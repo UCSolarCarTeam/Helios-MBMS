@@ -1,0 +1,17 @@
+/*
+ * BatteryControlTask.c
+ *
+ *  Created on: Jul 20, 2024
+ *      Author: khadeejaabbas
+ */
+
+#include "BatteryControlTask.h"
+
+void BatteryControlTask(void* arg)
+{
+    for (;;)
+    {
+    	BatteryControl();
+    }
+}
+
