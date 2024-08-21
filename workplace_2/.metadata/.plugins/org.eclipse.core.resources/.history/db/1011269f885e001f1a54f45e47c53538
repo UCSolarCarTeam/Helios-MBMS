@@ -1,0 +1,16 @@
+/*
+ * DisplayTask.c
+ *
+ *  Created on: Jul 20, 2024
+ *      Author: khadeejaabbas
+ */
+
+#include "DisplayTask.h"
+
+void DebugInterface(void* arg)
+{
+    for (;;)
+    {
+    	DebugInterface();
+    }
+}
