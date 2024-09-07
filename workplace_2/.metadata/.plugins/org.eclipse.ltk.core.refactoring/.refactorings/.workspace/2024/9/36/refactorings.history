@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Delete resource &apos;MBMS/Core/Src/Tasks/ArrayContactorPrechargerTask.coo&apos;" deleteContents="false" description="Delete resource &apos;MBMS/Core/Src/Tasks/ArrayContactorPrechargerTask.coo&apos;" element1="/MBMS/Core/Src/Tasks/ArrayContactorPrechargerTask.coo" flags="7" id="org.eclipse.ltk.core.refactoring.delete.resources" resources="1" stamp="1725738760343"/>
+</session>

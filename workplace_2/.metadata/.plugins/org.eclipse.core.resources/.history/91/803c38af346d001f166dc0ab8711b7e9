@@ -1,0 +1,17 @@
+/*
+ * main.cpp
+ *
+ *	Master BMS
+ *
+ *  Created on: Aug 21, 2024
+ *      Author: khadeejaabbas
+ *      System: Core
+ *      Role: Application Entry Point
+ */
+
+//Includes
+#include "main.hpp"
+
+
+
+

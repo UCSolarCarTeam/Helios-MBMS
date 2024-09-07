@@ -1,0 +1,16 @@
+/*
+ * handlers.cpp
+ *
+ *	Master BMS
+ *
+ *  Created on: Aug 21, 2024
+ *      Author: khadeejaabbas
+ *      System: Core
+ *      Role:
+ */
+
+
+//Includes
+#include "handlers.hpp"
+
+

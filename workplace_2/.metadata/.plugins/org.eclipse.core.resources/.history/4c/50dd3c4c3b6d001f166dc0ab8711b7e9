@@ -1,0 +1,22 @@
+/*
+ * setup.hpp
+ *
+ *	Master BMS
+ *
+ *  Created on: Aug 21, 2024
+ *      Author: khadeejaabbas
+ *      System: Core
+ *      Role: Setup Code
+ */
+
+//Prevent Recursive Inclusion
+#ifndef __SETUP_HPP_
+#define __SETUP_HPP_
+
+//Includes
+#include "stm32f4xx.h"
+#include "stm32f4xx_hal.h"
+
+
+//Prevent Recursive Inclusion
+#endif /* SETUP_HPP_ */

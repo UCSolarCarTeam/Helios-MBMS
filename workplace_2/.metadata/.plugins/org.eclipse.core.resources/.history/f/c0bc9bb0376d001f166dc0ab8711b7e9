@@ -1,0 +1,30 @@
+/*
+ * boot.hpp
+ *
+ *	Master BMS
+ *
+ *  Created on: Aug 21, 2024
+ *      Author: khadeejaabbas
+ *      System: Core
+ *      Role: Boot Code
+ */
+
+//Prevent Recursive Inclusion
+#ifndef __BOOT_HPP_
+#define __BOOT_HPP_
+
+
+//Includes
+#include "stm32f4xx.h"
+#include "stm32f4xx_hal.h"
+#include "setup.hpp"
+
+
+#ifndef INC_BOOT_HPP_
+#define INC_BOOT_HPP_
+
+
+
+
+
+#endif /* INC_BOOT_HPP_ */

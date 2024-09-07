@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Rename resource &apos;MBMS/Core/Inc/Task_h_files/Precharger_h_files/ChargeContactorPrechargeTask.hpp&apos; to &apos;ChargeContactorPrechargerTask.hpp&apos;" description="Rename resource &apos;ChargeContactorPrechargeTask.hpp&apos;" flags="7" id="org.eclipse.ltk.core.refactoring.rename.resource" input="Core/Inc/Task_h_files/Precharger_h_files/ChargeContactorPrechargeTask.hpp" name="ChargeContactorPrechargerTask.hpp" stamp="1725739207678" updateReferences="true"/>
+</session>
