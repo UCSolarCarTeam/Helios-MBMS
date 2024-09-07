@@ -640,3 +640,25 @@ Command-line arguments:  -os macosx -ws cocoa -arch x86_64 -keyring /Users/khade
 
 !ENTRY com.st.stm32cube.ide.mcu.ide 1 1 2024-09-07 14:43:12.122
 !MESSAGE Started RMI Server, listening on port 41337
+!SESSION 2024-09-07 14:53:01.473 -----------------------------------------------
+eclipse.buildId=Version 1.12.0
+java.version=11.0.17
+java.vendor=Eclipse Adoptium
+BootLoader constants: OS=macosx, ARCH=x86_64, WS=cocoa, NL=en_CA
+Framework arguments:  -keyring /Users/khadeejaabbas/.eclipse_keyring
+Command-line arguments:  -os macosx -ws cocoa -arch x86_64 -keyring /Users/khadeejaabbas/.eclipse_keyring
+
+!ENTRY com.st.stm32cube.ide.mcu.informationcenter 1 1 2024-09-07 14:53:15.458
+!MESSAGE Log4j2 initialized with config file /Users/khadeejaabbas/Documents/GitHub/Helios-MBMS/workplace_2/.metadata/.log4j2.xml
+
+!ENTRY com.st.stm32cube.ide.mcu.ide 1 1 2024-09-07 14:53:26.953
+!MESSAGE Started RMI Server, listening on port 41337
+
+!ENTRY org.eclipse.equinox.p2.repository 2 0 2024-09-07 15:11:51.185
+!MESSAGE The digest algorithms (md5) used to verify osgi.bundle,org.apache.log4j,1.2.15.v201012070815 have severely compromised security. Please report this concern to the artifact provider.
+
+!ENTRY org.eclipse.equinox.p2.repository 2 0 2024-09-07 15:11:52.431
+!MESSAGE The digest algorithms (md5) used to verify osgi.bundle,org.slf4j.impl.log4j12,1.7.2.v20131105-2200 have severely compromised security. Please report this concern to the artifact provider.
+
+!ENTRY org.eclipse.epp.mpc.ui 4 0 2024-09-07 15:19:00.860
+!MESSAGE The following solutions are not available: EGit - Git Integration for Eclipse 6.7.0 (id=org.eclipse.egit.mylyn.feature.group, site=https://download.eclipse.org/egit/updates)
