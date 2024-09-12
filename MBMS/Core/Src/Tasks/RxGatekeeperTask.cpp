@@ -5,6 +5,13 @@
  *      Author: khadeejaabbas
  */
 
+void RxGatekeeperTask(void* arg)
+{
+    for (;;)
+    {
+    	RxGatekeeperTask();
+    }
+}
 
 
 

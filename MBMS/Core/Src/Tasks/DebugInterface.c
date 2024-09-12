@@ -6,3 +6,10 @@
  */
 
 
+void DebugInterface(void* arg)
+{
+    for (;;)
+    {
+    	DebugInterface();
+    }
+}

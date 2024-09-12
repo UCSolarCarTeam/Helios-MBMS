@@ -5,6 +5,13 @@
  *      Author: khadeejaabbas
  */
 
+void DisplayTask(void* arg)
+{
+    for (;;)
+    {
+    	DisplayTask();
+    }
+}
 
 
 

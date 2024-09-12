@@ -6,5 +6,12 @@
  */
 
 
+void BatteryControlTask(void* arg)
+{
+    for (;;)
+    {
+    	BatteryControlTask();
+    }
+}
 
 

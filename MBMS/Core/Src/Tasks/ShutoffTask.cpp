@@ -5,6 +5,14 @@
  *      Author: khadeejaabbas
  */
 
+void ShutoffTask(void* arg)
+{
+    for (;;)
+    {
+    	ShutoffTask();
+    }
+}
+
 
 
 

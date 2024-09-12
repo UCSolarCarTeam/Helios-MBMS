@@ -5,6 +5,12 @@
  *      Author: khadeejaabbas
  */
 
-
+void TxGatekeeperTask(void* arg)
+{
+    for (;;)
+    {
+    	TxGatekeeperTask();
+    }
+}
 
 

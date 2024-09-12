@@ -5,6 +5,12 @@
  *      Author: khadeejaabbas
  */
 
-
+void MotorContactorPrechargerTask(void* arg)
+{
+    for (;;)
+    {
+    	MotorContactorPrechargerTask();
+    }
+}
 
 

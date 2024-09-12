@@ -5,6 +5,14 @@
  *      Author: khadeejaabbas
  */
 
+void ChargeContactorPrechargerTask(void* arg)
+{
+    for (;;)
+    {
+    	ChargeContactorPrechargerTask();
+    }
+}
+
 
 
 

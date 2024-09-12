@@ -5,6 +5,14 @@
  *      Author: khadeejaabbas
  */
 
+void StartupTask(void* arg)
+{
+    for (;;)
+    {
+    	StartupTask();
+    }
+}
+
 
 
 

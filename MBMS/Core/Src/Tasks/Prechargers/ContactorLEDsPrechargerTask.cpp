@@ -5,6 +5,13 @@
  *      Author: khadeejaabbas
  */
 
+void ContactorLEDsPrechargerTask(void* arg)
+{
+    for (;;)
+    {
+    	ContactorLEDsPrechargerTask();
+    }
+}
 
 
 

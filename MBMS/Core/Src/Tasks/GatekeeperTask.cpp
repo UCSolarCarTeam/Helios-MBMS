@@ -5,6 +5,14 @@
  *      Author: khadeejaabbas
  */
 
+void GatekeeperTask(void* arg)
+{
+    for (;;)
+    {
+    	GatekeeperTask();
+    }
+}
+
 
 
 

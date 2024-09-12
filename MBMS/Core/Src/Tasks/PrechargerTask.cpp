@@ -5,6 +5,13 @@
  *      Author: khadeejaabbas
  */
 
+void PrechargerTask(void* arg)
+{
+    for (;;)
+    {
+    	PrechargerTask();
+    }
+}
 
 
 
