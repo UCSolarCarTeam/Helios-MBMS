@@ -1,4 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<session version="1.0">
-<refactoring comment="Rename resource &apos;MBMS/Core/Inc/PrechargerTasks&apos; to &apos;PrechargerTasksH&apos;" description="Rename resource &apos;PrechargerTasks&apos;" flags="7" id="org.eclipse.ltk.core.refactoring.rename.resource" input="Core/Inc/PrechargerTasks" name="PrechargerTasksH" stamp="1724112307528" updateReferences="true"/>
-</session>
