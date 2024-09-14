@@ -9,9 +9,12 @@ void DisplayTask(void* arg)
 {
     for (;;)
     {
-    	DisplayTask();
+    	Display();
     }
 }
 
+void Display(void* arg)
+{
 
+}
 

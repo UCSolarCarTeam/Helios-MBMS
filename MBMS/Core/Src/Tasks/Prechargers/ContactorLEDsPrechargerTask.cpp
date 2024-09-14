@@ -9,8 +9,14 @@ void ContactorLEDsPrechargerTask(void* arg)
 {
     for (;;)
     {
-    	ContactorLEDsPrechargerTask();
+    	ContactorLEDsPrecharger();
     }
+}
+
+
+void ContactorLEDsPrecharger(void* arg)
+{
+
 }
 
 

@@ -5,12 +5,17 @@
  *      Author: khadeejaabbas
  */
 
-void TxGatekeeperTask(void* arg)
+void CANTxGatekeeperTask(void* arg)
 {
     for (;;)
     {
-    	TxGatekeeperTask();
+    	CANTxGatekeeper();
     }
+}
+
+void CANTxGatekeeper(void* arg)
+{
+
 }
 
 

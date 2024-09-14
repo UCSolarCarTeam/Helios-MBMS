@@ -9,8 +9,13 @@ void CommonContactorPrechargerTask(void* arg)
 {
     for (;;)
     {
-    	CommonContactorPrechargerTask();
+    	CommonContactorPrecharger();
     }
 }
 
+
+void CommonContactorPrecharger(void* arg)
+{
+
+}
 

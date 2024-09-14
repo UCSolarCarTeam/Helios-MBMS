@@ -9,8 +9,13 @@ void StartupTask(void* arg)
 {
     for (;;)
     {
-    	StartupTask();
+    	Startup();
     }
+}
+
+void Startup(void* arg)
+{
+
 }
 
 

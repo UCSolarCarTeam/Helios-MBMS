@@ -9,8 +9,11 @@ void MotorContactorPrechargerTask(void* arg)
 {
     for (;;)
     {
-    	MotorContactorPrechargerTask();
+    	MotorContactorPrecharger();
     }
 }
 
+void MotorContactorPrecharger(void* arg)
+{
 
+}

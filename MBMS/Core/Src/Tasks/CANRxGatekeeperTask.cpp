@@ -5,13 +5,17 @@
  *      Author: khadeejaabbas
  */
 
-void RxGatekeeperTask(void* arg)
+void CANRxGatekeeperTask(void* arg)
 {
     for (;;)
     {
-    	RxGatekeeperTask();
+    	CANRxGatekeeper();
     }
 }
 
+void CANRxGatekeeper(void* arg)
+{
+
+}
 
 

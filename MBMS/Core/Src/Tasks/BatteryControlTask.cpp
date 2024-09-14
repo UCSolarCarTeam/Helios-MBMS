@@ -10,8 +10,13 @@ void BatteryControlTask(void* arg)
 {
     for (;;)
     {
-    	BatteryControlTask();
+    	BatteryControl();
     }
+}
+
+void BatteryControl(void* arg)
+{
+
 }
 
 

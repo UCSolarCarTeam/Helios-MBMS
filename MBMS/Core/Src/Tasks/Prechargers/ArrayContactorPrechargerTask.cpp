@@ -9,8 +9,13 @@ void ArrayContactorPrechargerTask(void* arg)
 {
     for (;;)
     {
-    	ArrayContactorPrechargerTask();
+    	ArrayContactorPrecharger();
     }
+}
+
+void ArrayContactorPrecharger(void* arg)
+{
+
 }
 
 

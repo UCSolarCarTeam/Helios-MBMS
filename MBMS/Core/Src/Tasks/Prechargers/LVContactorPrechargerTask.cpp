@@ -9,8 +9,11 @@ void LVContactorPrechargerTask(void* arg)
 {
     for (;;)
     {
-    	LVContactorPrechargerTask();
+    	LVContactorPrecharger();
     }
 }
 
+void LVContactorPrecharger(void* arg)
+{
 
+}

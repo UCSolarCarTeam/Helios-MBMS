@@ -9,10 +9,13 @@ void ChargeContactorPrechargerTask(void* arg)
 {
     for (;;)
     {
-    	ChargeContactorPrechargerTask();
+    	ChargeContactorPrecharger();
     }
 }
 
 
+void ChargeContactorPrecharger(void* arg)
+{
 
+}
 

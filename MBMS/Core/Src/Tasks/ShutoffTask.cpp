@@ -9,10 +9,14 @@ void ShutoffTask(void* arg)
 {
     for (;;)
     {
-    	ShutoffTask();
+    	Shutoff();
     }
 }
 
+void Shutoff(void* arg)
+{
+
+}
 
 
 

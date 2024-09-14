@@ -6,10 +6,15 @@
  */
 
 
-void DebugInterface(void* arg)
+void DebugInterfaceTask(void* arg)
 {
     for (;;)
     {
     	DebugInterface();
     }
+}
+
+void DebugInterface(void* arg)
+{
+
 }
