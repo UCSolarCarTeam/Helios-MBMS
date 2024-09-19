@@ -412,6 +412,7 @@ static void MX_ADC3_Init(void)
   }
   /* USER CODE BEGIN ADC3_Init 2 */
 
+
   /* USER CODE END ADC3_Init 2 */
 
 }
