@@ -9,6 +9,13 @@
 
 // macro for the precharger delay (I just made up 10 for rn)
 #define PRECHARGER_DELAY 10
+// macro for the time to close delay (made up rn)
+#define TIMETOCLOSE_DELAY 10
+
+// number of prechargers for the list of structs below
+#define NUM_PRECHARGERS 7
+// number of contacotors for the list of structs below
+#define NUM_CONTACTORS 7
 
 // assigning all the prechargers a number
 typedef enum
@@ -45,13 +52,19 @@ typedef enum
 
 
 // a struct for the general info for each contactor
-
 typedef struct
 {
 	GPIO_TypeDef * GPIO_Port;
 	uint16_t GPIO_Pin;
     ContactorState GPIO_State;
 } ContactorInfo_t;
+
+// making an array of all the prechargers and contactors as structs
+ContactorInfo_t prechargers[NUM_PRECHARGERS];
+ContactorInfo_t gatekeepers[NUM_CONTACTORS];
+
+
+
 
 
 

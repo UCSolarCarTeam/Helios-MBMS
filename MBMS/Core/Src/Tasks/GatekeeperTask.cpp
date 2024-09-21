@@ -13,19 +13,18 @@ void GatekeeperTask(void* arg)
     }
 }
 
-void Gatekeeper(void* arg)
+void Gatekeeper(ContactorInfo_t* contactor)
 {
-	// arg is the contactor we have to close
+	// (switch case) if we want to close the contactor:
+		// arg is the contactor we have to close, it will be an enum
 
-	// set charge state to closing for the contactor specified
-	arg.status = CLOSING;
-
-	// to safely close the contactor, we would need to first close the precharger
-	// by using this function, we're closing the precharger AND the contactor, so we don't need to call the closeContactor function here
-	Precharger(arg);
-
+		// to safely close the contactor, we would need to first close the precharger
+		// by using this function, we're closing the precharger AND the contactor, so we don't need to call the closeContactor function here
+		Precharger(contactor);
 
 }
+
+
 
 
 
