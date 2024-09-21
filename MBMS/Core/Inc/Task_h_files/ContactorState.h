@@ -11,6 +11,8 @@
 #define PRECHARGER_DELAY 10
 // macro for the time to close delay (made up rn)
 #define TIMETOCLOSE_DELAY 10
+// macro for the time to open delay (made up rn)
+#define TIMETOOPEN_DELAY 10
 
 // number of prechargers for the list of structs below
 #define NUM_PRECHARGERS 7
@@ -45,8 +47,8 @@ typedef enum
 typedef enum
 {
     OPEN,
-    CLOSING, // Intermediate state between open and closed
     CLOSED,
+    CLOSING, // Intermediate state between open and closed
     CONTACTOR_ERROR
 } ContactorState;
 
