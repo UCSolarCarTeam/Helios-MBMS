@@ -22,18 +22,18 @@ void Precharger(ContactorInfo_t* contactor)
 
 	// once the precharger gets the 'closing' command from the gatekeeper which comes from the FreeRTOS queue, it must first close its own switch
 	// every corresponding precharger and contactor have the same number (i.e motor precharger and contactor are both 2)
-	tryChangingContactor(prechargers[contactor], CLOSING, CLOSED, PRECHARGER_DELAY);
+	tryChangingContactor(prechargers[contactor], CLOSING, CLOSED, PRECHARGER_DELAY, prechargerNames);
 
 	// if the precharger doesn't close, the function will be put into a recursive loop and will never end. Thus a watchdog needs to stop it to throw an error
 
 	// secondly, it must close the array the gatekeeper wanted closed (this is so the contactor isn't flooded with high voltage)
-	tryChangingContactor(gatekeepers[contactor], CLOSING, CLOSED, TIMETOCLOSE_DELAY);
+	tryChangingContactor(gatekeepers[contactor], CLOSING, CLOSED, TIMETOCLOSE_DELAY, contactorNames);
 
 	// if the contactor doesn't close, the function will be put into a recursive loop and will never end. Thus a watchdog needs to stop it to throw an error
 
 	// thirdly, once the array is closed and a 'transition voltage' is provided by the precharger, the precharger opens and the state of the contactor is changed from 'closing' to 'closed'
 	// this means that there won't be a voltage spike now so thats safer 😌
-	tryChangingContactor(prechargers[contactor], CLOSED, OPEN, TIMETOOPEN_DELAY);
+	tryChangingContactor(prechargers[contactor], CLOSED, OPEN, TIMETOOPEN_DELAY, prechargerNames);
 
 	// check the voltage by reading the line and making sure it's what we want (the battery voltage)
 	// if it is, we can change the state from 'closing' to 'closed'
@@ -41,7 +41,8 @@ void Precharger(ContactorInfo_t* contactor)
 
 
 
-void tryChangingContactor(ContactorInfo_t* contactor, ContactorState current_state, ContactorState wanted_state, uint32_t delayTime){
+void tryChangingContactor(ContactorInfo_t* contactor, ContactorState current_state, ContactorState wanted_state, uint32_t delayTime, char prechargerOrContactor){
+	// added the prechargerOrContactor for error checking, that's it
 	// set state to closing for the contactor specified
 	contactor.GPIO_State = current_state;
 
@@ -52,7 +53,7 @@ void tryChangingContactor(ContactorInfo_t* contactor, ContactorState current_sta
 	HAL_Delay(delayTime);
 
 	// check if the contactor is closed
-	checkState(contactor, wanted_state);
+	checkState(contactor, wanted_state, prechargerOrContactor);
 
 }
 
@@ -76,14 +77,15 @@ void physciallyChangeContactor(ContactorInfo_t* contactor, ContactorState state)
 	}
 }
 
-void checkState(ContactorInfo_t* contactor, ContactorState state){
+void checkState(ContactorInfo_t* contactor, ContactorState state, char prechargerOrContactor){
+	// added the prechargerOrContactor for error checking, that's it
 	// check if the contactor is closed
 	if (HAL_GPIO_ReadPin(contactor.GPIO_Port, contactor.GPIO_Pin) == state){
 		contactor.GPIO_State = state;
 	}
 	else{
 		// try closing the contactor again
-		printf("Contactor is not in wanted state, so trying again");
+		printf("%s is not in the %s state, so trying again", prechargerOrContactor[contactor], stateNames[state]);
 		tryChangingContactor(contactor);
 		// throw an error if a certain amount of time has passed??
 	}

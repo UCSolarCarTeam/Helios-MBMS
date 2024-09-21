@@ -65,6 +65,11 @@ typedef struct
 ContactorInfo_t prechargers[NUM_PRECHARGERS];
 ContactorInfo_t gatekeepers[NUM_CONTACTORS];
 
+// listing all the names of the enum for more accurate error checking
+const char* prechargerNames[] = {"Precharger", "CommonContactorPrecharger", "LVContactorPrecharger", "MotorContactorPrecharger", "ChargeContactorPrecharger", "ArrayContactorPrecharger", "ContactorLEDsPrecharger"};
+const char* contactorNames[] = {"Gatekeeper", "CommonContactor", "LVContactor", "MotorContactor", "ChargeContactor", "ArrayContactor", "ContactorLEDs"};
+const char* stateNames[] = {"OPEN", "CLOSED", "CLOSING", "CONTACTOR_ERROR"};
+
 
 
 
