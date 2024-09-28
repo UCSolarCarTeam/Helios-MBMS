@@ -5,9 +5,11 @@
  *      Author: khadeejaabbas
  */
 
+#include "ShutoffTask.hpp"
+
 void ShutoffTask(void* arg)
 {
-    for (;;)
+    while(1)
     {
     	Shutoff();
     }

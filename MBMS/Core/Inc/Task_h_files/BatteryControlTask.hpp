@@ -8,8 +8,9 @@
 #ifndef INC_TASK_H_FILES_BATTERYCONTROLTASK_HPP_
 #define INC_TASK_H_FILES_BATTERYCONTROLTASK_HPP_
 
+void BatteryControlTask(void* arg);
 
-
+void BatteryControl(void* arg);
 
 
 #endif /* INC_TASK_H_FILES_BATTERYCONTROLTASK_HPP_ */

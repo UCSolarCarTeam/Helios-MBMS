@@ -4,10 +4,11 @@
  *  Created on: Sep 7, 2024
  *      Author: khadeejaabbas
  */
+#include "CANTxGatekeeperTask.hpp"
 
 void CANTxGatekeeperTask(void* arg)
 {
-    for (;;)
+    while(1)
     {
     	CANTxGatekeeper();
     }

@@ -4,10 +4,11 @@
  *  Created on: Sep 7, 2024
  *      Author: khadeejaabbas
  */
+#include "LVContactorPrechargerTask.hpp"
 
 void LVContactorPrechargerTask(void* arg)
 {
-    for (;;)
+    while(1)
     {
     	LVContactorPrecharger();
     }

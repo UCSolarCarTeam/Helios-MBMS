@@ -4,10 +4,11 @@
  *  Created on: Sep 7, 2024
  *      Author: khadeejaabbas
  */
+#include "MotorContactorPrechargerTask.hpp"
 
 void MotorContactorPrechargerTask(void* arg)
 {
-    for (;;)
+    while(1)
     {
     	MotorContactorPrecharger();
     }

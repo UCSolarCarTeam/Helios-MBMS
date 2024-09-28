@@ -4,10 +4,11 @@
  *  Created on: Sep 7, 2024
  *      Author: khadeejaabbas
  */
+#include "CANRxGatekeeperTask.hpp"
 
 void CANRxGatekeeperTask(void* arg)
 {
-    for (;;)
+    while(1)
     {
     	CANRxGatekeeper();
     }

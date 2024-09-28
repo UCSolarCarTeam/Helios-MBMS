@@ -1,14 +1,15 @@
 /*
- * DebugInterface.c
+ * DebugInterface.cpp
  *
  *  Created on: Sep 7, 2024
  *      Author: khadeejaabbas
  */
 
+#include "DebugInterfaceTask.hpp"
 
 void DebugInterfaceTask(void* arg)
 {
-    for (;;)
+    while(1)
     {
     	DebugInterface();
     }

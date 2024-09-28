@@ -5,10 +5,11 @@
  *      Author: khadeejaabbas
  *      Role: Safely closes the contactor by first closing a precharger to prevent a voltage spike
  */
+#include "PrechargerTask.hpp"
 
 void PrechargerTask(void* arg)
 {
-    for (;;)
+    while(1)
     {
     	Precharger();
     }

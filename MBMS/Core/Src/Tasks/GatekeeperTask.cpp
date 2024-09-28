@@ -5,9 +5,11 @@
  *      Author: khadeejaabbas
  */
 
+#include "GatekeeperTask.hpp"
+
 void GatekeeperTask(void* arg)
 {
-    for (;;)
+    while(1)
     {
     	Gatekeeper();
     }
@@ -21,10 +23,7 @@ void Gatekeeper(ContactorInfo_t* contactor)
 		// to safely close the contactor, we would need to first close the precharger
 		// by using this function, we're closing the precharger AND the contactor, so we don't need to call the closeContactor function here
 		Precharger(contactor);
-
 }
-
-
 
 
 

@@ -5,10 +5,11 @@
  *      Author: khadeejaabbas
  */
 
+#include "BatteryControlTask.hpp"
 
 void BatteryControlTask(void* arg)
 {
-    for (;;)
+    while(1)
     {
     	BatteryControl();
     }

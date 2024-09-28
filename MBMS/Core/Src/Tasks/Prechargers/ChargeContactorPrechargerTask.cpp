@@ -4,10 +4,11 @@
  *  Created on: Sep 7, 2024
  *      Author: khadeejaabbas
  */
+#include "ChargeContactorPrechargerTask.hpp"
 
 void ChargeContactorPrechargerTask(void* arg)
 {
-    for (;;)
+    while(1)
     {
     	ChargeContactorPrecharger();
     }

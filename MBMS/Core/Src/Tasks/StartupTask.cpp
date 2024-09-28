@@ -4,10 +4,11 @@
  *  Created on: Sep 7, 2024
  *      Author: khadeejaabbas
  */
+#include "StartupTask.hpp"
 
 void StartupTask(void* arg)
 {
-    for (;;)
+    while(1)
     {
     	Startup();
     }
