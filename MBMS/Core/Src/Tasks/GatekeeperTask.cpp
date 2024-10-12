@@ -15,14 +15,19 @@ void GatekeeperTask(void* arg)
     }
 }
 
-void Gatekeeper(ContactorInfo_t* contactor)
+void Gatekeeper(Contactors contactor, ContactorState WantedState)
 {
-	// (switch case) if we want to close the contactor:
-		// arg is the contactor we have to close, it will be an enum
-
-		// to safely close the contactor, we would need to first close the precharger
-		// by using this function, we're closing the precharger AND the contactor, so we don't need to call the closeContactor function here
-		Precharger(contactor);
+	// switch case between opening or closing
+	switch (WantedState){
+		case OPEN:
+			HAL_GPIO_WritePin(contactor->GPIO_Port, contactor->GPIO_Pin, GPIO_PIN_RESET);
+			break;
+		case CLOSED:
+			// to safely close the contactor, we would need to first close the precharger
+			// by using this function, we're closing the precharger AND the contactor, so we don't need to call a closeContactor function here
+			Precharger(contactor);
+			break;
+	}
 }
 
 
