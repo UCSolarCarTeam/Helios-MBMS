@@ -9,6 +9,8 @@
 
 void GatekeeperTask(void* arg)
 {
+	uint16_t delay = 0;
+
     while(1)
     {
     	Gatekeeper();
@@ -26,6 +28,7 @@ void Gatekeeper(Contactors contactor, ContactorState WantedState)
 			// to safely close the contactor, we would need to first close the precharger
 			// by using this function, we're closing the precharger AND the contactor, so we don't need to call a closeContactor function here
 			Precharger(contactor);
+			osMessageQueuePut(msgConactorQueueID, &delay, 0, osWaitForever);
 			break;
 	}
 }

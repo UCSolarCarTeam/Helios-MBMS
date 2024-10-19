@@ -60,6 +60,8 @@ typedef struct
 {
 	GPIO_TypeDef * GPIO_Port;
 	uint16_t GPIO_Pin;
+	GPIO_TypeDef * GPIO_Port_Sense;
+	uint16_t GPIO_Pin_Sense;
     ContactorState GPIO_State;
 } ContactorInfo_t;
 
@@ -74,28 +76,38 @@ typedef struct
 // creating list of structs and initalizing
 ContactorInfo_t prechargers[NUM_PRECHARGERS] = {
 		[0] = {
-				.GPIO_Port = Common_Contactor_Precharger_GPIO_Port,
-				.GPIO_Pin = Common_Contactor_Precharger_Pin,
+				.GPIO_Port = Common_Contactor_Precharger_Output_GPIO_Port,
+				.GPIO_Pin = Common_Contactor_Precharger_Output_Pin,
+				.GPIO_Port_Sense = Common_Contactor_Precharger_Sense_GPIO_Port,
+				.GPIO_Pin_Sense = Common_Contactor_Precharger_Sense_Pin,
 				.GPIO_State = OPEN
 		},
 		[1] = {
-				.GPIO_Port = LV_Contactor_Precharger_GPIO_Port,
-				.GPIO_Pin = LV_Contactor_Precharger_Pin,
+				.GPIO_Port = LV_Contactor_Precharger_Output_GPIO_Port,
+				.GPIO_Pin = LV_Contactor_Precharger_Output_Pin,
+				.GPIO_Port_Sense = LV_Contactor_Precharger_Sense_GPIO_Port,
+				.GPIO_Pin_Sense = LV_Contactor_Precharger_Sense_Pin,
 				.GPIO_State = OPEN
 		},
 		[2] = {
-				.GPIO_Port = Motor_Contactor_Precharger_GPIO_Port,
-				.GPIO_Pin = Motor_Contactor_Precharger_Pin,
+				.GPIO_Port = Motor_Contactor_Precharger_Output_GPIO_Port,
+				.GPIO_Pin = Motor_Contactor_Precharger_Output_Pin,
+				.GPIO_Port_Sense = Motor_Contactor_Precharger_Output_GPIO_Port,
+				.GPIO_Pin_Sense = Motor_Contactor_Precharger_Output_Pin,
 				.GPIO_State = OPEN
 		},
 		[3] = {
-				.GPIO_Port = Charge_Contactor_Precharger_GPIO_Port,
-				.GPIO_Pin = Charge_Contactor_Precharger_Pin,
+				.GPIO_Port = Charge_Contactor_Precharger_Output_GPIO_Port,
+				.GPIO_Pin = Charge_Contactor_Precharger_Output_Pin,
+				.GPIO_Port_Sense = Charge_Contactor_Precharger_Sense_GPIO_Port,
+				.GPIO_Pin_Sense = Charge_Contactor_Precharger_Sense_Pin,
 				.GPIO_State = OPEN
 		},
 		[4] = {
 				.GPIO_Port = Array_Contactor_Precharger_GPIO_Port,
 				.GPIO_Pin = Array_Contactor_Precharger_Pin,
+				.GPIO_Port_Sense = Charge_Contactor_Precharger_Sense_GPIO_Port,
+				.GPIO_Pin_Sense = Charge_Contactor_Precharger_Sense_Pin,
 				.GPIO_State = OPEN
 		},
 		[5] = {
