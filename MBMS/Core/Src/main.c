@@ -47,6 +47,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define CONTACTOR_QUEUE_COUNT 2 // Anticipating 2 messages being received. 1) the contactor number 2) the desired action (closed/open)
 
 /* USER CODE END PD */
 
@@ -134,6 +135,10 @@ const osThreadAttr_t startupTask_attributes = {
 };
 
 
+// IS THIS THE CORRECT PLACE TO PUT IT??
+osMessageQueueId_t msgQueueID;
+
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -207,6 +212,15 @@ int main(void)
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
+
+
+  // IS THIS CORRECT??? THE NUMBER IN QUEUE AND SIZE
+  msgConactorQueueID = osMessageQueueNew(15, sizeof(uint16_t), NULL);
+
+  prechargerThreadID = osThreadNew(prechargerThread, NULL, &prechargerThread_attr);
+
+  gatekeeperThreadID = osThreadNew(gatekeeperThread, NULL, &gatekeeperThread_attr);
+
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
@@ -574,32 +588,91 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
   __HAL_RCC_GPIOD_CLK_ENABLE();
+  __HAL_RCC_GPIOE_CLK_ENABLE();
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOA, Contactor_LEDs_Precharger_Output_Pin|Array_Contactor_Precharger_Output_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOC, Charge_Contactor_Precharger_Output_Pin|Motor_Contactor_Precharger_Output_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOD, LV_Contactor_Precharger_Output_Pin|Common_Contactor_Precharger_Output_Pin|Array_Contactor_Output_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOB, Charge_Contactor_Output_Pin|Motor_Contactor_Output_Pin|LV_Contactor_Output_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(Common_Contactor_Output_GPIO_Port, Common_Contactor_Output_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pins : Debug_LEDs_Pin Debug_LEDsD9_Pin DCDC0_UV_Fault_Pin DCDC0_OV_Fault_Pin
                            nDCDC1_Enable_Pin nCharger_12V_Line_Enable_Pin nCurrent_Sense_Pin ncharge_ON_Pin
-                           Contactor_LEDs_Precharger_Pin Array_Contactor_Precharger_Pin Charge_Contactor_Precharger_Pin Motor_Contactor_Precharger_Pin
-                           LV_Contactor_Precharger_Pin Common_Contactor_Precharger_Pin Contactor_LEDs_Pin */
+                           Motor_Contactor_Precharger_Sense_Pin LV_Contactor_Precharger_Sense_Pin Common_Contactor_Precharger_Sense_Pin */
   GPIO_InitStruct.Pin = Debug_LEDs_Pin|Debug_LEDsD9_Pin|DCDC0_UV_Fault_Pin|DCDC0_OV_Fault_Pin
                           |nDCDC1_Enable_Pin|nCharger_12V_Line_Enable_Pin|nCurrent_Sense_Pin|ncharge_ON_Pin
-                          |Contactor_LEDs_Precharger_Pin|Array_Contactor_Precharger_Pin|Charge_Contactor_Precharger_Pin|Motor_Contactor_Precharger_Pin
-                          |LV_Contactor_Precharger_Pin|Common_Contactor_Precharger_Pin|Contactor_LEDs_Pin;
+                          |Motor_Contactor_Precharger_Sense_Pin|LV_Contactor_Precharger_Sense_Pin|Common_Contactor_Precharger_Sense_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : ncharge_fault_Pin nDCDC1_ON_Pin nDCDC1_fault_Pin */
-  GPIO_InitStruct.Pin = ncharge_fault_Pin|nDCDC1_ON_Pin|nDCDC1_fault_Pin;
+  /*Configure GPIO pins : ncharge_fault_Pin nDCDC1_ON_Pin nDCDC1_fault_Pin Charge_Contactor_Precharger_Sense_Pin */
+  GPIO_InitStruct.Pin = ncharge_fault_Pin|nDCDC1_ON_Pin|nDCDC1_fault_Pin|Charge_Contactor_Precharger_Sense_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : Array_Contactor_Pin Charge_Contactor_Pin Motor_Contactor_Pin LV_Contactor_Pin
-                           Common_Contactor_Pin */
-  GPIO_InitStruct.Pin = Array_Contactor_Pin|Charge_Contactor_Pin|Motor_Contactor_Pin|LV_Contactor_Pin
-                          |Common_Contactor_Pin;
+  /*Configure GPIO pins : Contactor_LEDs_Precharger_Output_Pin Array_Contactor_Precharger_Output_Pin */
+  GPIO_InitStruct.Pin = Contactor_LEDs_Precharger_Output_Pin|Array_Contactor_Precharger_Output_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : Contactor_LEDs_Precharger_Sense_Pin Array_Contactor_Precharger_Sense_Pin */
+  GPIO_InitStruct.Pin = Contactor_LEDs_Precharger_Sense_Pin|Array_Contactor_Precharger_Sense_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : Charge_Contactor_Precharger_Output_Pin Motor_Contactor_Precharger_Output_Pin */
+  GPIO_InitStruct.Pin = Charge_Contactor_Precharger_Output_Pin|Motor_Contactor_Precharger_Output_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : LV_Contactor_Precharger_Output_Pin Common_Contactor_Precharger_Output_Pin Array_Contactor_Output_Pin */
+  GPIO_InitStruct.Pin = LV_Contactor_Precharger_Output_Pin|Common_Contactor_Precharger_Output_Pin|Array_Contactor_Output_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : Array_Contactor_Sense_Pin Charge_Contactor_Sense_Pin Motor_Contactor_Sense_Pin LV_Contactor_Sense_Pin */
+  GPIO_InitStruct.Pin = Array_Contactor_Sense_Pin|Charge_Contactor_Sense_Pin|Motor_Contactor_Sense_Pin|LV_Contactor_Sense_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : Charge_Contactor_Output_Pin Motor_Contactor_Output_Pin LV_Contactor_Output_Pin */
+  GPIO_InitStruct.Pin = Charge_Contactor_Output_Pin|Motor_Contactor_Output_Pin|LV_Contactor_Output_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : Common_Contactor_Output_Pin */
+  GPIO_InitStruct.Pin = Common_Contactor_Output_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(Common_Contactor_Output_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : Common_Contactor_Sense_Pin */
+  GPIO_InitStruct.Pin = Common_Contactor_Sense_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(Common_Contactor_Sense_GPIO_Port, &GPIO_InitStruct);
 
 /* USER CODE BEGIN MX_GPIO_Init_2 */
 /* USER CODE END MX_GPIO_Init_2 */

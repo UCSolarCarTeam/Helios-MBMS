@@ -11,15 +11,24 @@
 
 void PrechargerTask(void* arg)
 {
+	// should I do this???
+	uint16_t delay = 500; /* Default delay */
+	uint16_t msg = 0;
+	osStatus_t status;
+
     while(1)
     {
-    	Precharger();
+    	status = osMessageQueueGet(msgConactorQueueID, &msg, 0, 10);
+    	if(status == osOK)
+    		Precharger(status);
+    	//should we do the delay?
+    	osDelay(delay);
     }
 }
 
-void Precharger(Contactors contactor)
+void Precharger()
 {
-	// What does this do???? Found in elysia code: ASK VIOLET THIS
+	// Change this to use to a queue and the queue should contain: 1) the contactor number 2) the desired action (closed/open)
     uint32_t contactorFlags = osEventFlagsWait(contactorControlEventBits, COMMON_CLOSED | COMMON_OPENED, osFlagsWaitAny, osWaitForever);
 
 	// here the input is a pointer to what contactor we want closed, it will be an enum (a number)
@@ -79,6 +88,7 @@ void physciallyChangeContactor(ContactorInfo_t* contactor, ContactorState state)
 
 	switch (state){
 			case CLOSED: // if it's in 'open' state, open the contactor
+
 				HAL_GPIO_WritePin(contactor->GPIO_Port, contactor->GPIO_Pin, GPIO_PIN_RESET);
 				break;
 			case CLOSING: // if it's in 'closing' state, close the contactor
