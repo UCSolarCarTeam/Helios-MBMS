@@ -10,14 +10,16 @@
 void GatekeeperTask(void* arg)
 {
 	uint16_t delay = 0;
-
+	int contactor = 1;
+	int wantedState = 2;
     while(1)
     {
-    	Gatekeeper();
+    	Gatekeeper(contactor, wantedState);
     }
 }
+//void Gatekeeper(Contactors contactor, ContactorState WantedState)
 
-void Gatekeeper(Contactors contactor, ContactorState WantedState)
+void Gatekeeper(int contactor, int WantedState)
 {
 	// switch case between opening or closing
 	switch (WantedState){
@@ -28,7 +30,7 @@ void Gatekeeper(Contactors contactor, ContactorState WantedState)
 			// to safely close the contactor, we would need to first close the precharger
 			// by using this function, we're closing the precharger AND the contactor, so we don't need to call a closeContactor function here
 			Precharger(contactor);
-			osMessageQueuePut(msgConactorQueueID, &delay, 0, osWaitForever);
+//			osMessageQueuePut(msgConactorQueueID, &delay, 0, osWaitForever);
 			break;
 	}
 }

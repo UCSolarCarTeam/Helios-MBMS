@@ -11,6 +11,6 @@
 
 void PrechargerTask(void* arg);
 
-void Precharger(ContactorInfo_t* contactor);
+void Precharger(int contactor);
 
 #endif /* INC_TASK_H_FILES_PRECHARGER_H_FILES_PRECHARGERTASK_HPP_ */

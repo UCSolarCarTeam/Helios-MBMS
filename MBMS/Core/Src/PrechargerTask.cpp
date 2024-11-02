@@ -18,15 +18,16 @@ void PrechargerTask(void* arg)
 
     while(1)
     {
-    	status = osMessageQueueGet(msgConactorQueueID, &msg, 0, 10);
-    	if(status == osOK)
-    		Precharger(status);
+//    	status = osMessageQueueGet(msgConactorQueueID, &msg, 0, 10);
+//    	if(status == osOK)
+    	int status = 1;
+    	Precharger(status);
     	//should we do the delay?
     	osDelay(delay);
     }
 }
 
-void Precharger()
+void Precharger(int contactor)
 {
 	// Change this to use to a queue and the queue should contain: 1) the contactor number 2) the desired action (closed/open)
     uint32_t contactorFlags = osEventFlagsWait(contactorControlEventBits, COMMON_CLOSED | COMMON_OPENED, osFlagsWaitAny, osWaitForever);

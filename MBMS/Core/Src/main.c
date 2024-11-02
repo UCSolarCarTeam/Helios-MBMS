@@ -31,12 +31,7 @@
 #include "DebugInterfaceTask.hpp"
 #include "DisplayTask.hpp"
 #include "PrechargerTask.hpp"
-#include "ArrayContactorPrechargerTask.hpp"
-#include "ChargeContactorPrechargerTask.hpp"
-#include "CommonContactorPrechargerTask.hpp"
-#include "ContactorLEDsPrechargerTask.hpp"
-#include "LVContactorPrechargerTask.hpp"
-#include "MotorContactorPrechargerTask.hpp"
+
 
 /* USER CODE END Includes */
 
@@ -215,11 +210,11 @@ int main(void)
 
 
   // IS THIS CORRECT??? THE NUMBER IN QUEUE AND SIZE
-  msgConactorQueueID = osMessageQueueNew(15, sizeof(uint16_t), NULL);
+  //msgConactorQueueID = osMessageQueueNew(15, sizeof(uint16_t), NULL);
 
-  prechargerThreadID = osThreadNew(prechargerThread, NULL, &prechargerThread_attr);
+  //prechargerThreadID = osThreadNew(prechargerThread, NULL, &prechargerThread_attr);
 
-  gatekeeperThreadID = osThreadNew(gatekeeperThread, NULL, &gatekeeperThread_attr);
+  //gatekeeperThreadID = osThreadNew(gatekeeperThread, NULL, &gatekeeperThread_attr);
 
   /* USER CODE END RTOS_QUEUES */
 
