@@ -22,7 +22,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "GatekeeperTask.hpp"
+//#include "GatekeeperTask.hpp"
 #include "StartupTask.hpp"
 #include "ShutoffTask.hpp"
 #include "BatteryControlTask.hpp"
