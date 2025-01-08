@@ -2,19 +2,16 @@
  * RxGatekeeperTask.cpp
  *
  *  Created on: Sep 7, 2024
- *      Author: khadeejaabbas
+ *      Author: khadeejaabbas, millaineli
  */
-#include "CANRxGatekeeperTask.hpp"
+#include "../Inc/CANRxGatekeeperTask.h"
+#include <stdint.h>
+#include "main.h"
+
+
 #include "stm32f4xx_hal.h"
 #include "CANdefines.h"
-
-
-typedef struct {
-    uint16_t ID;
-    uint32_t extendedID;
-    uint8_t DLC;
-    uint8_t data[8];
-} CANmsg;
+#include "cmsis_os.h"
 
 
 
@@ -26,10 +23,10 @@ void CANRxGatekeeperTask(void* arg)
     }
 }
 
-void CANRxGatekeeper(void* arg)
+void CANRxGatekeeper()
 {
 
-	CANmsg msg; // CANmsg is struct (defined in CAN.h)
+	CANMsg msg; // CANmsg is struct (defined in CAN.h)
 
 	osStatus_t status = osMessageQueueGet(RxCANMessageQueueHandle, &msg, 0, osWaitForever);
 	if (status != osOK){
@@ -51,11 +48,11 @@ void CANRxGatekeeper(void* arg)
 }
 
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan){
-	CANmsg msg;
+	CANMsg msg;
 
 	CAN_RxHeaderTypeDef CANRxHeader;
 	uint8_t  data[8]; // can hold 8 bytes of data
-	HAL_CAN_GetRxMessage(hcan1, 0, &CANRxHeader, &data); // get CAN message from the FIFO 0 queue and store its header and data
+	HAL_CAN_GetRxMessage(&hcan1, 0, &CANRxHeader, &data); // get CAN message from the FIFO 0 queue and store its header and data
 
 	msg.extendedID = CANRxHeader.ExtId; // set CANmsg extended ID
 	msg.DLC = CANRxHeader.DLC; // set CANmsg DLC

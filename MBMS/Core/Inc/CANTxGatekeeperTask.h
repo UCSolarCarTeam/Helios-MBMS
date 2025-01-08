@@ -5,11 +5,11 @@
  *      Author: khadeejaabbas, millaineli
  */
 
-#ifndef INC_TASK_H_FILES_CANTXGATEKEEPERTASK_HPP_
-#define INC_TASK_H_FILES_CANTXGATEKEEPERTASK_HPP_
+#ifndef INC_TASK_H_FILES_CANTXGATEKEEPERTASK_H_
+#define INC_TASK_H_FILES_CANTXGATEKEEPERTASK_H_
 
 void CANTxGatekeeperTask(void* arg);
-void CANTxGatekeeper(void* arg);
+void CANTxGatekeeper();
 
 
 #endif /* INC_TASK_H_FILES_CANTXGATEKEEPERTASK_HPP_ */

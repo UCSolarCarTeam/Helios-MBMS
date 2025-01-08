@@ -5,12 +5,14 @@
  *      Author: khadeejaabbas, millaineli
  */
 
-#ifndef INC_TASK_H_FILES_BATTERYCONTROLTASK_HPP_
-#define INC_TASK_H_FILES_BATTERYCONTROLTASK_HPP_
+#ifndef INC_TASK_H_FILES_BATTERYCONTROLTASK_H_
+#define INC_TASK_H_FILES_BATTERYCONTROLTASK_H_
+
+#include <stdint.h>
 
 void BatteryControlTask(void* arg);
 
-void BatteryControl(void* arg);
+void BatteryControl();
 
 typedef struct {
 	// pack info
@@ -30,5 +32,7 @@ typedef struct {
     uint16_t minPackVoltage;
 } BatteryInfo;
 
+// so should probably dequeue CAN messages and update the values in this struct, and do appropriate checks of values
 
-#endif /* INC_TASK_H_FILES_BATTERYCONTROLTASK_HPP_ */
+
+#endif /* INC_TASK_H_FILES_BATTERYCONTROLTASK_H_ */

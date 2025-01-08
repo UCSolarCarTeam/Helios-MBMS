@@ -6,8 +6,14 @@
  */
 
 
-#include "CANTxGatekeeperTask.hpp"
-#include "CAN.h" // idk if i need this anymore tbh
+#include "../Inc/CANTxGatekeeperTask.h"
+#include <stdint.h>
+#include "cmsis_os.h"
+#include "main.h"
+
+
+
+
 #include "stm32f4xx_hal.h"
 
 
@@ -34,10 +40,10 @@ void CANTxGatekeeperTask(void* arg)
     }
 }
 
-void CANTxGatekeeper(void* arg)
+void CANTxGatekeeper()
 {
 
-	CANmsg msg; // CANmsg is struct (defined in CAN.h)
+	CANMsg msg; // CANmsg is struct (defined in CAN.h)
 
 	CAN_TxHeaderTypeDef CANTxHeader;
 	uint8_t  data[8]; // can hold 8 bytes of data
@@ -47,7 +53,7 @@ void CANTxGatekeeper(void* arg)
 	CANTxHeader.RTR = CAN_RTR_DATA;
 
 
-	status = osMessageQueueGet(TxCANMessageQueueHandle, &msg, 0, osWaitForever);
+	osStatus_t status = osMessageQueueGet(TxCANMessageQueueHandle, &msg, 0, osWaitForever);
 	while (status != osOK){
 		// do nothing, wait for it to be okay lol (?)
 	}

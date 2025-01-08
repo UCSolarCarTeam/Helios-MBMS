@@ -4,7 +4,9 @@
  *  Created on: Sep 7, 2024
  *      Author: khadeejaabbas
  */
-#include "StartupTask.hpp"
+#include "../Inc/StartupTask.h"
+#include <stdint.h>
+
 
 void StartupTask(void* arg)
 {
@@ -14,7 +16,7 @@ void StartupTask(void* arg)
     }
 }
 
-void Startup(void* arg)
+void Startup()
 {
 	//aux battery has started up and is powering the MBMS now (no code)
 	// check if main power switch is closed (connected), if so, then..

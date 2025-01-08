@@ -5,7 +5,11 @@
  *      Author: khadeejaabbas
  */
 
-#include "BatteryControlTask.hpp"
+#include "../Inc/BatteryControlTask.h"
+#include <stdint.h>
+#include "cmsis_os.h"
+// Define boolean as an enum or typedef in a header
+typedef enum { false = 0, true = 1 } boolean;
 
 // but this struct should be readable by diff tasks !!!! e.g. startup, shutoff
 // zero for closed (connected), one for open (disconnected)
@@ -47,7 +51,7 @@ void BatteryControlTask(void* arg)
 
 // make a struct to hold contactor states (open, closed, precharging)
 // this struct should be a global var, but only batterycontroltask should be able to write to it!!!!
-void BatteryControl(void* arg)
+void BatteryControl()
 {
 	// should communicate with startup and shutdown tasks, queue? mutex? flag? ... event flag for shutdown
 

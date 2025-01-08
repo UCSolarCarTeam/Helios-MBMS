@@ -31,11 +31,18 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "cmsis_os.h"
+#include <string.h>
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
+extern CAN_HandleTypeDef hcan1;
+extern osMessageQueueId_t TxCANMessageQueueHandle;
+extern osMessageQueueId_t RxCANMessageQueueHandle;
+extern osMessageQueueId_t batteryControlMessageQueueHandle;
+extern osThreadId_t batteryControlTaskHandle;
+extern osEventFlagsId_t shutoffFlagHandle;
 
 /* USER CODE END ET */
 
@@ -123,6 +130,7 @@ void Error_Handler(void);
 #define DCDC0_UV_FAULT_GPIO_Port GPIOE
 
 /* USER CODE BEGIN Private defines */
+
 
 /* USER CODE END Private defines */
 

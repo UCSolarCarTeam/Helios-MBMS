@@ -17,21 +17,26 @@
   */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
+#include <BatteryControlTask.h>
+#include <CANRxGatekeeperTask.h>
+#include <CANTxGatekeeperTask.h>
+#include <stdint.h>
+
+
+
 #include "main.h"
 #include "cmsis_os.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 //#include "GatekeeperTask.hpp"
-#include "StartupTask.hpp"
-#include "ShutoffTask.hpp"
-#include "BatteryControlTask.hpp"
-#include "CANRxGatekeeperTask.hpp"
-#include "CANTxGatekeeperTask.hpp"
+
+#include "StartupTask.h"
+#include "ShutoffTask.h"
 #include "DebugInterfaceTask.hpp"
 #include "DisplayTask.hpp"
 #include "CANdefines.h"
-#include "CAN.h"
+
 
 #include "stm32f4xx_hal.h"
 
@@ -78,7 +83,7 @@ const osThreadAttr_t defaultTask_attributes = {
 };
 /* USER CODE BEGIN PV */
 
-// mutex for CAN transmit and receive
+// mutex for CAN transmit and receive CAN I DELETE THIS??????
 osMutexId_t CANSPIMutexHandle;
 const osMutexAttr_t CANSPIMutex_attributes = {
 		.name = "CANSPIMutex",
@@ -262,6 +267,9 @@ int main(void)
 
   batteryControlTaskHandle = osThreadNew(BatteryControlTask, NULL, &batteryControlTask_attributes);
 
+  shutoffTaskHandle = osThreadNew(ShutoffTask, NULL, &shutoffTask_attributes);
+  startupTaskHandle = osThreadNew(StartupTask, NULL, &startupTask_attributes);
+
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */
@@ -364,63 +372,58 @@ static void MX_CAN1_Init(void)
   }
   /* USER CODE BEGIN CAN1_Init 2 */
 
-  //put filter here
-  CAN_FilterTypeDef filter;
-
-  filter.FilterBank = 0;  // filter bank 0
-  filter.FilterMode = CAN_FILTERMODE_IDLIST;  // ID list mode,,, make it match this exact ID
-  filter.FilterScale = CAN_FILTERSCALE_32BIT;
-  filter.FilterFIFOAssignment = CAN_FILTER_FIFO0;
-
-  filter.FilterActivation = CAN_FILTER_ENABLE;
+  //put filters here
 
   // filtering IDs from orion
 
-  filter.FilterIdHigh = (0x302 << 5) & 0xFFFF; // shifting by 5 bits under the assumption that its standard 11 bit ID, would be diff if using extended ID!!!
-  filter.FilterIdLow = 0x0000;  //
-  if (HAL_CAN_ConfigFilter(&hcan1, &filter) != HAL_OK) {
+  CAN_FilterTypeDef orionFilter;
+
+  orionFilter.FilterBank = 0;  // filter bank 0
+  orionFilter.FilterMode = CAN_FILTERMODE_IDLIST;  // ID list mode,,, make it match this exact ID
+  orionFilter.FilterScale = CAN_FILTERSCALE_32BIT;
+  orionFilter.FilterFIFOAssignment = CAN_FILTER_FIFO0;
+  orionFilter.FilterActivation = CAN_FILTER_ENABLE;
+
+  orionFilter.FilterIdHigh = 0x302 >> 13; // shift right 13 bits so first 5 bits of EXID are in high reg
+  orionFilter.FilterIdLow = 0x302 << 3;  // shift left 3 bits because last 13 bits of EXID in low reg, and zero out last 3 bits of low reg (RTR, IDE, 0)
+  if (HAL_CAN_ConfigFilter(&hcan1, &orionFilter) != HAL_OK) {
       // handle error!
   }
 
 
-  filter.FilterIdHigh = (0x304 << 5) & 0xFFFF;
-  if (HAL_CAN_ConfigFilter(&hcan1, &filter) != HAL_OK) {
-      // handle error!
+  orionFilter.FilterIdHigh = 0x304 >> 13; // would be zero when u shift it 13 bits left lol
+  orionFilter.FilterIdLow = 0x304 << 3;
+  if (HAL_CAN_ConfigFilter(&hcan1, &orionFilter) != HAL_OK) {
+      Error_Handler();
   }
 
 
-  filter.FilterIdHigh = (0x30A << 5) & 0xFFFF;
-  if (HAL_CAN_ConfigFilter(&hcan1, &filter) != HAL_OK) {
-      // handle error!
+  orionFilter.FilterIdHigh = 0x30A >> 13;
+  orionFilter.FilterIdLow = 0x30A << 3;
+  if (HAL_CAN_ConfigFilter(&hcan1, &orionFilter) != HAL_OK) {
+      Error_Handler();
   }
 
   // filtering IDs from the individual contactor boards
 
-  filter.FilterIdHigh = (0x700 << 5) & 0xFFFF;
-  if (HAL_CAN_ConfigFilter(&hcan1, &filter) != HAL_OK) {
-        // handle error!
-  }
+  CAN_FilterTypeDef contactorFilter;
+  contactorFilter.FilterBank = 1;  // filter bank 1
+  contactorFilter.FilterMode = CAN_FILTERMODE_IDMASK;  // mask mode !!! can accept range of IDs
+  contactorFilter.FilterScale = CAN_FILTERSCALE_32BIT;
+  contactorFilter.FilterFIFOAssignment = CAN_FILTER_FIFO0;
+  // 0 is dont care, 1 is compare them !!!!
+  uint32_t mask = 0x1ffffff0; // want it to let thru EXIDs 0x0000070X = 0x70X
+  contactorFilter.FilterMaskIdHigh = mask >> 13;
+  contactorFilter.FilterMaskIdLow = (mask & 0x1fff) << 3;
 
-  filter.FilterIdHigh = (0x701 << 5) & 0xFFFF;
-  if (HAL_CAN_ConfigFilter(&hcan1, &filter) != HAL_OK) {
-	  // handle error!
-  }
+  contactorFilter.FilterActivation = CAN_FILTER_ENABLE;
 
-  filter.FilterIdHigh = (0x702 << 5) & 0xFFFF;
-  if (HAL_CAN_ConfigFilter(&hcan1, &filter) != HAL_OK) {
-	  // handle error!
-  }
 
-  filter.FilterIdHigh = (0x703 << 5) & 0xFFFF;
-  if (HAL_CAN_ConfigFilter(&hcan1, &filter) != HAL_OK) {
-	  // handle error!
+  contactorFilter.FilterIdHigh = 0x700 >> 13; // shift right by 13 bits to get rid of
+  contactorFilter.FilterIdLow = (0x700 & 0x1fff) << 3; // zero out the first 16-bits, so only rightmost 13 bits left, shift left by 3 to make room for IDE, RTR, 0
+  if (HAL_CAN_ConfigFilter(&hcan1, &contactorFilter) != HAL_OK) {
+	  Error_Handler();
   }
-
-  filter.FilterIdHigh = (0x704 << 5) & 0xFFFF;
-  if (HAL_CAN_ConfigFilter(&hcan1, &filter) != HAL_OK) {
-  	  // handle error!
-  }
-
 
   /* USER CODE END CAN1_Init 2 */
 

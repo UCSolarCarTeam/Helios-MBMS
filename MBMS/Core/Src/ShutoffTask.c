@@ -2,23 +2,16 @@
  * ShutoffTask.cpp
  *
  *  Created on: Sep 7, 2024
- *      Author: khadeejaabbas
+ *      Author: khadeejaabbas, millaine li
  */
 
-#define SHUTOFF_FLAG 0b00000001U // just making the flag an arbitrary number (should be uint32_t,,, this is = 1 in decimal)
-// what was the cause of the shutdown??
-#define EPCOS_FLAG 0b00000010U // external power cut off switch (push button outside car), starts soft shutdown
-#define MPS_FLAG 0b00000100U // main power switch is the cause of shutoff
-#define KEY_FLAG 0b00001000U // turning car key is cause of shutoff
-#define HARD_BL_FLAG 0b00010000U // hard battery limit is cause of shutoff
-#define SOFT_BL_FLAG 0b00100000U // soft battery limit is cause of shutoff
+#include <stdint.h>
 
 
-#define OPEN_CONTACTOR 0x01
-#define CLOSE_CONTACTOR 0x00
-
-
-#include "ShutoffTask.hpp"
+#include "../Inc/ShutoffTask.h"
+#include "CANdefines.h"
+#include "cmsis_os.h"
+#include "main.h"
 
 void ShutoffTask(void* arg)
 {
@@ -31,7 +24,7 @@ void ShutoffTask(void* arg)
 // read struct of contactor states to check and maybe when u send the message send it with keeo the states as is except for
 // the one that ur tryna change
 
-void Shutoff(void* arg)
+void Shutoff()
 {
 	uint32_t flags; //
 	while (1) {
@@ -42,32 +35,32 @@ void Shutoff(void* arg)
 		msg.DLC = 3;             // 1 byte data ?????? bc i dont rly need to send that much do i ...?
 		msg.data[0] = OPEN_CONTACTOR;      // first byte of data ,,, maybe like 0x01 for open it, 0x00 to close it? idk ...
 		// ADD IT TO THE QUEUE FOR CANTX TASK !!
-		osMessageQueuePut(CANSPIMessageQueueHandle, &msg, 0, osWaitForever); // do i want it to wait forever tho ... idk
+		osMessageQueuePut(TxCANMessageQueueHandle, &msg, 0, osWaitForever); // do i want it to wait forever tho ... idk
 		flags = osEventFlagsWait(shutoffFlagHandle, SHUTOFF_FLAG, osFlagsWaitAny, osWaitForever);
 		uint16_t BPSFaultSignal = 0;
 		// extract the reason for the shut off procedure
 		char* cause = "\0";
-		if (flags & MPS_FLAG == MPS_FLAG) {
+		if ((flags & MPS_FLAG) == MPS_FLAG) {
 			cause = "MPS"; // main power switch
 		}
-		else if (flags & KEY_FLAG == KEY_FLAG) {
+		else if ((flags & KEY_FLAG) == KEY_FLAG) {
 			cause = "key";
 		}
-		else if (flags & HARD_BL_FLAG == HARD_BL_FLAG) {
+		else if ((flags & HARD_BL_FLAG) == HARD_BL_FLAG) {
 			cause = "hard"; // hard battery limit
 		}
-		else if (flags & SOFT_BL_FLAG == SOFT_BL_FLAG) {
+		else if ((flags & SOFT_BL_FLAG) == SOFT_BL_FLAG) {
 			cause = "soft"; // soft battery limit
 		}
-		else if (flags & EPCOS_FLAG == EPCOS_FLAG) {
+		else if ((flags & EPCOS_FLAG) == EPCOS_FLAG) {
 			cause = "EPCOS"; // external power cut off switch
 		}
 
-		if (cause == "soft" || cause == "hard" || cause == "EPCOS") {
+		if (strcmp(cause, "soft") == 0 || strcmp(cause, "hard") == 0 || strcmp(cause, "EPCOS") == 0) {
 			BPSFaultSignal = 1;
 		}
 
-		if(cause != "hard") { // if hard battery limit is not hit
+		if (strcmp(cause, "hard") != 0) { // if hard battery limit is not hit
 			// update motor control info // no action needed so far!!!
 
 
@@ -86,7 +79,7 @@ void Shutoff(void* arg)
 
 		}
 
-		if(cause == "key") {
+		if (strcmp(cause, "key") == 0) {
 			// send CAN message to open common contactor
 			// MAKING THE CAN MSG
 						CANMsg msg;
@@ -95,7 +88,7 @@ void Shutoff(void* arg)
 						msg.DLC = 1;             // 1 byte data ?????? bc i dont rly need to send that much do i ...?
 						msg.data[0] = OPEN_CONTACTOR;      // first byte of data ,,, maybe like 0x01 for open it, 0x00 to close it? idk ...
 						// ADD IT TO THE QUEUE FOR CANTX TASK !!
-						osMessageQueuePut(TxCANMessageQueueHandle &msg, 0, osWaitForever); // do i want it to wait forever tho ... idk
+						osMessageQueuePut(TxCANMessageQueueHandle, &msg, 0, osWaitForever); // do i want it to wait forever tho ... idk
 			while(1) {
 				// basically waiting until its open at which point everything loses power including bms !
 			}
@@ -104,7 +97,7 @@ void Shutoff(void* arg)
 		// maybe we (the mbms) cannot turn on and off DCDC0... so then should i just wait for it to be connect? maybe yes..
 		// set gpio to close DCDC0
 		// wait for it to be closed (while loop)
-		while(readDCDC0_ON() == 1) { // (0 is that DCDC0 producing a stable power supply, 1 is not)
+		while(readnDCDC0_ON() == 1) { // (0 is that DCDC0 producing a stable power supply, 1 is not)
 			// do nothing, just wait for it to be connected
 		}
 
@@ -142,22 +135,23 @@ void Shutoff(void* arg)
 }
 
 // NEED TPO CHANGE THESE BECAUSE CHANGED THE PIN CONFIG :(
+// just changed all except EPCOS
 
 uint16_t readMainPowerSwitch(void) {
-    return HAL_GPIO_ReadPin(GPIOE, GPIO_PIN_0);  // PE0
+    return HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_4);  // PC4
 }
 
 
 uint16_t readKeySwitch(void) {
-    return HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_9);  // PB9
+    return HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_1);  // PB1
 }
 
 uint16_t readEPCOSwitch(void) {
-    return HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_8);  // PB8
+    return HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_8);  // PB8 NOT SURE ABT THIS ONE!!! ASK SOMEBODY!!!!
 }
 
-uint16_t readDCDC0_ON(void) {
-    return HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_15);  // PB15
+uint16_t readnDCDC0_ON(void) {
+    return HAL_GPIO_ReadPin(GPIOE, GPIO_PIN_2);  // PE2
 }
 //GPIO_PIN_RESET or GPIO_PIN_SET
 
