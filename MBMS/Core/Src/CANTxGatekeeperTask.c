@@ -17,12 +17,12 @@
 #include "stm32f4xx_hal.h"
 
 
-// below defines from site: https://mikrocontroller.ti.bfh.ch/halDoc/group__CAN__Identifier__Type.html
-#define 	CAN_ID_EXT   0x00000004U
-#define 	CAN_ID_STD   0x00000000U
-
-#define 	CAN_RTR_DATA   0x00000000U // maybe, telling im sending data out
-#define 	CAN_RTR_REMOTE   0x00000002U // maybe, telling that i want data sent to me
+//// below defines from site: https://mikrocontroller.ti.bfh.ch/halDoc/group__CAN__Identifier__Type.html
+//#define 	CAN_ID_EXT   0x00000004U
+//#define 	CAN_ID_STD   0x00000000U
+//
+//#define 	CAN_RTR_DATA   0x00000000U // maybe, telling im sending data out
+//#define 	CAN_RTR_REMOTE   0x00000002U // maybe, telling that i want data sent to me
 
 typedef struct {
     uint16_t ID;

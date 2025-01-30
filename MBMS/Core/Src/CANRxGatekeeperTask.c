@@ -36,13 +36,20 @@ void CANRxGatekeeper()
 	else if (status == osOK) {
 		uint32_t eID = msg.extendedID;
 
-		if (eID == packInfoID || eID == tempInfoID || eID == maxMinVoltagesID) {
+		if (eID == PACKINFOID || eID == TEMPINFOID || eID == MAXMINVOLTAGESID) {
 			// add to queue for battery control task
 			status = osMessageQueuePut(batteryControlMessageQueueHandle, &msg, 0, osWaitForever); // idk maybe shouldnt wait forever tho..
 				if(status != osOK){
 					// also handle error here but idk do what :(
 				}
 		}
+		else if (eID && CONTACTORMASK == CONTACTORIDS) { // if id is 0x70X or 0x71X
+					// add to queue for battery control task
+					status = osMessageQueuePut(contactorMessageQueueHandle, &msg, 0, osWaitForever); // idk maybe shouldnt wait forever tho..
+						if(status != osOK){
+							// also handle error here but idk do what :(
+						}
+				}
 
 	}
 }

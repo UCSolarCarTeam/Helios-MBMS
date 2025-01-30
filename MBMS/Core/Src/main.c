@@ -17,19 +17,17 @@
   */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
-#include <BatteryControlTask.h>
-#include <CANRxGatekeeperTask.h>
-#include <CANTxGatekeeperTask.h>
-#include <stdint.h>
-
-
-
 #include "main.h"
 #include "cmsis_os.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 //#include "GatekeeperTask.hpp"
+
+#include <BatteryControlTask.h>
+#include <CANRxGatekeeperTask.h>
+#include <CANTxGatekeeperTask.h>
+#include <stdint.h>
 
 #include "StartupTask.h"
 #include "ShutoffTask.h"
@@ -49,7 +47,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define CONTACTOR_QUEUE_COUNT 2 // Anticipating 2 messages being received. 1) the contactor number 2) the desired action (closed/open)
+#define QUEUE_SIZE 10
 
 #define SHUTOFF_FLAG 0b00000001U // just making the flag an arbitrary number (should be uint32_t,,, this is = 1 in decimal)
 // what was the cause of the shutdown??
@@ -108,10 +106,24 @@ const osMessageQueueAttr_t batteryControlMessageQueue_attributes = {
 		.attr_bits = 0, // idk i just set it to zero for now but idk help
 };
 
+osMessageQueueId_t contactorMessageQueueHandle;
+const osMessageQueueAttr_t contactorMessageQueue_attributes = {
+		.name = "contactorMessageQueue",
+		.attr_bits = 0, // idk i just set it to zero for now but idk help
+};
+
 // flag that BatteryControlTask will set, ShutdownTask will wait for
 osEventFlagsId_t shutoffFlagHandle;
 const osEventFlagsAttr_t shutoffFlag_attributes = {
 		.name = "shutoffFlag"
+		// default cb_mem,
+		// default cb_size ?
+};
+
+// flag that startup sets
+osEventFlagsId_t contactorPermissionsFlagHandle;
+const osEventFlagsAttr_t contactorPermissionsFlag_attributes = {
+		.name = "contactorPermissionsFlag"
 		// default cb_mem,
 		// default cb_size ?
 };
@@ -242,10 +254,10 @@ int main(void)
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
-  TxCANMessageQueueHandle = osMessageQueueNew(5, sizeof(CANMsg), &TxCANMessageQueue_attributes);
-  RxCANMessageQueueHandle = osMessageQueueNew(5, sizeof(CANMsg), &RxCANMessageQueue_attributes);
-  batteryControlMessageQueueHandle = osMessageQueueNew(5, sizeof(CANMsg), &batteryControlMessageQueue_attributes);
-
+  TxCANMessageQueueHandle = osMessageQueueNew(QUEUE_SIZE, sizeof(CANMsg), &TxCANMessageQueue_attributes);
+  RxCANMessageQueueHandle = osMessageQueueNew(QUEUE_SIZE, sizeof(CANMsg), &RxCANMessageQueue_attributes);
+  batteryControlMessageQueueHandle = osMessageQueueNew(QUEUE_SIZE, sizeof(CANMsg), &batteryControlMessageQueue_attributes);
+  contactorMessageQueueHandle = osMessageQueueNew(QUEUE_SIZE, sizeof(CANMsg), &contactorMessageQueue_attributes);
   // IS THIS CORRECT??? THE NUMBER IN QUEUE AND SIZE
 //  msgConactorQueueID = osMessageQueueNew(15, sizeof(uint16_t), NULL);
 //
@@ -275,18 +287,23 @@ int main(void)
   /* USER CODE BEGIN RTOS_EVENTS */
   // IS THIS WHERE I SHOULD CREATE AN EVENT FLAG ????
   shutoffFlagHandle = osEventFlagsNew(&shutoffFlag_attributes);
+  contactorPermissionsFlagHandle = osEventFlagsNew(&contactorPermissionsFlag_attributes);
   /* USER CODE END RTOS_EVENTS */
 
   /* Start scheduler */
-  osKernelStart();
+  //osKernelStart();
   /* We should never get here as control is now taken by the scheduler */
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+
+	  HAL_GPIO_TogglePin(G1_GPIO_Port, G1_Pin); // pin PE7
   }
   /* USER CODE END 3 */
 }
@@ -336,6 +353,23 @@ void SystemClock_Config(void)
   }
 }
 
+
+/**
+ * @brief SysTick Initialization Function
+ * @param None
+ * @retval None
+ */
+// idk if this is right...
+static void SysTick_Init(void) {
+	HAL_SYSTICK_CLKSourceConfig(SYSTICK_CLKSOURCE_HCLK);
+	HAL_SYSTICK_Config(HAL_RCC_GetHCLKFreq()/1000);  // Set SysTick to fire every 1 ms
+   // Set SysTick interrupt priority (optional)
+   HAL_NVIC_SetPriority(SysTick_IRQn, 0, 0);  // set priority to 0 (highest) ?????? idk why i asked chat this ngl..
+   HAL_NVIC_EnableIRQ(SysTick_IRQn);  // enable SysTick interrupt
+}
+
+
+
 /**
   * @brief CAN1 Initialization Function
   * @param None
@@ -351,7 +385,6 @@ static void MX_CAN1_Init(void)
   /* USER CODE BEGIN CAN1_Init 1 */
 
   /* USER CODE END CAN1_Init 1 */
-
   hcan1.Instance = CAN1;
   hcan1.Init.Prescaler = 4;
   hcan1.Init.Mode = CAN_MODE_NORMAL;
@@ -364,8 +397,6 @@ static void MX_CAN1_Init(void)
   hcan1.Init.AutoRetransmission = DISABLE;
   hcan1.Init.ReceiveFifoLocked = DISABLE;
   hcan1.Init.TransmitFifoPriority = DISABLE;
-
-
   if (HAL_CAN_Init(&hcan1) != HAL_OK)
   {
     Error_Handler();
@@ -376,51 +407,67 @@ static void MX_CAN1_Init(void)
 
   // filtering IDs from orion
 
-  CAN_FilterTypeDef orionFilter;
+  CAN_FilterTypeDef packInfoFilter;
 
-  orionFilter.FilterBank = 0;  // filter bank 0
-  orionFilter.FilterMode = CAN_FILTERMODE_IDLIST;  // ID list mode,,, make it match this exact ID
-  orionFilter.FilterScale = CAN_FILTERSCALE_32BIT;
-  orionFilter.FilterFIFOAssignment = CAN_FILTER_FIFO0;
-  orionFilter.FilterActivation = CAN_FILTER_ENABLE;
+  packInfoFilter.FilterBank = 0;  // filter bank 0
+  packInfoFilter.FilterMode = CAN_FILTERMODE_IDLIST;  // ID list mode,,, make it match this exact ID
+  packInfoFilter.FilterScale = CAN_FILTERSCALE_32BIT;
+  packInfoFilter.FilterFIFOAssignment = CAN_FILTER_FIFO0;
+  packInfoFilter.FilterActivation = CAN_FILTER_ENABLE;
 
-  orionFilter.FilterIdHigh = 0x302 >> 13; // shift right 13 bits so first 5 bits of EXID are in high reg
-  orionFilter.FilterIdLow = 0x302 << 3;  // shift left 3 bits because last 13 bits of EXID in low reg, and zero out last 3 bits of low reg (RTR, IDE, 0)
-  if (HAL_CAN_ConfigFilter(&hcan1, &orionFilter) != HAL_OK) {
+  packInfoFilter.FilterIdHigh = PACKINFOID >> 13; //
+  packInfoFilter.FilterIdLow = (PACKINFOID & 0x1fff) << 3;  // shift left 3 bits because last 13 bits of EXID in low reg, and zero out last 3 bits of low reg (RTR, IDE, 0)
+  if (HAL_CAN_ConfigFilter(&hcan1, &packInfoFilter) != HAL_OK) {
       // handle error!
   }
 
+  CAN_FilterTypeDef tempInfoFilter;
 
-  orionFilter.FilterIdHigh = 0x304 >> 13; // would be zero when u shift it 13 bits left lol
-  orionFilter.FilterIdLow = 0x304 << 3;
-  if (HAL_CAN_ConfigFilter(&hcan1, &orionFilter) != HAL_OK) {
+    tempInfoFilter.FilterBank = 1;  // filter bank 1
+    tempInfoFilter.FilterMode = CAN_FILTERMODE_IDLIST;  // ID list mode,,, make it match this exact ID
+    tempInfoFilter.FilterScale = CAN_FILTERSCALE_32BIT;
+    tempInfoFilter.FilterFIFOAssignment = CAN_FILTER_FIFO0;
+    tempInfoFilter.FilterActivation = CAN_FILTER_ENABLE;
+
+  tempInfoFilter.FilterIdHigh = (TEMPINFOID >> 13); // would be zero when u shift it 13 bits left lol
+  tempInfoFilter.FilterIdLow = (TEMPINFOID & 0x1fff) << 3;
+  if (HAL_CAN_ConfigFilter(&hcan1, &tempInfoFilter) != HAL_OK) {
       Error_Handler();
   }
 
+  CAN_FilterTypeDef maxMinVoltagesFilter;
 
-  orionFilter.FilterIdHigh = 0x30A >> 13;
-  orionFilter.FilterIdLow = 0x30A << 3;
-  if (HAL_CAN_ConfigFilter(&hcan1, &orionFilter) != HAL_OK) {
-      Error_Handler();
-  }
+	maxMinVoltagesFilter.FilterBank = 2;  // filter bank 2
+	maxMinVoltagesFilter.FilterMode = CAN_FILTERMODE_IDLIST;  // ID list mode,,, make it match this exact ID
+	maxMinVoltagesFilter.FilterScale = CAN_FILTERSCALE_32BIT;
+	maxMinVoltagesFilter.FilterFIFOAssignment = CAN_FILTER_FIFO0;
+	maxMinVoltagesFilter.FilterActivation = CAN_FILTER_ENABLE;
+
+
+	maxMinVoltagesFilter.FilterIdHigh = MAXMINVOLTAGESID >> 13;
+	maxMinVoltagesFilter.FilterIdLow = (MAXMINVOLTAGESID & 0x1fff) << 3;
+
+	if (HAL_CAN_ConfigFilter(&hcan1, &maxMinVoltagesFilter) != HAL_OK) {
+	Error_Handler();
+	}
 
   // filtering IDs from the individual contactor boards
 
   CAN_FilterTypeDef contactorFilter;
-  contactorFilter.FilterBank = 1;  // filter bank 1
+  contactorFilter.FilterBank = 3;  // filter bank 1
   contactorFilter.FilterMode = CAN_FILTERMODE_IDMASK;  // mask mode !!! can accept range of IDs
   contactorFilter.FilterScale = CAN_FILTERSCALE_32BIT;
   contactorFilter.FilterFIFOAssignment = CAN_FILTER_FIFO0;
   // 0 is dont care, 1 is compare them !!!!
-  uint32_t mask = 0x1ffffff0; // want it to let thru EXIDs 0x0000070X = 0x70X
-  contactorFilter.FilterMaskIdHigh = mask >> 13;
-  contactorFilter.FilterMaskIdLow = (mask & 0x1fff) << 3;
+  //uint32_t mask = 0x1ffffff0; // want it to let thru EXIDs 0x0000020X = 0x20X to 0x21X :)
+  contactorFilter.FilterMaskIdHigh = CONTACTORMASK >> 13;
+  contactorFilter.FilterMaskIdLow = (CONTACTORMASK & 0x1fff) << 3;
 
   contactorFilter.FilterActivation = CAN_FILTER_ENABLE;
 
 
-  contactorFilter.FilterIdHigh = 0x700 >> 13; // shift right by 13 bits to get rid of
-  contactorFilter.FilterIdLow = (0x700 & 0x1fff) << 3; // zero out the first 16-bits, so only rightmost 13 bits left, shift left by 3 to make room for IDE, RTR, 0
+  contactorFilter.FilterIdHigh = CONTACTORIDS >> 13; // shift right by 13 bits to get rid of
+  contactorFilter.FilterIdLow = (CONTACTORIDS & 0x1fff) << 3; // zero out the first 16-bits, so only rightmost 13 bits left, shift left by 3 to make room for IDE, RTR, 0
   if (HAL_CAN_ConfigFilter(&hcan1, &contactorFilter) != HAL_OK) {
 	  Error_Handler();
   }

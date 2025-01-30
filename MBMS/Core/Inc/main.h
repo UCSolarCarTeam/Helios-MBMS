@@ -41,8 +41,11 @@ extern CAN_HandleTypeDef hcan1;
 extern osMessageQueueId_t TxCANMessageQueueHandle;
 extern osMessageQueueId_t RxCANMessageQueueHandle;
 extern osMessageQueueId_t batteryControlMessageQueueHandle;
+extern osMessageQueueId_t contactorMessageQueueHandle;
 extern osThreadId_t batteryControlTaskHandle;
 extern osEventFlagsId_t shutoffFlagHandle;
+extern osEventFlagsId_t contactorPermissionsFlagHandle;
+extern osThreadId_t startupTaskHandle;
 
 /* USER CODE END ET */
 

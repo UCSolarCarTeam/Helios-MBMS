@@ -5,31 +5,34 @@
  *      Author: khadeejaabbas
  */
 
+// look at prion interface task from old code to see what they did
+
 #include "../Inc/BatteryControlTask.h"
 #include <stdint.h>
 #include "cmsis_os.h"
+#include "CANdefines.h"
 // Define boolean as an enum or typedef in a header
 typedef enum { false = 0, true = 1 } boolean;
 
-// but this struct should be readable by diff tasks !!!! e.g. startup, shutoff
-// zero for closed (connected), one for open (disconnected)
-typedef struct contactorState {
-	int common;
-	int motor;
-	int array;
-	int LV;
-} contactorState;
-// or should i do it like this
-// and create a new isntance of this struct for every contactor !!!
-typedef struct contactor {
-	boolean closed;
-	boolean precharged;
-} contactor;
-//contactor common = new contactor; // idk man :(
+ContactorState contactorState = {0};
 
+BatteryInfo batteryInfo;
+
+MBMSStatus mbmsStatus;
+
+ContactorInfo contactorInfo[6]; // one for each contactor
+
+// STROBE ENABLE IS NOW GPIO STRAIGHT FROM MBMS, need CAN message to let rest of car know that its currently strobing
+// actiive low ??????
+// strobe en pulled low
+// pull down, we want it to strobe if not connected??
+
+
+// if trip, check if startup state is less than fully operational, if so, kill it, otherwise if its at fully operational it would've already killed itself
 
 void BatteryControlTask(void* arg)
 {
+
     while(1)
     {
     	BatteryControl();
@@ -53,6 +56,76 @@ void BatteryControlTask(void* arg)
 // this struct should be a global var, but only batterycontroltask should be able to write to it!!!!
 void BatteryControl()
 {
+
+	static uint32_t previousHeartbeat; // compare with struct heartbeat ( the most recent one, check if its greater than the previous heartbeat, if yes, things r good and update previous heartbeat, if not... things r bad, and trip
+
+	osStatus_t status;
+	CANMsg orionMsg;
+	CANMsg contactorMsg;
+
+	// before u set shutdown flag, check startupState and terminate the task if its not finished... ?
+
+	status = osMessageQueueGet(batteryControlMessageQueueHandle, &orionMsg, NULL, 0);  // Timeout = 0 means non-blocking
+	if (status == osOK) {
+
+		// update the struct w the infos and stuff
+		// do the checks u need w info given by orion
+		uint8_t data[orionMsg.DLC];
+		for (int i = 0; i < orionMsg.DLC; i ++) {
+			data[i] = orionMsg.data[i];
+		}
+
+		if (orionMsg.extendedID == PACKINFOID) {
+			// update batteryInfo instance for the pack info stuff
+			batteryInfo.packCurrent = data[0] + (data[1] << 8);
+			batteryInfo.packVoltage = data[2] + (data[3] << 8);
+			batteryInfo.packSOC = data[4];
+			batteryInfo.packAmphours = data[5] + (data[6] << 8);
+			batteryInfo.packDOD = data[7];
+
+		}
+		else if (orionMsg.extendedID == TEMPINFOID) {
+			batteryInfo.highTemp = data[0];
+			batteryInfo.lowTemp = data[2];
+			batteryInfo.avgTemp = data[4];
+		}
+
+		else if (orionMsg.extendedID == MAXMINVOLTAGESID) {
+			batteryInfo.maxCellVoltage = data[0] + (data[1] << 8);
+			batteryInfo.minCellVoltage = data[2] + (data[3] << 8);
+			batteryInfo.maxPackVoltage = data[4] + (data[5] << 8);
+			batteryInfo.minPackVoltage = data[6] + (data[7] << 8);
+		}
+
+	}
+
+	// Non blocking check for messages from contactors !
+	status = osMessageQueueGet(contactorMessageQueueHandle, &contactorMsg, NULL, 0);  // Timeout = 0 means non-blocking
+	if (status == osOK) {
+		uint8_t data[contactorMsg.DLC];
+		for (int i = 0; i < contactorMsg.DLC; i ++) {
+			data[i] = contactorMsg.data[i];
+		}
+
+		uint8_t prechargerClosed = data[0] & 0x01; // extract bit 0
+		uint8_t prechargerClosing = data[0] & 0x02; // extract bit 1
+		uint8_t prechargerError = data[0] & 0x04; // extraxt bit 2
+		uint8_t contactorClosed = data[0] & 0x08; // extract bit 3
+		uint8_t contactorClosing = data[0] & 0x10; // extract bit 4
+		uint8_t contactorError = data[0] & 0x20; // extract bit 5
+		uint16_t contactorCurrent = ((data[0] & 0xc0) >> 6) + ((data[1] & 0xff) << 2) + ((data[2] & 0x03) << 10); // extract bits 6 to 17
+		uint16_t contactorVoltage = ((data[2] & 0xfc) >> 2) + ((data[3] & 0x3f) << 6); // extract bits 18 to 29
+
+		updateContactorInfo((contactorMsg.extendedID - 0x700), prechargerClosed, prechargerClosing, prechargerError, contactorClosed, contactorClosing, contactorError, contactorCurrent, contactorVoltage);
+
+		// do update contactor state contactor info stuff !!!!
+
+		// DO HEARTBEATS TOO BUT CLARIFY HOW? IN SAME STRUCT? OR DIFF ONE ? IDK , also should i keep contactorstate, or no, bc now i have contactor info
+
+	}
+
+	// receive states of each contactor and update this struct !!!!!!
+
 	// should communicate with startup and shutdown tasks, queue? mutex? flag? ... event flag for shutdown
 
 	// checking everything is ok through orion
@@ -108,6 +181,18 @@ uint32_t orionCheck(uint32_t permissions) {
 	// check if CC closed
 	// if not closed
 
+}
+
+void updateContactorInfo(uint8_t contactor, uint8_t prechargerClosed, uint8_t prechargerClosing, uint8_t prechargerError, uint8_t contactorClosed, uint8_t contactorClosing, uint8_t contactorError, uint16_t contactorCurrent, uint16_t contactorVoltage) {
+	contactorInfo[contactor].prechargerClosed = prechargerClosed;
+	contactorInfo[contactor].prechargerClosing = prechargerClosing;
+	contactorInfo[contactor].prechargerError = prechargerError;
+	contactorInfo[contactor].contactorClosed = contactorClosed;
+	contactorInfo[contactor].contactorClosing = contactorClosing;
+	contactorInfo[contactor].contactorError = contactorError;
+	contactorInfo[contactor].current = contactorCurrent;
+	contactorInfo[contactor].voltage = contactorVoltage;
+	return;
 }
 
 // motor and array cont6actors might still need to open or close during.....
