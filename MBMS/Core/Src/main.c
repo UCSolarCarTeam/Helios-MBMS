@@ -38,6 +38,7 @@
 
 #include "stm32f4xx_hal.h"
 
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -259,11 +260,6 @@ int main(void)
   batteryControlMessageQueueHandle = osMessageQueueNew(QUEUE_SIZE, sizeof(CANMsg), &batteryControlMessageQueue_attributes);
   contactorMessageQueueHandle = osMessageQueueNew(QUEUE_SIZE, sizeof(CANMsg), &contactorMessageQueue_attributes);
   // IS THIS CORRECT??? THE NUMBER IN QUEUE AND SIZE
-//  msgConactorQueueID = osMessageQueueNew(15, sizeof(uint16_t), NULL);
-//
-//  prechargerThreadID = osThreadNew(prechargerThread, NULL, &prechargerThread_attr);
-//
-//  gatekeeperThreadID = osThreadNew(gatekeeperThread, NULL, &gatekeeperThread_attr);
 
   /* USER CODE END RTOS_QUEUES */
 
