@@ -27,12 +27,12 @@
 #include <BatteryControlTask.h>
 #include <CANRxGatekeeperTask.h>
 #include <CANTxGatekeeperTask.h>
+#include <DisplayTask.h>
 #include <stdint.h>
 
 #include "StartupTask.h"
 #include "ShutoffTask.h"
 #include "DebugInterfaceTask.hpp"
-#include "DisplayTask.hpp"
 #include "CANdefines.h"
 
 
@@ -359,14 +359,14 @@ void SystemClock_Config(void)
  * @param None
  * @retval None
  */
-// idk if this is right...
-static void SysTick_Init(void) {
-	HAL_SYSTICK_CLKSourceConfig(SYSTICK_CLKSOURCE_HCLK);
-	HAL_SYSTICK_Config(HAL_RCC_GetHCLKFreq()/1000);  // Set SysTick to fire every 1 ms
-   // Set SysTick interrupt priority (optional)
-   HAL_NVIC_SetPriority(SysTick_IRQn, 0, 0);  // set priority to 0 (highest) ?????? idk why i asked chat this ngl..
-   HAL_NVIC_EnableIRQ(SysTick_IRQn);  // enable SysTick interrupt
-}
+//// idk if this is right...
+//static void SysTick_Init(void) {
+//	HAL_SYSTICK_CLKSourceConfig(SYSTICK_CLKSOURCE_HCLK);
+//	HAL_SYSTICK_Config(HAL_RCC_GetHCLKFreq()/1000);  // Set SysTick to fire every 1 ms
+//   // Set SysTick interrupt priority (optional)
+//   HAL_NVIC_SetPriority(SysTick_IRQn, 0, 0);  // set priority to 0 (highest) ?????? idk why i asked chat this ngl..
+//   HAL_NVIC_EnableIRQ(SysTick_IRQn);  // enable SysTick interrupt
+//}
 
 
 

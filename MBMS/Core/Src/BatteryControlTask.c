@@ -2,7 +2,7 @@
  * BatteryControlTask.cpp
  *
  *  Created on: Sep 7, 2024
- *      Author: khadeejaabbas
+ *      Author: khadeejaabbas, millainel
  */
 
 // look at prion interface task from old code to see what they did
@@ -19,6 +19,8 @@ ContactorState contactorState = {0};
 BatteryInfo batteryInfo;
 
 MBMSStatus mbmsStatus;
+
+MBMSTrip mbmsTrip;
 
 ContactorInfo contactorInfo[6]; // one for each contactor
 
@@ -124,7 +126,18 @@ void BatteryControl()
 
 	}
 
-	// receive states of each contactor and update this struct !!!!!!
+	// should send CAN message of trips ???
+	CANMsg tripMsg;
+	uint16_t tripData = ((mbmsTrip.highCellVoltageTrip & 0x1) << 0) + ((mbmsTrip.lowCellVoltageTrip & 0x1) << 1)
+			+ ((mbmsTrip.highCommonCurrentTrip & 0x1) << 2) + ((mbmsTrip.motorHighTempCurrentTrip & 0x1) << 3)
+		+ ((mbmsTrip.arrayHighTempCurrentTrip & 0x1) << 4) + ((mbmsTrip.LVHighTempCurrentTrip & 0x1) << 5)
+		+ ((mbmsTrip.chargeHighTempTrip & 0x1) << 6) + ((mbmsTrip.protectionTrip & 0x1) << 7)
+		+ ((mbmsTrip.orionMessageTimeoutTrip & 0x1) << 8) + ((mbmsTrip.contactorDisconnectedTrip & 0x1) << 9);
+	tripMsg.data[0] = (tripData & 0xff);
+	tripMsg.data[1] = (tripData & 0xff00) >> 8;
+
+
+
 
 	// should communicate with startup and shutdown tasks, queue? mutex? flag? ... event flag for shutdown
 

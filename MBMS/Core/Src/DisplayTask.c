@@ -4,7 +4,7 @@
  *  Created on: Sep 7, 2024
  *      Author: khadeejaabbas
  */
-#include "DisplayTask.hpp"
+#include "../Inc/DisplayTask.h"
 
 void DisplayTask(void* arg)
 {
@@ -14,7 +14,7 @@ void DisplayTask(void* arg)
     }
 }
 
-void Display(void* arg)
+void Display()
 {
 
 }

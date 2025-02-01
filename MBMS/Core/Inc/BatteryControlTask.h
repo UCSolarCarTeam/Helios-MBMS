@@ -114,7 +114,7 @@ typedef struct {
 	uint8_t nDCDC1Fault;
 	uint8_t DCDC0_OV_Fault;
 	uint8_t DCDC0_UV_Fault;
-	uint8_t nDCDC0_On; // um this feels like an inout to the bms
+	uint8_t nDCDC0_On; // um this feels like an input to the bms
 	uint8_t _3A_OC_UC;
 	uint8_t nDCDC1_On;
 	uint8_t nCHG_Fault;

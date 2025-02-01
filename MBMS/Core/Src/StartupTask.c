@@ -78,6 +78,7 @@ void Startup()
 		uint32_t DCDC0_Time_Passed = (osKernelGetTickCount() - DCDC0_Start_Count) * seconds_per_tick;
 		if(DCDC0_Time_Passed >= DCDC0_WAIT_TIME){
 			// trip
+			osThreadTerminate(startupTaskHandle);
 		}
 	}
 
@@ -93,7 +94,10 @@ void Startup()
 		uint32_t DCDC1_Time_Passed = (osKernelGetTickCount() - DCDC1_Start_Count) * seconds_per_tick;
 		if(DCDC1_Time_Passed >= DCDC1_WAIT_TIME){
 			// trip
+			osThreadTerminate(startupTaskHandle);
 		}
+
+
 
 	}
 	mbmsStatus.startupState = DCDC0_OPEN;
@@ -105,7 +109,8 @@ void Startup()
 	mbmsStatus.startupState = MOTORS_ENABLED;
 
 	//add a delay for 10 seconds
-	osDelay(10000); // to give time for batt control to check things r ok, close contactors or not, decide if there needs to be a trip or not etc.
+	// to give time for batt control to check things r ok, close contactors or not, decide if there needs to be a trip or not etc.
+	osDelay(10000);
 
 	// set flag to give permission to precharge/close array contactor
 	// wait until array contactor done (same as above, make sure everything okay still, doesnt NEED it to bed closed...)
@@ -117,19 +122,14 @@ void Startup()
 	// if car is fully charged, dont need array
 
 
-	// set flag that everything is done (all perms given !!!!)
-
+	// set flag that everything is done (all perms given!!!)
 	mbmsStatus.startupState = FULLY_OPERATIONAL;
 
 	// end of startup
 	osThreadTerminate(startupTaskHandle);
 
-
 }
 
-// clean up comments
-// clarify w/ electrical the MPS purpose etc.
-// redo key state diagrams
 
 
 
