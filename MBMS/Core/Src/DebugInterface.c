@@ -5,7 +5,7 @@
  *      Author: khadeejaabbas
  */
 
-#include "DebugInterfaceTask.hpp"
+#include "../Inc/DebugInterfaceTask.h"
 
 void DebugInterfaceTask(void* arg)
 {
@@ -15,7 +15,7 @@ void DebugInterfaceTask(void* arg)
     }
 }
 
-void DebugInterface(void* arg)
+void DebugInterface()
 {
 
 }

@@ -43,7 +43,7 @@ void CANRxGatekeeper()
 					// also handle error here but idk do what :(
 				}
 		}
-		else if (eID && CONTACTORMASK == CONTACTORIDS) { // if id is 0x70X or 0x71X
+		else if (eID && CONTACTORMASK == CONTACTOR_HEARTBEATS_IDS) { // if id is 0x20X or 0x21X
 					// add to queue for battery control task
 					status = osMessageQueuePut(contactorMessageQueueHandle, &msg, 0, osWaitForever); // idk maybe shouldnt wait forever tho..
 						if(status != osOK){
@@ -59,7 +59,7 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan){
 
 	CAN_RxHeaderTypeDef CANRxHeader;
 	uint8_t  data[8]; // can hold 8 bytes of data
-	HAL_CAN_GetRxMessage(&hcan1, 0, &CANRxHeader, &data); // get CAN message from the FIFO 0 queue and store its header and data
+	HAL_CAN_GetRxMessage(&hcan1, 0, &CANRxHeader, (unsigned char*)data); // get CAN message from the FIFO 0 queue and store its header and data
 
 	msg.extendedID = CANRxHeader.ExtId; // set CANmsg extended ID
 	msg.DLC = CANRxHeader.DLC; // set CANmsg DLC

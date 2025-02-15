@@ -15,8 +15,8 @@
 #include "BatteryControlTask.h"
 #include "ReadPowerGPIO.h"
 
+extern MBMSStatus mbmsStatus;
 extern ContactorState contactorState;
-extern uint16_t startupState;
 
 // PRIORITIES FOR SHUTDOWN PROCEDURE
 // HIGHEST: HARD BATTERY LIMIT
@@ -77,13 +77,13 @@ void Shutoff()
 
 		if (!causes[HARD]) { // if hitting hard battery limit is not the reason for shut off
 
-			if (startupState >= MOTORS_ENABLED) { // check that startup task made it past the poiunt of enabling th motors
+			if (mbmsStatus.startupState >= MOTORS_ENABLED) { // check that startup task made it past the poiunt of enabling th motors
 
 				msg.data[0] = openHV; // assign the data to open the HV Contactor Command!
 				osMessageQueuePut(TxCANMessageQueueHandle, &msg, 0, osWaitForever); //adding it to the message queue to send CAN messages
 				// wait for motor contactors to open (dont care abt array/charge contactors
 				while(contactorState.motor1 == CLOSE_CONTACTOR || contactorState.motor2 == CLOSE_CONTACTOR ) {
-					 // get shutoff flags to see if hard battery limit has been reached during the time it take foe HV contactors to open
+					 // get shutoff flags to see if hard battery limit has been reached during the time it takes for HV contactors to open
 					// if so, change causes, and break out of this loop!
 					 uint32_t flags = osEventFlagsGet(shutoffFlagHandle);
 					 if ((flags & HARD_BL_FLAG) == HARD_BL_FLAG) {
@@ -98,7 +98,7 @@ void Shutoff()
 		}
 
 		if (causes[KEY] & !BPSFaultSignal) { // if cause of shut off is the key, and there is no BPS Fault Signal needed
-			if (startupState >= COMMON_CLOSED) { // checking that the startup task made it past the point of closing the common contactor
+			if (mbmsStatus.startupState >= COMMON_CLOSED) { // checking that the startup task made it past the point of closing the common contactor
 
 				msg.data[0] = openCommon; // assign the data of the CAN message to open the Common Contactor Command
 				osMessageQueuePut(TxCANMessageQueueHandle, &msg, 0, osWaitForever); // do i want it to wait forever tho ... idk
@@ -112,7 +112,7 @@ void Shutoff()
 
 		// Otherwise, at this point the reason for shut off is either MPS/EPCOS, or hard or soft battery limit hit
 		// If the startup task has made it past the point of disconnecting from DCDC0, then connect to it
-		if(startupState >= DCDC0_OPEN) {
+		if(mbmsStatus.startupState >= DCDC0_OPEN) {
 			// assuming that ABATT_DISABLE = 0 means this line enables/closes DCDC0 connection to aux/small battery
 			HAL_GPIO_WritePin(ABATT_DISABLE_GPIO_Port, ABATT_DISABLE_Pin, GPIO_PIN_RESET);
 			while(read_nDCDC0_ON() == 1) {
@@ -121,7 +121,7 @@ void Shutoff()
 		}
 
 		// After connecting to DCDC0, DCDC1 needs to be disconnected
-		if(startupState >= DCDC1_CLOSED) {
+		if(mbmsStatus.startupState >= DCDC1_CLOSED) {
 			HAL_GPIO_WritePin(DCDC1_EN_GPIO_Port, DCDC1_EN_Pin, GPIO_PIN_RESET);
 			while(read_nDCDC1_ON() == 0) {
 				// wait for disconnection of DCDC1
@@ -130,7 +130,7 @@ void Shutoff()
 		}
 
 		// Common contactor needs to be opened
-		if (startupState >= COMMON_CLOSED) {
+		if (mbmsStatus.startupState >= COMMON_CLOSED) {
 			// assigning the data of the CAN message to open Common Contactor
 			msg.data[0] = openCommon;
 			osMessageQueuePut(TxCANMessageQueueHandle, &msg, 0, osWaitForever);
@@ -150,6 +150,15 @@ void Shutoff()
 				// Wait for driver to turn key to off, to power everything off
 				// Is this just a non-software thing??????
 				// or does it have to go thru this shutodwn task tooooo ? probably maybe yeah
+				uint32_t flags = osEventFlagsGet(shutoffFlagHandle);
+				if ((flags & KEY_FLAG) == KEY_FLAG) {
+					HAL_GPIO_WritePin(ABATT_DISABLE_GPIO_Port, ABATT_DISABLE_Pin, GPIO_PIN_SET); // disconnect DCDC0, power off mbms
+					while(read_nDCDC0_ON() == 1) {
+						// wait for it to be connected to the aux battery
+					}
+					break;
+				}
+
 			}
 
 		}

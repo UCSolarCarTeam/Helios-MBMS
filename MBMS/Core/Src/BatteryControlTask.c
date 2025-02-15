@@ -5,12 +5,14 @@
  *      Author: khadeejaabbas, millainel
  */
 
-// look at prion interface task from old code to see what they did
+// look at orion interface task from old code to see what they did
 
 #include "../Inc/BatteryControlTask.h"
 #include <stdint.h>
 #include "cmsis_os.h"
 #include "CANdefines.h"
+#include "StartupTask.h"
+#include "ShutoffTask.h"
 // Define boolean as an enum or typedef in a header
 typedef enum { false = 0, true = 1 } boolean;
 
@@ -21,6 +23,8 @@ BatteryInfo batteryInfo;
 MBMSStatus mbmsStatus;
 
 MBMSTrip mbmsTrip;
+
+ContactorCommand contactorCommand;
 
 ContactorInfo contactorInfo[6]; // one for each contactor
 
@@ -67,10 +71,12 @@ void BatteryControl()
 
 	// before u set shutdown flag, check startupState and terminate the task if its not finished... ?
 
-	status = osMessageQueueGet(batteryControlMessageQueueHandle, &orionMsg, NULL, 0);  // Timeout = 0 means non-blocking
+	status = osMessageQueueGet(batteryControlMessageQueueHandle, &orionMsg, NULL, ORION_MSG_WAIT_TIMEOUT *1000);  // Timeout = 0 means non-blocking
 	if (status == osOK) {
 
-		// update the struct w the infos and stuff
+		mbmsStatus.orionCANReceived = 0;
+
+		// update the struct w the info
 		// do the checks u need w info given by orion
 		uint8_t data[orionMsg.DLC];
 		for (int i = 0; i < orionMsg.DLC; i ++) {
@@ -84,6 +90,17 @@ void BatteryControl()
 			batteryInfo.packSOC = data[4];
 			batteryInfo.packAmphours = data[5] + (data[6] << 8);
 			batteryInfo.packDOD = data[7];
+
+			mbmsStatus.auxilaryBattVoltage = batteryInfo.packVoltage;
+
+			// updating allow charge/discharge on mbmsStatus, based on SOC
+			if (batteryInfo.packSOC >= SOC_SAFE_FOR_DISCHARGE) {
+				mbmsStatus.allowDischarge = 1;
+			}
+			if (batteryInfo.packSOC <= SOC_SAFE_FOR_CHARGE) {
+				mbmsStatus.allowCharge = 1;
+			}
+
 
 		}
 		else if (orionMsg.extendedID == TEMPINFOID) {
@@ -99,10 +116,30 @@ void BatteryControl()
 			batteryInfo.minPackVoltage = data[6] + (data[7] << 8);
 		}
 
+		// checking for trips ?
+		if(batteryInfo.maxCellVoltage >= MAX_CELL_VOLTAGE){
+			mbmsTrip.highCellVoltageTrip = 1;
+		}
+		if(batteryInfo.minCellVoltage <= MIN_CELL_VOLTAGE) {
+			mbmsTrip.lowCellVoltageTrip = 1;
+		}
+
+
+
+		// QUESTION: why is there no hard batt lim or soft batt lim trips ????
+		// and do we not care abt the other things like batt temp etc.?? theres no trips for those??
+
+
 	}
 
+	else if (status == osErrorTimeout) // if timeout for orion (no message :0)
+    {
+		mbmsTrip.orionMessageTimeoutTrip = 1;
+        mbmsStatus.orionCANReceived = 0; // no orion message recieved !!!
+    }
+
 	// Non blocking check for messages from contactors !
-	status = osMessageQueueGet(contactorMessageQueueHandle, &contactorMsg, NULL, 0);  // Timeout = 0 means non-blocking
+	status = osMessageQueueGet(contactorMessageQueueHandle, &contactorMsg, NULL, 0);
 	if (status == osOK) {
 		uint8_t data[contactorMsg.DLC];
 		for (int i = 0; i < contactorMsg.DLC; i ++) {
@@ -118,11 +155,29 @@ void BatteryControl()
 		uint16_t contactorCurrent = ((data[0] & 0xc0) >> 6) + ((data[1] & 0xff) << 2) + ((data[2] & 0x03) << 10); // extract bits 6 to 17
 		uint16_t contactorVoltage = ((data[2] & 0xfc) >> 2) + ((data[3] & 0x3f) << 6); // extract bits 18 to 29
 
-		updateContactorInfo((contactorMsg.extendedID - 0x700), prechargerClosed, prechargerClosing, prechargerError, contactorClosed, contactorClosing, contactorError, contactorCurrent, contactorVoltage);
+		updateContactorInfo((contactorMsg.extendedID - CONTACTORIDS), prechargerClosed, prechargerClosing, prechargerError, contactorClosed, contactorClosing, contactorError, contactorCurrent, contactorVoltage);
 
 		// do update contactor state contactor info stuff !!!!
 
 		// DO HEARTBEATS TOO BUT CLARIFY HOW? IN SAME STRUCT? OR DIFF ONE ? IDK , also should i keep contactorstate, or no, bc now i have contactor info
+
+		// check trips
+		if (contactorInfo[COMMON].current >= MAX_CONTACTOR_CURRENT){
+			mbmsTrip.highCommonCurrentTrip = 1;
+		}
+		if ((contactorInfo[MOTOR1].current >= MAX_CONTACTOR_CURRENT) || (contactorInfo[MOTOR2].current >= MAX_CONTACTOR_CURRENT)){
+			mbmsTrip.motorHighTempCurrentTrip = 1;
+		}
+		if (contactorInfo[ARRAY].current >= MAX_CONTACTOR_CURRENT){
+			mbmsTrip.arrayHighTempCurrentTrip = 1;
+		}
+		if (contactorInfo[LOWV].current >= MAX_CONTACTOR_CURRENT){
+			mbmsTrip.LVHighTempCurrentTrip = 1;
+		}
+		if (contactorInfo[CHARGE].current >= MAX_CONTACTOR_CURRENT){
+			mbmsTrip.chargeHighTempTrip = 1;
+		}
+
 
 	}
 
@@ -135,6 +190,63 @@ void BatteryControl()
 		+ ((mbmsTrip.orionMessageTimeoutTrip & 0x1) << 8) + ((mbmsTrip.contactorDisconnectedTrip & 0x1) << 9);
 	tripMsg.data[0] = (tripData & 0xff);
 	tripMsg.data[1] = (tripData & 0xff00) >> 8;
+	tripMsg.DLC = 2; // 2 bytes
+	tripMsg.extendedID = MBMS_TRIP_ID;
+	tripMsg.ID = 0x0;
+	osMessageQueuePut(TxCANMessageQueueHandle, &tripMsg, 0, osWaitForever);
+
+
+
+	// should close contactors if perms given? OH PROBABLY ALSO CHECK IF ALLOWE DTO DISCHARGE
+
+	uint32_t flags = osEventFlagsGet(contactorPermissionsFlagHandle);
+	CANMsg contactorCommandMsg;
+	tripMsg.DLC = 2; // 2 bytes
+	tripMsg.extendedID = MBMS_TRIP_ID;
+	tripMsg.ID = 0x0;
+	uint8_t sendContactorCommand = 0;
+	if (((flags & COMMON_FLAG) == COMMON_FLAG) && !(contactorInfo[COMMON].contactorClosed) && (tripData == 0x0)) {
+		// if perms are given, and contactor is not already closed, and there are no trips
+		contactorCommand.common = CLOSE_CONTACTOR;
+		sendContactorCommand = 1;
+	}
+	if (((flags & MOTOR1_FLAG) == MOTOR1_FLAG) && !(contactorInfo[MOTOR1].contactorClosed) && (tripData == 0x0) && (mbmsStatus.allowDischarge == 1)) {
+		contactorCommand.motor1 = CLOSE_CONTACTOR;
+		sendContactorCommand = 1;
+	}
+	if (((flags & MOTOR2_FLAG) == MOTOR2_FLAG) && !(contactorInfo[MOTOR2].contactorClosed) && (tripData == 0x0) && (mbmsStatus.allowDischarge == 1)) {
+		contactorCommand.motor2 = CLOSE_CONTACTOR;
+		sendContactorCommand = 1;
+	}
+
+	if (((flags & ARRAY_FLAG) == ARRAY_FLAG) && !(contactorInfo[ARRAY].contactorClosed) && (tripData == 0x0) && (mbmsStatus.allowCharge == 1)) {
+		contactorCommand.array = CLOSE_CONTACTOR;
+		sendContactorCommand = 1;
+	}
+
+	if (((flags & LV_FLAG) == LV_FLAG) && !(contactorInfo[LOWV].contactorClosed) && (tripData == 0x0)) {
+		contactorCommand.LV = CLOSE_CONTACTOR;
+		sendContactorCommand = 1;
+	}
+	if (((flags & CHARGE_FLAG) == CHARGE_FLAG) && !(contactorInfo[CHARGE].contactorClosed) && (tripData == 0x0) && (mbmsStatus.allowCharge == 1)) {
+		contactorCommand.charge = CLOSE_CONTACTOR;
+		sendContactorCommand = 1;
+	}
+
+	if (sendContactorCommand == 1) {
+		osMessageQueuePut(TxCANMessageQueueHandle, &contactorCommandMsg, 0, osWaitForever);
+	}
+
+	// check key and mps and hard and soft batt limit to possibly set shutdown flags !!!!
+
+
+	uint32_t shutoffFlagsSet;
+	if (readKeySwitch() == KEY_OFF){
+		shutoffFlagsSet = osEventFlagsSet(shutoffFlagHandle, KEY_FLAG | SHUTOFF_FLAG);
+	}
+	if (readMainPowerSwitch() == MPS_ENABLED){
+		shutoffFlagsSet = osEventFlagsSet(shutoffFlagHandle, MPS_FLAG | SHUTOFF_FLAG);
+	}
 
 
 

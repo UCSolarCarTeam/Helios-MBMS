@@ -25,7 +25,24 @@ void updateContactorInfo(uint8_t contactor, uint8_t prechargerClosed, uint8_t pr
 
 // These are random values i made for the batt limit, must be updated
 #define HARD_BATTERY_LIMIT 75
-#define SOFT_BATTERY_LIMIT 12
+#define SOFT_BATTERY_LIMIT 73
+// wait.... are these the limits for the cell or the pack ????
+
+#define MAX_CELL_VOLTAGE 10
+#define MIN_CELL_VOLTAGE 2
+
+#define MAX_CONTACTOR_CURRENT 5
+
+#define ORION_MSG_WAIT_TIMEOUT 10
+
+#define SOC_SAFE_FOR_CHARGE 90 // maybe can do if SOC is less than 90, safe to charge
+#define SOC_SAFE_FOR_DISCHARGE 25 // maybe if SOC greater than this, safe to discharge ?
+
+#define KEY_OFF 0
+#define KEY_ON 1
+
+#define MPS_ENABLED 1
+#define MPS_DISABLED 0
 
 enum Contactor {
 	COMMON = 0,
@@ -132,7 +149,14 @@ typedef struct{
 	uint8_t charge;
 } ContactorState; // maybe i could use this struct for when its proper closed/proper open.. ? idk i might not even rly need this tsruct anymnore but idk
 
-
+typedef struct{
+	uint8_t common;
+	uint8_t motor1;
+	uint8_t motor2;
+	uint8_t array;
+	uint8_t LV;
+	uint8_t charge;
+} ContactorCommand;
 
 
 // make struct w precharge, current, voltage, then have an array of 4 (for the 4 contactors) of the struct type

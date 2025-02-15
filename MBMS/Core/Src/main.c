@@ -27,12 +27,12 @@
 #include <BatteryControlTask.h>
 #include <CANRxGatekeeperTask.h>
 #include <CANTxGatekeeperTask.h>
+#include <DebugInterfaceTask.h>
 #include <DisplayTask.h>
 #include <stdint.h>
 
 #include "StartupTask.h"
 #include "ShutoffTask.h"
-#include "DebugInterfaceTask.hpp"
 #include "CANdefines.h"
 
 
@@ -455,7 +455,7 @@ static void MX_CAN1_Init(void)
   contactorFilter.FilterScale = CAN_FILTERSCALE_32BIT;
   contactorFilter.FilterFIFOAssignment = CAN_FILTER_FIFO0;
   // 0 is dont care, 1 is compare them !!!!
-  //uint32_t mask = 0x1ffffff0; // want it to let thru EXIDs 0x0000020X = 0x20X to 0x21X :)
+  //uint32_t mask = 0x1fffffe0; // want it to let thru EXIDs 0x0000020X = 0x20X to 0x21X :)
   contactorFilter.FilterMaskIdHigh = CONTACTORMASK >> 13;
   contactorFilter.FilterMaskIdLow = (CONTACTORMASK & 0x1fff) << 3;
 
