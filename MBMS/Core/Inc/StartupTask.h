@@ -19,8 +19,8 @@
 #define ALL_CONTACTORS_FLAG ( COMMON_FLAG | MOTOR1_FLAG | MOTOR2_FLAG | ARRAY_FLAG | LV_FLAG | CHARGE_FLAG)
 
 // also known as EPCOS
-#define MPS_ENABLED 0x0
-#define MPS_DISABLED 0x1
+//#define MPS_ENABLED 0x0
+//#define MPS_DISABLED 0x1
 
 void StartupTask(void* arg);
 

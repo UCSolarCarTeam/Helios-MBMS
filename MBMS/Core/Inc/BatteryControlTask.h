@@ -14,6 +14,13 @@
 void BatteryControlTask(void* arg);
 void BatteryControl();
 void updateContactorInfo(uint8_t contactor, uint8_t prechargerClosed, uint8_t prechargerCLosing, uint8_t prechargerError, uint8_t contactorClosed, uint8_t contactorClosing, uint8_t contactorError, uint16_t contactorCurrent, uint16_t contactorVoltage);
+void updateContactorInfoStruct();
+void sendTripStatusCanMessage(uint16_t * tripData);
+void updatePackInfoStruct();
+void updateTripStatus();
+void sendMBMSStatusCanMessage();
+void checkIfShutdown();
+void updateContactors();
 
 
 //#define CLOSED 0x0
@@ -33,7 +40,7 @@ void updateContactorInfo(uint8_t contactor, uint8_t prechargerClosed, uint8_t pr
 
 #define MAX_CONTACTOR_CURRENT 5
 
-#define ORION_MSG_WAIT_TIMEOUT 10
+#define ORION_MSG_WAIT_TIMEOUT 600 //ms
 
 #define SOC_SAFE_FOR_CHARGE 90 // maybe can do if SOC is less than 90, safe to charge
 #define SOC_SAFE_FOR_DISCHARGE 25 // maybe if SOC greater than this, safe to discharge ?
@@ -43,6 +50,10 @@ void updateContactorInfo(uint8_t contactor, uint8_t prechargerClosed, uint8_t pr
 
 #define MPS_ENABLED 1
 #define MPS_DISABLED 0
+
+#define NO_CURRENT_THRESHOLD 3 // (AMPS). So if less than this, consider no current, if more than this, consider there is current
+
+#define MAX_PACK_VOLTAGE 75 // (Volts)
 
 enum Contactor {
 	COMMON = 0,
@@ -102,11 +113,12 @@ typedef struct {
 	uint8_t auxilaryBattVoltage; // bits 0-4
 	uint8_t strobeBMSLight;
 	uint8_t allowCharge;
-	uint8_t highVoltageEnableState;
+	uint8_t chargeSafety;
+	uint8_t highVoltageEnableState; // what is this, why doesnt it exist anymore in the excel???
 	uint8_t allowDischarge;
 	uint8_t orionCANReceived;
-	uint8_t dischargeTrip;
-	uint8_t chargeTrip;
+	uint8_t dischargeShouldTrip;
+	uint8_t chargeShouldTrip;
 	uint8_t startupState;
 
 } MBMSStatus;
@@ -114,15 +126,16 @@ typedef struct {
 typedef struct {
 	uint8_t highCellVoltageTrip;
 	uint8_t lowCellVoltageTrip;
-	uint8_t highCommonCurrentTrip;
-	uint8_t motorHighTempCurrentTrip;
-	uint8_t arrayHighTempCurrentTrip;
-	uint8_t LVHighTempCurrentTrip;
-	uint8_t chargeHighTempTrip;
+	uint8_t commonHighCurrentTrip;
+	uint8_t motorHighCurrentTrip;
+	uint8_t arrayHighCurrentTrip;
+	uint8_t LVHighCurrentTrip;
+	uint8_t chargeHighCurrentTrip;
 	uint8_t protectionTrip;
 	uint8_t orionMessageTimeoutTrip;
-	uint8_t contactorDisconnectedTrip;
-	uint8_t mainPowerSwitchTrip;
+	uint8_t contactorDisconnectedUnexpectedlyTrip;
+	uint8_t contactorConnectedUnexpectedlyTrip;
+	uint8_t highBatteryTrip;
 } MBMSTrip;
 
 typedef struct {

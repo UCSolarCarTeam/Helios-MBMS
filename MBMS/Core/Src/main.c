@@ -300,6 +300,8 @@ int main(void)
     /* USER CODE BEGIN 3 */
 
 	  HAL_GPIO_TogglePin(G1_GPIO_Port, G1_Pin); // pin PE7
+	  // Delay in milliseconds
+	  HAL_Delay(500);
   }
   /* USER CODE END 3 */
 }

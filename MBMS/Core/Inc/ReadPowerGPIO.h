@@ -13,7 +13,7 @@
 
 uint16_t readMainPowerSwitch(void);
 
-uint16_t readEPCOSwitch(void);
+//uint16_t readEPCOSwitch(void);
 uint16_t read_nDCDC0_ON(void);
 
 uint16_t read_nDCDC1_ON(void);

@@ -23,6 +23,7 @@
 #define CONTACTORCOMMANDID 0x101 // was 0x721 love it
 
 #define MBMS_TRIP_ID 0x104
+#define MBMS_STATUS_ID 0x102
 
 
 

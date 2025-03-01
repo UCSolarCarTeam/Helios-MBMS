@@ -15,6 +15,10 @@ extern ContactorState contactorState;
 extern ContactorInfo contactorInfo[6];
 extern MBMSStatus mbmsStatus;
 
+#define FREERTOS_TICK_PERIOD 1/configTICK_RATE_HZ //USE THIS INSTEAD OF SECONFS PER TICK
+// MBMSSys.h
+// all structs important for more than one file, contactor
+
 // wait times in seconds !
 #define MPS_WAIT_TIME 1
 #define DCDC0_WAIT_TIME 10
@@ -42,7 +46,9 @@ void Startup()
 	while ( readMainPowerSwitch() == MPS_ENABLED) {
 		//if EPCOS/MPS is enabled, we need to trip
 		// TO DO: trip
-		mbmsTrip.protectionTrip = 1; // not sure if this is the right trip... check
+		//mbmsTrip.protectionTrip = 1; // not sure if this is the right trip... check NUH UH
+		// MAYBE JUST DELAY THIS TASK SO BATT CONTROL CAN DETECT IT AND SET FOLAG AND GO TO SHUTDOWN ETC.
+		osDelay(MPS_WAIT_TIME * 1000);
 		osThreadTerminate(startupTaskHandle);
 	}
 	// otherwise everything is good to continue
@@ -78,7 +84,7 @@ void Startup()
 	while(read_nDCDC1_ON() == 1) { // n stands for NOT
 		//set a timeout, if this fails, trip
 		uint32_t DCDC1_Current_Count = osKernelGetTickCount();
-		uint32_t DCDC1_Time_Passed = (osKernelGetTickCount() - DCDC1_Start_Count) * seconds_per_tick;
+		uint32_t DCDC1_Time_Passed = (osKernelGetTickCount() - DCDC1_Start_Count) / seconds_per_tick; // USE THE GIUVEN SECONDS PER TICK MACRO FROM FREE RTOS
 		if(DCDC1_Time_Passed >= DCDC1_WAIT_TIME){
 			// TO DO: trip
 			// but idk which type of trip this is...

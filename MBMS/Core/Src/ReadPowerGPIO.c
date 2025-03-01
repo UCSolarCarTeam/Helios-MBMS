@@ -15,10 +15,10 @@ uint16_t readMainPowerSwitch(void) {
     return HAL_GPIO_ReadPin(MAIN_PWR_SW_GPIO_Port, MAIN_PWR_SW_Pin);  // PC4
 }
 
-// um maybe dont need this EPCOS no more
-uint16_t readEPCOSwitch(void) {
-    return HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_8);  // PB8 NOT SURE ABT THIS ONE!!! ASK SOMEBODY!!!!
-}
+//// um maybe dont need this EPCOS no more
+//uint16_t readEPCOSwitch(void) {
+//    return HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_8);  // PB8 NOT SURE ABT THIS ONE!!! ASK SOMEBODY!!!!
+//}
 
 uint16_t read_nDCDC0_ON(void) {
     return HAL_GPIO_ReadPin(nDCDC0_ON_GPIO_Port, nDCDC0_ON_Pin);  // PE2
