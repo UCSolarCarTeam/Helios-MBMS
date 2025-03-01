@@ -239,8 +239,9 @@ int main(void)
 
   /* Init scheduler */
   osKernelInitialize();
-
+  defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
   /* USER CODE BEGIN RTOS_MUTEX */
+#if 0
   /* add mutexes, ... */
   CANSPIMutexHandle = osMutexNew(&CANSPIMutex_attributes);
   /* USER CODE END RTOS_MUTEX */
@@ -285,23 +286,26 @@ int main(void)
   shutoffFlagHandle = osEventFlagsNew(&shutoffFlag_attributes);
   contactorPermissionsFlagHandle = osEventFlagsNew(&contactorPermissionsFlag_attributes);
   /* USER CODE END RTOS_EVENTS */
+#endif
+
 
   /* Start scheduler */
-  //osKernelStart();
+  osKernelStart();
   /* We should never get here as control is now taken by the scheduler */
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
 
-
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
 
 	  HAL_GPIO_TogglePin(G1_GPIO_Port, G1_Pin); // pin PE7
+	  HAL_GPIO_TogglePin(A3_GPIO_Port, A3_Pin); // pin PE7
 	  // Delay in milliseconds
 	  HAL_Delay(500);
+
   }
   /* USER CODE END 3 */
 }
@@ -350,23 +354,6 @@ void SystemClock_Config(void)
     Error_Handler();
   }
 }
-
-
-/**
- * @brief SysTick Initialization Function
- * @param None
- * @retval None
- */
-//// idk if this is right...
-//static void SysTick_Init(void) {
-//	HAL_SYSTICK_CLKSourceConfig(SYSTICK_CLKSOURCE_HCLK);
-//	HAL_SYSTICK_Config(HAL_RCC_GetHCLKFreq()/1000);  // Set SysTick to fire every 1 ms
-//   // Set SysTick interrupt priority (optional)
-//   HAL_NVIC_SetPriority(SysTick_IRQn, 0, 0);  // set priority to 0 (highest) ?????? idk why i asked chat this ngl..
-//   HAL_NVIC_EnableIRQ(SysTick_IRQn);  // enable SysTick interrupt
-//}
-
-
 
 /**
   * @brief CAN1 Initialization Function
@@ -662,14 +649,18 @@ void StartDefaultTask(void *argument)
   /* Infinite loop */
   for(;;)
   {
-    osDelay(1);
+	  HAL_GPIO_TogglePin(G1_GPIO_Port, G1_Pin); // pin PE7
+	  HAL_GPIO_TogglePin(A3_GPIO_Port, A3_Pin); // pin PE7
+	  // Delay in milliseconds
+//	  HAL_Delay(100);
+	  osDelay(1000);
   }
   /* USER CODE END 5 */
 }
 
 /**
   * @brief  Period elapsed callback in non blocking mode
-  * @note   This function is called  when TIM6 interrupt took place, inside
+  * @note   This function is called  when TIM2 interrupt took place, inside
   * HAL_TIM_IRQHandler(). It makes a direct call to HAL_IncTick() to increment
   * a global variable "uwTick" used as application time base.
   * @param  htim : TIM handle
@@ -680,7 +671,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   /* USER CODE BEGIN Callback 0 */
 
   /* USER CODE END Callback 0 */
-  if (htim->Instance == TIM6) {
+  if (htim->Instance == TIM2) {
     HAL_IncTick();
   }
   /* USER CODE BEGIN Callback 1 */
