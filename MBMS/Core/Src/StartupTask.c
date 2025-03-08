@@ -8,10 +8,11 @@
 #include <stdint.h>
 #include "main.h"
 #include "CANdefines.h"
-#include "BatteryControlTask.h"
+//#include "BatteryControlTask.h"
 #include "ReadPowerGPIO.h"
+#include "MBMS.h"
 
-extern ContactorState contactorState;
+//extern ContactorState contactorState;
 extern ContactorInfo contactorInfo[6];
 extern MBMSStatus mbmsStatus;
 
@@ -19,7 +20,7 @@ extern MBMSStatus mbmsStatus;
 // MBMSSys.h
 // all structs important for more than one file, contactor
 
-// wait times in seconds !
+// wait times in seconds ! um is it ms now? idk check!!!
 #define MPS_WAIT_TIME 1
 #define DCDC0_WAIT_TIME 10
 #define DCDC1_WAIT_TIME 10
@@ -38,7 +39,6 @@ void StartupTask(void* arg)
 
 void Startup()
 {
-	uint32_t seconds_per_tick = 1/osKernelGetTickFreq();
 
 	mbmsStatus.startupState = MPS_OPEN;
 	//aux battery has started up and is powering the MBMS
@@ -61,7 +61,7 @@ void Startup()
 	uint32_t flagsSet;
 	// set flag to give permission to precharge/close common contactor
 	flagsSet = osEventFlagsSet(contactorPermissionsFlagHandle, COMMON_FLAG);
-	while ((contactorInfo[COMMON].contactorClosed == OPEN_CONTACTOR)) { //
+	while ((contactorInfo[COMMON].contactorState != CLOSE_CONTACTOR)) { //
 		// wait for common contactor to close
 	}
 	if (contactorInfo[COMMON].contactorError) {
@@ -72,7 +72,7 @@ void Startup()
 
 	// set flag to give permission to precharge/close LV
 	flagsSet = osEventFlagsSet(contactorPermissionsFlagHandle, LV_FLAG); // set LV contactor flag
-	while ((contactorInfo[LOWV].contactorClosed == OPEN_CONTACTOR)) { //
+	while ((contactorInfo[LOWV].contactorState != CLOSE_CONTACTOR)) { //
 		// wait for LV contactor to close
 	}
 	mbmsStatus.startupState = LV_CLOSED;
@@ -83,8 +83,7 @@ void Startup()
 	uint32_t DCDC1_Start_Count = osKernelGetTickCount();
 	while(read_nDCDC1_ON() == 1) { // n stands for NOT
 		//set a timeout, if this fails, trip
-		uint32_t DCDC1_Current_Count = osKernelGetTickCount();
-		uint32_t DCDC1_Time_Passed = (osKernelGetTickCount() - DCDC1_Start_Count) / seconds_per_tick; // USE THE GIUVEN SECONDS PER TICK MACRO FROM FREE RTOS
+		uint32_t DCDC1_Time_Passed = (osKernelGetTickCount() - DCDC1_Start_Count) * FREERTOS_TICK_PERIOD; // USE THE GIUVEN SECONDS PER TICK MACRO FROM FREE RTOS
 		if(DCDC1_Time_Passed >= DCDC1_WAIT_TIME){
 			// TO DO: trip
 			// but idk which type of trip this is...
@@ -99,9 +98,7 @@ void Startup()
 	// wait until DCDC0 has been disconnected (while DCDC0 == closed) {}
 	uint32_t DCDC0_Start_Count = osKernelGetTickCount();
 	while(read_nDCDC0_ON() == 0) {
-
-		uint32_t DCDC0_Current_Count = osKernelGetTickCount();
-		uint32_t DCDC0_Time_Passed = (osKernelGetTickCount() - DCDC0_Start_Count) * seconds_per_tick;
+		uint32_t DCDC0_Time_Passed = (osKernelGetTickCount() - DCDC0_Start_Count) * FREERTOS_TICK_PERIOD;
 		if(DCDC0_Time_Passed >= DCDC0_WAIT_TIME){
 			// TO DO: trip
 			osThreadTerminate(startupTaskHandle);

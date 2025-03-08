@@ -19,6 +19,7 @@
 #define CONTACTORMASK  0x1fffffe0 // just changed it so it accepts 0x21X and 0x20X
 #define CONTACTORIDS 0x210 // was 0x700,, then was 0x200.. just changed to 0x210 feb 6
 #define CONTACTOR_HEARTBEATS_IDS 0x200
+#define MBMS_HEARTBEAT_ID 0x100
 
 #define CONTACTORCOMMANDID 0x101 // was 0x721 love it
 

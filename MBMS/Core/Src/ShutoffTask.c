@@ -12,11 +12,13 @@
 #include "CANdefines.h"
 #include "cmsis_os.h"
 #include "main.h"
-#include "BatteryControlTask.h"
+//#include "BatteryControlTask.h"
 #include "ReadPowerGPIO.h"
+#include "MBMS.h"
 
 extern MBMSStatus mbmsStatus;
-extern ContactorState contactorState;
+extern ContactorInfo contactorInfo[6];
+//extern ContactorState contactorState;
 
 // PRIORITIES FOR SHUTDOWN PROCEDURE
 // HIGHEST: HARD BATTERY LIMIT
@@ -50,7 +52,7 @@ void Shutoff()
 		// make it so all contactors (if common open, all contactors SHOULD BE opened)
 		uint8_t openCommon = (OPEN_CONTACTOR << COMMON) + (OPEN_CONTACTOR<< MOTOR1) + (OPEN_CONTACTOR << MOTOR2)+ (OPEN_CONTACTOR << ARRAY) + (OPEN_CONTACTOR << LOWV) + (OPEN_CONTACTOR << CHARGE);
 		// assuming all HV stuff opened at same time
-		uint8_t openHV = (contactorState.common << COMMON ) + (OPEN_CONTACTOR << MOTOR1) + (OPEN_CONTACTOR << MOTOR2) + (OPEN_CONTACTOR << ARRAY) + (contactorState.LV << LOWV) + (OPEN_CONTACTOR << CHARGE);
+		uint8_t openHV = ((contactorInfo[COMMON].contactorState & 0x01) << COMMON ) + (OPEN_CONTACTOR << MOTOR1) + (OPEN_CONTACTOR << MOTOR2) + (OPEN_CONTACTOR << ARRAY) + ((contactorInfo[LOWV].contactorState & 0x01) << LOWV) + (OPEN_CONTACTOR << CHARGE);
 
 		// flag for BPS fault
 		uint16_t BPSFaultSignal = 0;
@@ -82,7 +84,7 @@ void Shutoff()
 				msg.data[0] = openHV; // assign the data to open the HV Contactor Command!
 				osMessageQueuePut(TxCANMessageQueueHandle, &msg, 0, osWaitForever); //adding it to the message queue to send CAN messages
 				// wait for motor contactors to open (dont care abt array/charge contactors
-				while(contactorState.motor1 == CLOSE_CONTACTOR || contactorState.motor2 == CLOSE_CONTACTOR ) {
+				while((contactorInfo[MOTOR1].contactorState != OPEN_CONTACTOR) || (contactorInfo[MOTOR2].contactorState != OPEN_CONTACTOR )) {
 					 // get shutoff flags to see if hard battery limit has been reached during the time it takes for HV contactors to open
 					// if so, change causes, and break out of this loop!
 					 uint32_t flags = osEventFlagsGet(shutoffFlagHandle);
@@ -134,7 +136,7 @@ void Shutoff()
 			// assigning the data of the CAN message to open Common Contactor
 			msg.data[0] = openCommon;
 			osMessageQueuePut(TxCANMessageQueueHandle, &msg, 0, osWaitForever);
-			while (contactorState.common == CLOSE_CONTACTOR) {
+			while (contactorInfo[COMMON].contactorState != OPEN_CONTACTOR) {
 				// wait for common to open
 			}
 		}
