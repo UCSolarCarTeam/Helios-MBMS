@@ -42,6 +42,7 @@ void DebugInterface()
 			}
 	}
 	// test contactor heartbeats
+	// Khadeeja's testing comment <-- u can delete this later
 	if (1) {
 		static uint16_t counter = 0;
 		counter++;
