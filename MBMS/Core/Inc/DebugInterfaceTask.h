@@ -8,6 +8,8 @@
 #ifndef INC_TASK_H_FILES_DEBUGINTERFACETASK_H_
 #define INC_TASK_H_FILES_DEBUGINTERFACETASK_H_
 
+#include "main.h"
+
 void DebugInterfaceTask(void* arg);
 
 void DebugInterface();

@@ -63,8 +63,6 @@ void BatteryControl()
 
 	// before u set shutdown flag, check startupState and terminate the task if its not finished... ?
 
-	sendMBMSHeartbeatCanMessage();
-
 	checkContactorHeartbeats();
 
 	updatePackInfoStruct();
@@ -75,9 +73,6 @@ void BatteryControl()
 	updateTripStatus();
 
 
-	/* Send out trip status (update struct */
-	sendTripStatusCanMessage(&tripData);
-	sendMBMSStatusCanMessage(); // i just added this idk
 
 	checkIfShutdown();
 
@@ -90,13 +85,42 @@ void BatteryControl()
 }
 
 void checkContactorHeartbeats() {
+	/* The reason i'm checking heartbeats this way and not with a timeout for the message queue (like orion)
+	 * is because there's multiple contactor boards all sending their heartbeats so how the timeout wouldn't
+	 * be accurate of what the problem is, or if there is a proble. For example if a contactor dies, other
+	 * contactor would still be sending messages.
+	 */
 	static uint8_t heartbeatStaticCounter[6] = {0};
 
 	static uint16_t previousHeartbeats[6] = {0}; //check this !!! syntax !
 	for(int i = 0; i < 6; i++) {
+		if(previousHeartbeats[i] >= 65535) { // check this logic lol
+			previousHeartbeats[i] = 0;
+		}
 		if(previousHeartbeats[i] >= contactorInfo[i].heartbeat){
 			if(((osKernelGetTickCount() - heartbeatLastUpdatedTime[i]) * FREERTOS_TICK_PERIOD) > CONTACTOR_HEARTBEAT_TIMEOUT) {
-				// TRIP!!!!
+				// set heartbeat dead trip
+				switch (i) {
+					case 0:
+						mbmsTrip.commonHeartbeatDeadTrip = 1;
+						break;
+					case 1:
+						mbmsTrip.motor1HeartbeatDeadTrip = 1;
+						break;
+					case 2:
+						mbmsTrip.motor2HeartbeatDeadTrip = 1;
+						break;
+					case 3:
+						mbmsTrip.arrayHeartbeatDeadTrip = 1;
+						break;
+					case 4:
+						mbmsTrip.LVHeartbeatDeadTrip = 1;
+						break;
+					case 5:
+						mbmsTrip.chargeHeartbeatDeadTrip = 1;
+						break;
+				}
+
 			}
 		}
 		else {
@@ -156,93 +180,6 @@ void updateContactorInfo(uint8_t contactor, uint8_t prechargerClosed, uint8_t pr
 	return;
 }
 
-void updateContactors() {
-	// should close contactors if perms given? OH PROBABLY ALSO CHECK IF ALLOWE DTO DISCHARGE
-
-	/* Update contactor state based on permissions and other things */
-	uint32_t flags = osEventFlagsGet(contactorPermissionsFlagHandle);
-	CANMsg contactorCommandMsg; // NEED TO SET ATTRIBUTES OF CAN MSG
-//	tripMsg.DLC = 2; // 2 bytes
-//	tripMsg.extendedID = MBMS_TRIP_ID;
-//	tripMsg.ID = 0x0;
-	uint8_t sendContactorCommand = 0;
-
-	static uint8_t contactorClosing = false;
-	for(int i = 0; i < 6; i++){
-		if (contactorInfo[i].contactorState == CLOSING_CONTACTOR){
-			contactorClosing = true;
-			break;
-		}
-	}
-
-	// if no contactors are currently in the state of closing, you may close a contactor!
-	if(!contactorClosing) {
-
-		if (((flags & COMMON_FLAG) == COMMON_FLAG) && (contactorInfo[COMMON].contactorState != CLOSE_CONTACTOR) && (tripData == 0x0)) {
-			// if perms are given, and contactor is not already closed, and there are no trips
-			contactorCommand.common = CLOSE_CONTACTOR;
-			sendContactorCommand = 1;
-		}
-		else if (((flags & MOTOR1_FLAG) == MOTOR1_FLAG) && (contactorInfo[MOTOR1].contactorState != CLOSE_CONTACTOR) && (tripData == 0x0) && (mbmsStatus.allowDischarge == 1)) {
-			contactorCommand.motor1 = CLOSE_CONTACTOR;
-			sendContactorCommand = 1;
-		}
-		else if (((flags & MOTOR2_FLAG) == MOTOR2_FLAG) && (contactorInfo[MOTOR2].contactorState != CLOSE_CONTACTOR) && (tripData == 0x0) && (mbmsStatus.allowDischarge == 1)) {
-			contactorCommand.motor2 = CLOSE_CONTACTOR;
-			sendContactorCommand = 1;
-		}
-		else if (((flags & ARRAY_FLAG) == ARRAY_FLAG) && (contactorInfo[ARRAY].contactorState != CLOSE_CONTACTOR) && (tripData == 0x0) && (mbmsStatus.allowCharge == 1)) {
-			contactorCommand.array = CLOSE_CONTACTOR;
-			sendContactorCommand = 1;
-		}
-		else if (((flags & LV_FLAG) == LV_FLAG) && (contactorInfo[LOWV].contactorState != CLOSE_CONTACTOR) && (tripData == 0x0) && (mbmsStatus.allowDischarge == 1)) {
-			contactorCommand.LV = CLOSE_CONTACTOR;
-			sendContactorCommand = 1;
-		}
-		else if (((flags & CHARGE_FLAG) == CHARGE_FLAG) && (contactorInfo[CHARGE].contactorState != CLOSE_CONTACTOR) && (tripData == 0x0) && (mbmsStatus.allowCharge == 1)) {
-			contactorCommand.charge = CLOSE_CONTACTOR;
-			sendContactorCommand = 1;
-		}
-
-	}
-
-
-	// Open contactors as needed SHOULD I CHECK TRIPDATA AS WELL HERE?or naw cuz a diff func will check idkkk i wanna say noo ...
-	if (((flags & MOTOR1_FLAG) == MOTOR1_FLAG) && (contactorInfo[MOTOR1].contactorState != OPEN_CONTACTOR) && (mbmsStatus.allowDischarge == 0)){
-		contactorCommand.motor1 = OPEN_CONTACTOR;
-		sendContactorCommand = 1;
-	}
-
-	if (((flags & MOTOR2_FLAG) == MOTOR2_FLAG) && (contactorInfo[MOTOR2].contactorState != OPEN_CONTACTOR) && (mbmsStatus.allowDischarge == 0)){
-		contactorCommand.motor2 = OPEN_CONTACTOR;
-		sendContactorCommand = 1;
-	}
-
-	if (((flags & ARRAY_FLAG) == ARRAY_FLAG) && (contactorInfo[ARRAY].contactorState != OPEN_CONTACTOR) && (mbmsStatus.allowCharge == 0)) {
-		contactorCommand.array = OPEN_CONTACTOR;
-		sendContactorCommand = 1;
-	}
-
-
-	if (((flags & LV_FLAG) == LV_FLAG) && (contactorInfo[LOWV].contactorState != OPEN_CONTACTOR) && (mbmsStatus.allowDischarge == 0)) {
-		contactorCommand.LV = OPEN_CONTACTOR;
-		sendContactorCommand = 1;
-	}
-
-
-	if (((flags & CHARGE_FLAG) == CHARGE_FLAG) && (contactorInfo[CHARGE].contactorState != OPEN_CONTACTOR) && (mbmsStatus.allowCharge == 0)) {
-		contactorCommand.charge = OPEN_CONTACTOR;
-		sendContactorCommand = 1;
-	}
-
-
-	if (sendContactorCommand == 1) {
-		contactorCommandMsg.data[0] = ((contactorCommand.common & 0x01) << COMMON) + ((contactorCommand.motor1 & 0x01) << MOTOR1)
-									+ ((contactorCommand.motor2 & 0x01) << MOTOR2) + ((contactorCommand.array & 0x01) << ARRAY)
-									+ ((contactorCommand.LV & 0x01) << LOWV)       + ((contactorCommand.charge & 0x01) << CHARGE);
-		osMessageQueuePut(TxCANMessageQueueHandle, &contactorCommandMsg, 0, osWaitForever);
-	}
-}
 
 
 void checkIfShutdown() {
@@ -257,9 +194,10 @@ void checkIfShutdown() {
 	if (readKeySwitch() == KEY_OFF){
 		shutoffFlagsSet = osEventFlagsSet(shutoffFlagHandle, KEY_FLAG | SHUTOFF_FLAG);
 	}
-	if (readMainPowerSwitch() == MPS_ENABLED){
+	if (readMainPowerSwitch() == MPS_DISABLED){
 		shutoffFlagsSet = osEventFlagsSet(shutoffFlagHandle, MPS_FLAG | SHUTOFF_FLAG);
 	}
+
 
 }
 
@@ -300,6 +238,7 @@ void updateTripStatus() {
 		mbmsTrip.orionMessageTimeoutTrip = 1;
 	}
 
+
 	// checking for Contactor Connected/Disconnected Unexpectedly Trip
 	/* To check, we compare a minimum current draw with the state of the contactor */
 	if(((		 contactorCommand.common == CLOSE_CONTACTOR) && (contactorInfo[COMMON].current < NO_CURRENT_THRESHOLD))
@@ -330,53 +269,15 @@ void updateTripStatus() {
 		mbmsTrip.highBatteryTrip = 1;
 	}
 
-}
+	// Dead contactor heartbeat trips are done in a diff function
 
-void sendTripStatusCanMessage(uint16_t * tripData) {
-	// should send CAN message of trips ???
-	CANMsg tripMsg;
-	*tripData = ((mbmsTrip.highCellVoltageTrip & 0x1) << 0) + ((mbmsTrip.lowCellVoltageTrip & 0x1) << 1)
-			+ ((mbmsTrip.commonHighCurrentTrip & 0x1) << 2) + ((mbmsTrip.motorHighCurrentTrip & 0x1) << 3)
-			+ ((mbmsTrip.arrayHighCurrentTrip & 0x1) << 4) + ((mbmsTrip.LVHighCurrentTrip & 0x1) << 5)
-			+ ((mbmsTrip.chargeHighCurrentTrip & 0x1) << 6) + ((mbmsTrip.protectionTrip & 0x1) << 7)
-			+ ((mbmsTrip.orionMessageTimeoutTrip & 0x1) << 8) + ((mbmsTrip.contactorDisconnectedUnexpectedlyTrip & 0x1) << 9)
-			+ ((mbmsTrip.contactorConnectedUnexpectedlyTrip & 0x1) << 10) + ((mbmsTrip.highBatteryTrip & 0x1) << 11);
+	if(readMainPowerSwitch() == MPS_OPEN){
+		//set trip
+	}
 
-	tripMsg.data[0] = (*tripData & 0xff);
-	tripMsg.data[1] = (*tripData & 0xff00) >> 8;
-	tripMsg.DLC = 2; // 2 bytes
-	tripMsg.extendedID = MBMS_TRIP_ID;
-	tripMsg.ID = 0x0;
-	osMessageQueuePut(TxCANMessageQueueHandle, &tripMsg, 0, osWaitForever);
 
 }
 
-void sendMBMSStatusCanMessage() {
-	// should send CAN message of trips ???
-	CANMsg mbmsStatusMsg;
-	uint16_t mbmsStatusData = ((mbmsStatus.auxilaryBattVoltage & 0x1f) << 0) + ((mbmsStatus.strobeBMSLight & 0x1) << 5)
-			+ ((mbmsStatus.allowCharge & 0x1) << 6) + ((mbmsStatus.chargeSafety & 0x1) << 7)
-			+ ((mbmsStatus.allowDischarge & 0x1) << 8) + ((mbmsStatus.orionCANReceived & 0x1) << 9)
-			+ ((mbmsStatus.dischargeShouldTrip & 0x1) << 10) + ((mbmsStatus.chargeShouldTrip & 0x1) << 11)
-			+ ((mbmsStatus.startupState & 0xf) << 15);
-
-	mbmsStatusMsg.data[0] = (mbmsStatusData & 0xff);
-	mbmsStatusMsg.data[1] = (mbmsStatusData & 0xff00) >> 8;
-	mbmsStatusMsg.DLC = 2; // 2 bytes
-	mbmsStatusMsg.extendedID = MBMS_STATUS_ID;
-	mbmsStatusMsg.ID = 0x0;
-	osMessageQueuePut(TxCANMessageQueueHandle, &mbmsStatusMsg, 0, osWaitForever);
-
-}
-
-void sendMBMSHeartbeatCanMessage() {
-	CANMsg mbmsHeartbeatMsg;
-	mbmsHeartbeatMsg.data[0] = 0x1;
-	mbmsHeartbeatMsg.DLC = 1;
-	mbmsHeartbeatMsg.extendedID = MBMS_HEARTBEAT_ID;
-	mbmsHeartbeatMsg.ID = 0x0;
-	osMessageQueuePut(TxCANMessageQueueHandle, &mbmsHeartbeatMsg, 0, osWaitForever);
-}
 
 void updatePackInfoStruct() {
 	//Update all information regarding the battery

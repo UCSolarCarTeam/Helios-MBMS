@@ -50,14 +50,6 @@
 /* USER CODE BEGIN PD */
 #define QUEUE_SIZE 10
 
-#define SHUTOFF_FLAG 0b00000001U // just making the flag an arbitrary number (should be uint32_t,,, this is = 1 in decimal)
-// what was the cause of the shutdown??
-#define EPCOS_FLAG 0b00000010U // external power cut off switch (push button outside car), starts soft shutdown
-#define MPS_FLAG 0b00000100U // main power switch is the cause of shutoff
-#define KEY_FLAG 0b00001000U // turning car key is cause of shutoff
-#define HARD_BL_FLAG 0b00010000U // hard battery limit is cause of shutoff
-#define SOFT_BL_FLAG 0b00100000U // soft battery limit is cause of shutoff
-
 
 /* USER CODE END PD */
 
@@ -178,9 +170,17 @@ const osThreadAttr_t startupTask_attributes = {
   .priority = (osPriority_t) osPriorityHigh2,
 };
 
+osThreadId_t CANMessageSenderTaskHandle;
+const osThreadAttr_t CANMessageSenderTask_attributes = {
+  .name = "CANMessageSenderTask",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityHigh2, // idk what priority to put ngl
+};
 
-// IS THIS THE CORRECT PLACE TO PUT IT??
-osMessageQueueId_t msgQueueID;
+
+
+//// IS THIS THE CORRECT PLACE TO PUT IT??
+//osMessageQueueId_t msgQueueID;
 
 
 /* USER CODE END PV */
@@ -278,6 +278,12 @@ int main(void)
 
   shutoffTaskHandle = osThreadNew(ShutoffTask, NULL, &shutoffTask_attributes);
   startupTaskHandle = osThreadNew(StartupTask, NULL, &startupTask_attributes);
+
+  debugInterfaceTaskHandle = osThreadNew(debugInterfaceTask, NULL, &debugInterfaceTask_attributes);
+
+  CANMessageSenderTaskHandle = osThreadNew(CANMessageSenderTask, NULL, &CANMessageSenderTaskHandle_attributes);
+
+
 
   /* USER CODE END RTOS_THREADS */
 

@@ -46,6 +46,7 @@ extern osThreadId_t batteryControlTaskHandle;
 extern osEventFlagsId_t shutoffFlagHandle;
 extern osEventFlagsId_t contactorPermissionsFlagHandle;
 extern osThreadId_t startupTaskHandle;
+extern osThreadId_t CANMessageSenderTaskHandle;
 
 /* USER CODE END ET */
 

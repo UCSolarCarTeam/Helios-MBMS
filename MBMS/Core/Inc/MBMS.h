@@ -20,6 +20,16 @@
 
 #define FREERTOS_TICK_PERIOD 1/configTICK_RATE_HZ //USE THIS INSTEAD OF SECONFS PER TICK
 
+#define SHUTOFF_FLAG 0b1U // just making the flag an arbitrary number (should be uint32_t,,, this is = 1 in decimal)
+// what was the cause of the shutdown??
+//#define EPCOS_FLAG 0b00000010U // external power cut off switch (push button outside car), starts soft shutdown
+#define MPS_FLAG 0b10U // main power switch is the cause of shutoff
+#define KEY_FLAG 0b100U // turning car key is cause of shutoff
+#define HARD_BL_FLAG 0b1000U // hard battery limit is cause of shutoff
+#define SOFT_BL_FLAG 0b10000U // soft battery limit is cause of shutoff
+
+
+
 // Define boolean as an enum or typedef in a header
 typedef enum { false = 0, true = 1 } boolean;
 
@@ -111,6 +121,16 @@ typedef struct {
 	uint8_t contactorDisconnectedUnexpectedlyTrip;
 	uint8_t contactorConnectedUnexpectedlyTrip;
 	uint8_t highBatteryTrip;
+	uint8_t commonHeartbeatDeadTrip;
+	uint8_t motor1HeartbeatDeadTrip;
+	uint8_t motor2HeartbeatDeadTrip;
+	uint8_t arrayHeartbeatDeadTrip;
+	uint8_t LVHeartbeatDeadTrip;
+	uint8_t chargeHeartbeatDeadTrip;
+	uint8_t MPSDisabledTrip;
+	uint8_t keyOffTrip;
+	uint8_t hardBatteryLimitTrip;
+	uint8_t softBatteryLimitTrip;
 } MBMSTrip;
 
 typedef struct {

@@ -43,9 +43,10 @@ void Startup()
 	mbmsStatus.startupState = MPS_OPEN;
 	//aux battery has started up and is powering the MBMS
 
-	while ( readMainPowerSwitch() == MPS_ENABLED) {
-		//if EPCOS/MPS is enabled, we need to trip
-		// TO DO: trip
+	while ( readMainPowerSwitch() == MPS_DISABLED) {
+		//if MPS is disabled (open) , we need to trip
+		// TO DO: trip... naw do in BCT lol
+
 		//mbmsTrip.protectionTrip = 1; // not sure if this is the right trip... check NUH UH
 		// MAYBE JUST DELAY THIS TASK SO BATT CONTROL CAN DETECT IT AND SET FOLAG AND GO TO SHUTDOWN ETC.
 		osDelay(MPS_WAIT_TIME * 1000);
