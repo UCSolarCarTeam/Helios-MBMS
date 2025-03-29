@@ -37,9 +37,9 @@ void DebugInterface()
 
 
 		osStatus status = osMessageQueuePut(contactorMessageQueueHandle, &contactorMsg, 0, osWaitForever); // idk maybe shouldnt wait forever tho..
-			if(status != osOK){
-				// also handle error here but idk do what :(
-			}
+		if(status != osOK){
+			// also handle error here but idk do what :(
+		}
 	}
 	// test contactor heartbeats
 	// Khadeeja's testing comment <-- u can delete this later
@@ -62,5 +62,100 @@ void DebugInterface()
 			}
 	}
 
+	//test update pack info orion
+	if (1) {
+
+		CANMsg orionMsg;
+
+		int16_t packCurrent = 14;
+		uint16_t packVoltage = 20;
+		uint8_t packSOC = 99;
+		uint16_t packAmphours = 15;
+		uint8_t packDOD = 18; // Depth of Discharge, 1-byte
+
+
+		orionMsg.data[0] = packCurrent & 0xff; // first eight bits
+		orionMsg.data[1] = (packCurrent & 0xff00) >> 8;
+		orionMsg.data[2] = packVoltage & 0xff;
+		orionMsg.data[3] = (packVoltage & 0xff00) >> 8;
+		orionMsg.data[4] = packSOC & 0xff;
+		orionMsg.data[5] = packAmphours & 0xff;
+		orionMsg.data[6] = (packAmphours & 0xff00) >> 8;
+		orionMsg.data[7] = packDOD & 0xff;
+
+		orionMsg.DLC = 8;
+		orionMsg.ID = 0x0;
+		orionMsg.extendedID = PACKINFOID;
+
+		osStatus status = osMessageQueuePut(batteryControlMessageQueueHandle, &orionMsg, 0, osWaitForever); // idk maybe shouldnt wait forever tho..
+		if(status != osOK){
+			// also handle error here but idk do what :(
+		}
+
+	}
+
+	// test update temp info orion
+	if(1) {
+		CANMsg orionMsg;
+
+		uint8_t highTemp = 40;
+		uint8_t lowTemp = 5;
+		uint8_t avgTemp = 20;
+
+		orionMsg.data[0] = highTemp & 0xff;
+		orionMsg.data[2] = lowTemp & 0xff;
+		orionMsg.data[4] = avgTemp & 0xff;
+
+		orionMsg.DLC = 8;
+
+		orionMsg.ID = 0x0;
+		orionMsg.extendedID = TEMPINFOID;
+
+		osStatus status = osMessageQueuePut(batteryControlMessageQueueHandle, &orionMsg, 0, osWaitForever); // idk maybe shouldnt wait forever tho..
+		if(status != osOK){
+			// also handle error here but idk do what :(
+		}
+
+	}
+
+	//test update min max voltages orion
+	if(1) {
+		CANMsg orionMsg;
+
+		// voltage info (each 2-bytes)
+		uint16_t maxCellVoltage = 8;
+		uint16_t minCellVoltage = 1;
+		uint16_t maxPackVoltage = 80;
+		uint16_t minPackVoltage = 10;
+
+		orionMsg.data[0] = maxCellVoltage & 0xff;
+		orionMsg.data[1] = (maxCellVoltage & 0xff00) >> 8;
+		orionMsg.data[2] = minCellVoltage & 0xff;
+		orionMsg.data[3] = (minCellVoltage & 0xff00) >> 8;
+		orionMsg.data[4] = maxPackVoltage & 0xff;
+		orionMsg.data[5] = (maxPackVoltage & 0xff00) >> 8;
+		orionMsg.data[6] = minPackVoltage & 0xff;
+		orionMsg.data[7] = (minPackVoltage & 0xff00) >> 8;
+
+		orionMsg.DLC = 8;
+
+		orionMsg.ID = 0x0;
+		orionMsg.extendedID = MAXMINVOLTAGESID;
+
+		osStatus status = osMessageQueuePut(batteryControlMessageQueueHandle, &orionMsg, 0, osWaitForever); // idk maybe shouldnt wait forever tho..
+		if(status != osOK){
+			// also handle error here but idk do what :(
+		}
+
+
+	}
+
 
 }
+
+
+
+
+
+
+

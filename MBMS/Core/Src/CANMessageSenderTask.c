@@ -40,7 +40,7 @@ void CANMessageSender() {
 	/* Send out trip status (update struct */
 	sendTripStatusCanMessage(&tripData);
 	sendMBMSStatusCanMessage(); // i just added this idk
-	sendContactorsCanMessage()
+	sendContactorsCanMessage();
 }
 
 void sendTripStatusCanMessage(uint16_t * tripData) {
