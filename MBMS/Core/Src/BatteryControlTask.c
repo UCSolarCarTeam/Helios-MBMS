@@ -78,7 +78,7 @@ void BatteryControl()
 
 
 
-	updateContactors();
+	//updateContactors();
 
 	// NEED TO CHECK CURRENT STUFF STILL.... need to do all the trip stuff lol, also check attributes of can msg for sumn idk
 
@@ -278,10 +278,11 @@ void updateTripStatus() {
 
 }
 
-
+// maybe change name of ths lol oop
 void updatePackInfoStruct() {
 	//Update all information regarding the battery
 	CANMsg orionMsg;
+	osDelay(1000);
 	static uint8_t orionMessageCounter = 0;
 	osStatus status = osMessageQueueGet(batteryControlMessageQueueHandle, &orionMsg, NULL, ORION_MSG_WAIT_TIMEOUT);  // Timeout = 0 means non-blocking
 	if (status == osOK) {

@@ -48,6 +48,8 @@ extern osEventFlagsId_t contactorPermissionsFlagHandle;
 extern osThreadId_t startupTaskHandle;
 extern osThreadId_t CANMessageSenderTaskHandle;
 
+extern osThreadId_t debugInterfaceTaskHandle;
+
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/

@@ -8,6 +8,7 @@
 #include "../Inc/DebugInterfaceTask.h"
 #include "MBMS.h"
 #include "CANdefines.h"
+#include "main.h"
 
 void DebugInterfaceTask(void* arg)
 {
@@ -123,7 +124,7 @@ void DebugInterface()
 		CANMsg orionMsg;
 
 		// voltage info (each 2-bytes)
-		uint16_t maxCellVoltage = 8;
+		uint16_t maxCellVoltage = 80;
 		uint16_t minCellVoltage = 1;
 		uint16_t maxPackVoltage = 80;
 		uint16_t minPackVoltage = 10;

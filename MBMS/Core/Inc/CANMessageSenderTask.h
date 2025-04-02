@@ -11,7 +11,7 @@
 #include <stdint.h>
 #include "main.h"
 
-
+void CANMessageSenderTask(void * arg);
 void CANMessageSender();
 
 void sendTripStatusCanMessage(uint16_t * tripData);

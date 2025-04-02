@@ -27,6 +27,7 @@
 #include <BatteryControlTask.h>
 #include <CANRxGatekeeperTask.h>
 #include <CANTxGatekeeperTask.h>
+#include <CANMessageSenderTask.h>
 #include <DebugInterfaceTask.h>
 #include <DisplayTask.h>
 #include <stdint.h>
@@ -145,8 +146,8 @@ const osThreadAttr_t CANTxGatekeeperTask_attributes = {
 osThreadId_t debugInterfaceTaskHandle;
 const osThreadAttr_t debugInterfaceTask_attributes = {
   .name = "debugInterfaceTask",
-  .stack_size = 128 * 4,
-  .priority = (osPriority_t) osPriorityBelowNormal,
+  .stack_size = 256 * 4,
+  .priority = (osPriority_t) osPriorityHigh2, //Khadeeja originally put osPriorityBelowNormal
 };
 
 osThreadId_t displayTaskHandle;
@@ -239,9 +240,9 @@ int main(void)
 
   /* Init scheduler */
   osKernelInitialize();
-  defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
+  //defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
   /* USER CODE BEGIN RTOS_MUTEX */
-#if 0
+#if 1
   /* add mutexes, ... */
   CANSPIMutexHandle = osMutexNew(&CANSPIMutex_attributes);
   /* USER CODE END RTOS_MUTEX */
@@ -257,8 +258,16 @@ int main(void)
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
   TxCANMessageQueueHandle = osMessageQueueNew(QUEUE_SIZE, sizeof(CANMsg), &TxCANMessageQueue_attributes);
+  if(TxCANMessageQueueHandle == NULL){
+	  uint8_t x = 0;
+	  //
+  }
   RxCANMessageQueueHandle = osMessageQueueNew(QUEUE_SIZE, sizeof(CANMsg), &RxCANMessageQueue_attributes);
   batteryControlMessageQueueHandle = osMessageQueueNew(QUEUE_SIZE, sizeof(CANMsg), &batteryControlMessageQueue_attributes);
+  if(batteryControlMessageQueueHandle == NULL){
+	  uint8_t x = 0;
+	  //
+  }
   contactorMessageQueueHandle = osMessageQueueNew(QUEUE_SIZE, sizeof(CANMsg), &contactorMessageQueue_attributes);
   // IS THIS CORRECT??? THE NUMBER IN QUEUE AND SIZE
 
@@ -266,22 +275,28 @@ int main(void)
 
   /* Create the thread(s) */
   /* creation of defaultTask */
-  defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
+//  defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
 
-  CANTxGatekeeperTaskHandle = osThreadNew(CANTxGatekeeperTask, NULL, &CANTxGatekeeperTask_attributes);
-  CANRxGatekeeperTaskHandle = osThreadNew(CANRxGatekeeperTask, NULL, &CANRxGatekeeperTask_attributes);
+//  CANTxGatekeeperTaskHandle = osThreadNew(CANTxGatekeeperTask, NULL, &CANTxGatekeeperTask_attributes);
+//  CANRxGatekeeperTaskHandle = osThreadNew(CANRxGatekeeperTask, NULL, &CANRxGatekeeperTask_attributes);
 
   batteryControlTaskHandle = osThreadNew(BatteryControlTask, NULL, &batteryControlTask_attributes);
+  if(batteryControlTaskHandle == NULL)
+  {
+	  uint8_t x = 0;
+  }
+//  shutoffTaskHandle = osThreadNew(ShutoffTask, NULL, &shutoffTask_attributes);
+//  startupTaskHandle = osThreadNew(StartupTask, NULL, &startupTask_attributes);
 
-  shutoffTaskHandle = osThreadNew(ShutoffTask, NULL, &shutoffTask_attributes);
-  startupTaskHandle = osThreadNew(StartupTask, NULL, &startupTask_attributes);
+  debugInterfaceTaskHandle = osThreadNew(DebugInterfaceTask, NULL, &debugInterfaceTask_attributes);
+  if(debugInterfaceTaskHandle == NULL) {
+	  uint8_t x = 0;
+  }
 
-  debugInterfaceTaskHandle = osThreadNew(debugInterfaceTask, NULL, &debugInterfaceTask_attributes);
-
-  CANMessageSenderTaskHandle = osThreadNew(CANMessageSenderTask, NULL, &CANMessageSenderTaskHandle_attributes);
+//  CANMessageSenderTaskHandle = osThreadNew(CANMessageSenderTask, NULL, &CANMessageSenderTask_attributes);
 
 
 
@@ -289,7 +304,8 @@ int main(void)
 
   /* USER CODE BEGIN RTOS_EVENTS */
   // IS THIS WHERE I SHOULD CREATE AN EVENT FLAG ????
-  shutoffFlagHandle = osEventFlagsNew(&shutoffFlag_attributes);
+//  shutoffFlagHandle = osEventFlagsNew(&shutoffFlag_attributes);
+
   contactorPermissionsFlagHandle = osEventFlagsNew(&contactorPermissionsFlag_attributes);
   /* USER CODE END RTOS_EVENTS */
 #endif
