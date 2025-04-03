@@ -6,6 +6,7 @@
  */
 #include "../Inc/DisplayTask.h"
 
+
 void DisplayTask(void* arg)
 {
     while(1)
@@ -16,6 +17,7 @@ void DisplayTask(void* arg)
 
 void Display()
 {
+
 
 }
 

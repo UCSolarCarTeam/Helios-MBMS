@@ -1,14 +1,15 @@
 /*
- * DebugInterface.cpp
+ * DebugInterface.c
  *
  *  Created on: Sep 7, 2024
- *      Author: khadeejaabbas
+ *      Author: khadeejaabbas, millaineli
  */
 
 #include "../Inc/DebugInterfaceTask.h"
 #include "MBMS.h"
 #include "CANdefines.h"
 #include "main.h"
+#include "BatteryControlTask.h"
 
 void DebugInterfaceTask(void* arg)
 {
@@ -42,8 +43,9 @@ void DebugInterface()
 			// also handle error here but idk do what :(
 		}
 	}
+
+
 	// test contactor heartbeats
-	// Khadeeja's testing comment <-- u can delete this later
 	if (1) {
 		static uint16_t counter = 0;
 		counter++;
@@ -120,7 +122,7 @@ void DebugInterface()
 	}
 
 	//test update min max voltages orion
-	if(1) {
+	if(0) {
 		CANMsg orionMsg;
 
 		// voltage info (each 2-bytes)
@@ -146,6 +148,136 @@ void DebugInterface()
 		osStatus status = osMessageQueuePut(batteryControlMessageQueueHandle, &orionMsg, 0, osWaitForever); // idk maybe shouldnt wait forever tho..
 		if(status != osOK){
 			// also handle error here but idk do what :(
+		}
+
+
+	}
+
+	//testing send can messages stuff (just comment out all the ones ur not testing, dequeue from Tx
+	if(1) {
+
+		CANMsg msg;
+		osStatus_t status = osMessageQueueGet(TxCANMessageQueueHandle, &msg, 0, osWaitForever);
+		while (status != osOK){
+			// do nothing, wait for it to be okay
+		}
+		uint8_t DLC = msg.DLC;
+		uint8_t data[8];
+		for (int i = 0; i < DLC; i++) {
+			data[i] = msg.data[i];
+		}
+		uint32_t extendedID = msg.extendedID;
+
+		// check data, extendedID, msg, in live expressions to compare
+
+	}
+
+	//testing trips
+	if(1) {
+
+		// testing high/low min/max voltage trips
+		if(1) {
+			CANMsg orionMsg;
+
+			// voltage info (each 2-bytes)
+			uint16_t maxCellVoltage = MAX_CELL_VOLTAGE + 1; // these two should set the two trips !
+			uint16_t minCellVoltage = MIN_CELL_VOLTAGE - 1;
+			uint16_t maxPackVoltage = 80;
+			uint16_t minPackVoltage = 10;
+
+			orionMsg.data[0] = maxCellVoltage & 0xff;
+			orionMsg.data[1] = (maxCellVoltage & 0xff00) >> 8;
+			orionMsg.data[2] = minCellVoltage & 0xff;
+			orionMsg.data[3] = (minCellVoltage & 0xff00) >> 8;
+			orionMsg.data[4] = maxPackVoltage & 0xff;
+			orionMsg.data[5] = (maxPackVoltage & 0xff00) >> 8;
+			orionMsg.data[6] = minPackVoltage & 0xff;
+			orionMsg.data[7] = (minPackVoltage & 0xff00) >> 8;
+
+			orionMsg.DLC = 8;
+
+			orionMsg.ID = 0x0;
+			orionMsg.extendedID = MAXMINVOLTAGESID;
+
+			osStatus status = osMessageQueuePut(batteryControlMessageQueueHandle, &orionMsg, 0, osWaitForever); // idk maybe shouldnt wait forever tho..
+			if(status != osOK){
+				// also handle error here but idk do what :(
+			}
+
+
+		}
+
+		//testing high current trips
+		if(1) {
+			CANMsg contactorMsg;
+			contactorMsg.DLC = 4;
+			uint8_t state = 0x000100;
+			uint16_t current = MAX_COMMON_CONTACTOR_CURRENT + 1; // CHANGE THIS TO CONTACTOR U WANT
+			uint16_t voltage = 13;
+			contactorMsg.data[0] = (state & 0x3f) + ((current & 0x3) << 6);
+			contactorMsg.data[1] = (current & 0x3fc) >> 2;
+			contactorMsg.data[2] = ((current & 0xc00) >> 10) + ((voltage & 0x3f) << 2);
+			contactorMsg.data[3] = ((voltage & 0xfc0) >> 6);
+			contactorMsg.extendedID = 0x210; // CHANGE THIS TO CONTACTOR U WANT
+
+
+			osStatus status = osMessageQueuePut(contactorMessageQueueHandle, &contactorMsg, 0, osWaitForever); // idk maybe shouldnt wait forever tho..
+			if(status != osOK){
+				// also handle error here but idk do what :(
+			}
+
+		}
+
+		// check protection trip
+		if(1) {
+			CANMsg contactorMsg;
+			contactorMsg.DLC = 4;
+			uint8_t state = 0x000100;
+			uint16_t current = -3; // -ve current
+			uint16_t voltage = 13;
+			contactorMsg.data[0] = (state & 0x3f) + ((current & 0x3) << 6);
+			contactorMsg.data[1] = (current & 0x3fc) >> 2;
+			contactorMsg.data[2] = ((current & 0xc00) >> 10) + ((voltage & 0x3f) << 2);
+			contactorMsg.data[3] = ((voltage & 0xfc0) >> 6);
+			contactorMsg.extendedID = 0x210; // CHANGE THIS TO CONTACTOR U WANT
+
+
+			osStatus status = osMessageQueuePut(contactorMessageQueueHandle, &contactorMsg, 0, osWaitForever); // idk maybe shouldnt wait forever tho..
+			if(status != osOK){
+				// also handle error here but idk do what :(
+			}
+
+		}
+
+		// testing high battery trip
+		if(1) {
+			CANMsg orionMsg;
+
+			// voltage info (each 2-bytes)
+			uint16_t maxCellVoltage = 50; // these two should set the two trips !
+			uint16_t minCellVoltage = 18;
+			uint16_t maxPackVoltage = MAX_PACK_VOLTAGE + 1; // set trip off !
+			uint16_t minPackVoltage = 10;
+
+			orionMsg.data[0] = maxCellVoltage & 0xff;
+			orionMsg.data[1] = (maxCellVoltage & 0xff00) >> 8;
+			orionMsg.data[2] = minCellVoltage & 0xff;
+			orionMsg.data[3] = (minCellVoltage & 0xff00) >> 8;
+			orionMsg.data[4] = maxPackVoltage & 0xff;
+			orionMsg.data[5] = (maxPackVoltage & 0xff00) >> 8;
+			orionMsg.data[6] = minPackVoltage & 0xff;
+			orionMsg.data[7] = (minPackVoltage & 0xff00) >> 8;
+
+			orionMsg.DLC = 8;
+
+			orionMsg.ID = 0x0;
+			orionMsg.extendedID = MAXMINVOLTAGESID;
+
+			osStatus status = osMessageQueuePut(batteryControlMessageQueueHandle, &orionMsg, 0, osWaitForever); // idk maybe shouldnt wait forever tho..
+			if(status != osOK){
+				// also handle error here but idk do what :(
+			}
+
 		}
 
 

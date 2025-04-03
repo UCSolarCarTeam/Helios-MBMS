@@ -271,7 +271,7 @@ void updateTripStatus() {
 
 	// Dead contactor heartbeat trips are done in a diff function
 
-	if(readMainPowerSwitch() == MPS_OPEN){
+	if(readMainPowerSwitch() == MPS_DISABLED){
 		//set trip
 	}
 
