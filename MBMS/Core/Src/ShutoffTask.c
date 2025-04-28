@@ -66,7 +66,7 @@ void Shutoff()
 			causes[HARD] = 1;
 		}
 
-		if ((flags & MPS_FLAG) == MPS_FLAG) {
+		if ((flags & nMPS_ESD_FLAG) == nMPS_ESD_FLAG) {
 			causes[MPS] = 1;
 		}
 		if ((flags & SOFT_BL_FLAG) == SOFT_BL_FLAG) {
@@ -114,7 +114,7 @@ void Shutoff()
 
 		// Otherwise, at this point the reason for shut off is either MPS/EPCOS, or hard or soft battery limit hit
 		// If the startup task has made it past the point of disconnecting from DCDC0, then connect to it
-		if(mbmsStatus.startupState >= DCDC0_OPEN) {
+		if(mbmsStatus.startupState >= DCDC0_OFF) {
 			// assuming that ABATT_DISABLE = 0 means this line enables/closes DCDC0 connection to aux/small battery
 			HAL_GPIO_WritePin(ABATT_DISABLE_GPIO_Port, ABATT_DISABLE_Pin, GPIO_PIN_RESET);
 			while(read_nDCDC0_ON() == 1) {
@@ -123,7 +123,7 @@ void Shutoff()
 		}
 
 		// After connecting to DCDC0, DCDC1 needs to be disconnected
-		if(mbmsStatus.startupState >= DCDC1_CLOSED) {
+		if(mbmsStatus.startupState >= DCDC1_ON) {
 			HAL_GPIO_WritePin(DCDC1_EN_GPIO_Port, DCDC1_EN_Pin, GPIO_PIN_RESET);
 			while(read_nDCDC1_ON() == 0) {
 				// wait for disconnection of DCDC1

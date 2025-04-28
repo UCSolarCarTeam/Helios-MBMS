@@ -88,8 +88,8 @@ void Error_Handler(void);
 #define RED_LED_GPIO_Port GPIOA
 #define STROBE_EN_Pin GPIO_PIN_3
 #define STROBE_EN_GPIO_Port GPIOA
-#define MAIN_PWR_SW_Pin GPIO_PIN_4
-#define MAIN_PWR_SW_GPIO_Port GPIOC
+#define nMPS_ESD_Pin GPIO_PIN_4
+#define nMPS_ESD_GPIO_Port GPIOC
 #define DCDC1_EN_Pin GPIO_PIN_5
 #define DCDC1_EN_GPIO_Port GPIOC
 #define ABATT_DISABLE_Pin GPIO_PIN_0

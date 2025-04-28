@@ -11,12 +11,12 @@
 #include <stdint.h>
 #include "main.h"
 
-uint16_t readMainPowerSwitch(void);
+uint16_t read_nMPS_ESD(void);
 
-//uint16_t readEPCOSwitch(void);
 uint16_t read_nDCDC0_ON(void);
 
 uint16_t read_nDCDC1_ON(void);
-uint16_t readKeySwitch(void);
+
+uint16_t read_KeySwitch(void);
 
 #endif /* INC_READPOWERGPIO_H_ */

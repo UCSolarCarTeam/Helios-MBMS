@@ -8,7 +8,7 @@
 #include <stdint.h>
 #include "main.h"
 #include "CANdefines.h"
-//#include "BatteryControlTask.h"
+#include "BatteryControlTask.h"
 #include "ReadPowerGPIO.h"
 #include "MBMS.h"
 
@@ -40,27 +40,22 @@ void StartupTask(void* arg)
 void Startup()
 {
 
-	mbmsStatus.startupState = MPS_OPEN;
+	mbmsStatus.startupState = nMPS_ESD_DISABLED;
 	//aux battery has started up and is powering the MBMS
 
-	while ( readMainPowerSwitch() == MPS_DISABLED) {
-		//if MPS is disabled (open) , we need to trip
-		// TO DO: trip... naw do in BCT lol
-
-		//mbmsTrip.protectionTrip = 1; // not sure if this is the right trip... check NUH UH
-		// MAYBE JUST DELAY THIS TASK SO BATT CONTROL CAN DETECT IT AND SET FOLAG AND GO TO SHUTDOWN ETC.
-		osDelay(MPS_WAIT_TIME * 1000);
+	while (read_nMPS_ESD() == nMPS_ESD_DISABLED) {
+		// do BPS fault & shutdown
+		uint32_t shutoffFlagsSet = osEventFlagsSet(shutoffFlagHandle, nMPS_ESD_FLAG| SHUTOFF_FLAG);
 		osThreadTerminate(startupTaskHandle);
 	}
-	// otherwise everything is good to continue
-	mbmsStatus.startupState = MPS_CLOSED;
 
-	// delay to enable battery control task
-	// delay 1 second, wait for battery control task to settle and decide if battery state is safe
-	osDelay(MPS_WAIT_TIME * 1000);
+	mbmsStatus.startupState = nMPS_ESD_ENABLED;
+
+	// DO NEW CHECKS!!!!! if fails, either BPS fault, or keeps checking
+	// maybe call BCT functionto do checks... make a function specific to startup checks
 
 	uint32_t flagsSet;
-	// set flag to give permission to precharge/close common contactor
+
 	flagsSet = osEventFlagsSet(contactorPermissionsFlagHandle, COMMON_FLAG);
 	while ((contactorInfo[COMMON].contactorState != CLOSE_CONTACTOR)) { //
 		// wait for common contactor to close
@@ -92,20 +87,8 @@ void Startup()
 		}
 	}
 
-	mbmsStatus.startupState = DCDC1_CLOSED;
+	mbmsStatus.startupState = DCDC1_ON;
 
-	// disconnect DCDC0 (no longer connect to aux battery)
-	HAL_GPIO_WritePin(ABATT_DISABLE_GPIO_Port, ABATT_DISABLE_Pin, GPIO_PIN_SET); // assuming disable is disconnect/open,
-	// wait until DCDC0 has been disconnected (while DCDC0 == closed) {}
-	uint32_t DCDC0_Start_Count = osKernelGetTickCount();
-	while(read_nDCDC0_ON() == 0) {
-		uint32_t DCDC0_Time_Passed = (osKernelGetTickCount() - DCDC0_Start_Count) * FREERTOS_TICK_PERIOD;
-		if(DCDC0_Time_Passed >= DCDC0_WAIT_TIME){
-			// TO DO: trip
-			osThreadTerminate(startupTaskHandle);
-		}
-	}
-	mbmsStatus.startupState = DCDC0_OPEN;
 
 	// set flag to give permission to precharge/close motor contactor
 	// just check that everything is good still (doesnt HAVE to close motor before moving on to next part)
@@ -130,6 +113,19 @@ void Startup()
 
 	// set flag that everything is done (all perms given!!!)
 	mbmsStatus.startupState = FULLY_OPERATIONAL;
+
+	// disconnect DCDC0 (no longer connect to aux battery)
+	HAL_GPIO_WritePin(ABATT_DISABLE_GPIO_Port, ABATT_DISABLE_Pin, GPIO_PIN_SET); // assuming disable is disconnect/open,
+	// wait until DCDC0 has been disconnected (while DCDC0 == closed) {}
+	uint32_t DCDC0_Start_Count = osKernelGetTickCount();
+	while(read_nDCDC0_ON() == 0) {
+		uint32_t DCDC0_Time_Passed = (osKernelGetTickCount() - DCDC0_Start_Count) * FREERTOS_TICK_PERIOD;
+		if(DCDC0_Time_Passed >= DCDC0_WAIT_TIME){
+			// TO DO: trip
+			osThreadTerminate(startupTaskHandle);
+		}
+	}
+	mbmsStatus.startupState = DCDC0_OFF;
 
 	// end of startup
 	osThreadTerminate(startupTaskHandle);

@@ -240,7 +240,7 @@ int main(void)
 
   /* Init scheduler */
   osKernelInitialize();
-  //defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
+
   /* USER CODE BEGIN RTOS_MUTEX */
 #if 1
   /* add mutexes, ... */
@@ -275,7 +275,7 @@ int main(void)
 
   /* Create the thread(s) */
   /* creation of defaultTask */
-//  defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
+  defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -307,9 +307,10 @@ int main(void)
 //  shutoffFlagHandle = osEventFlagsNew(&shutoffFlag_attributes);
 
   contactorPermissionsFlagHandle = osEventFlagsNew(&contactorPermissionsFlag_attributes);
-  /* USER CODE END RTOS_EVENTS */
-#endif
 
+
+#endif
+  /* USER CODE END RTOS_EVENTS */
 
   /* Start scheduler */
   osKernelStart();
@@ -596,9 +597,9 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PC13 MAIN_PWR_SW_Pin CHARGE_SAFETY_SENSE_Pin DISCHARGE_ENABLE_SENSE_Pin
+  /*Configure GPIO pins : PC13 nMPS_ESD_Pin CHARGE_SAFETY_SENSE_Pin DISCHARGE_ENABLE_SENSE_Pin
                            CHARGE_ENABLE_SENSE_Pin */
-  GPIO_InitStruct.Pin = GPIO_PIN_13|MAIN_PWR_SW_Pin|CHARGE_SAFETY_SENSE_Pin|DISCHARGE_ENABLE_SENSE_Pin
+  GPIO_InitStruct.Pin = GPIO_PIN_13|nMPS_ESD_Pin|CHARGE_SAFETY_SENSE_Pin|DISCHARGE_ENABLE_SENSE_Pin
                           |CHARGE_ENABLE_SENSE_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;

@@ -24,6 +24,11 @@ void checkIfShutdown();
 
 void checkContactorHeartbeats();
 
+void waitForFirstHeartbeats();
+
+void startupCheck();
+
+
 
 //#define CLOSED 0x0
 //#define OPEN 0x1

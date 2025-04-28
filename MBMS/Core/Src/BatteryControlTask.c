@@ -26,11 +26,15 @@ MBMSTrip mbmsTrip;
 
 ContactorCommand contactorCommand;
 
+PowerSelectionStatus powerSelectionStatus;
+
 ContactorInfo contactorInfo[6]; // one for each contactor
 
 uint16_t tripData = 0;
 
-static uint8_t heartbeatLastUpdatedTime[6];
+static uint8_t heartbeatLastUpdatedTime[6] = {0};
+
+static uint16_t previousHeartbeats[6] = {0}; //check this !!! syntax !
 
 
 // STROBE ENABLE IS NOW GPIO STRAIGHT FROM MBMS, need CAN message to let rest of car know that its currently strobing
@@ -43,9 +47,6 @@ static uint8_t heartbeatLastUpdatedTime[6];
 
 void BatteryControlTask(void* arg)
 {
-	for(int i = 0; i < 6; i++) {
-		heartbeatLastUpdatedTime[i] = osKernelGetTickCount();
-	}
 
     while(1)
     {
@@ -57,7 +58,6 @@ void BatteryControlTask(void* arg)
 void BatteryControl()
 {
 
-	static uint32_t previousHeartbeat; // compare with struct heartbeat ( the most recent one, check if its greater than the previous heartbeat, if yes, things r good and update previous heartbeat, if not... things r bad, and trip
 
 
 
@@ -83,6 +83,102 @@ void BatteryControl()
 	// NEED TO CHECK CURRENT STUFF STILL.... need to do all the trip stuff lol, also check attributes of can msg for sumn idk
 
 }
+void waitForFirstHeartbeats() {
+	static uint8_t heartbeatFailCounter[6] = {0};
+
+
+	for(int i = 0; i < 6; i++) {
+		if(heartbeatFailCounter[i] > 3) {
+			switch (i) {
+				case 0:
+					mbmsTrip.commonHeartbeatDeadTrip = 1;
+					break;
+				case 1:
+					mbmsTrip.motor1HeartbeatDeadTrip = 1;
+					break;
+				case 2:
+					mbmsTrip.motor2HeartbeatDeadTrip = 1;
+					break;
+				case 3:
+					mbmsTrip.arrayHeartbeatDeadTrip = 1;
+					break;
+				case 4:
+					mbmsTrip.LVHeartbeatDeadTrip = 1;
+					break;
+				case 5:
+					mbmsTrip.chargeHeartbeatDeadTrip = 1;
+					break;
+			}
+			// MAYBE STRAIGHT UP SET SHUTDOWN FLAG HERE !
+
+		}
+		if(previousHeartbeats[i] >= 65535) { // check this logic lol
+			previousHeartbeats[i] = 0;
+		}
+		if(previousHeartbeats[i] >= contactorInfo[i].heartbeat){
+			if(((osKernelGetTickCount() - heartbeatLastUpdatedTime[i]) * FREERTOS_TICK_PERIOD) > CONTACTOR_HEARTBEAT_TIMEOUT) {
+				heartbeatFailCounter[i]++;
+
+
+			}
+		}
+		else {
+			heartbeatLastUpdatedTime[i] = osKernelGetTickCount();
+			previousHeartbeats[i] = contactorInfo[i].heartbeat;
+			heartbeatFailCounter[i] = 0;
+		}
+	}
+
+}
+
+uint8_t checkContactorsOpen() {
+	// BUT SHOULD I OPEN THE CONTACTOR IF THEY ARE CLOSED? maybe yeah
+	uint8_t safe = 1;
+	for (int i = 0; i < 6; i++) {
+		if (contactorInfo[i].contactorState == OPEN_CONTACTOR) {
+			safe = 0;
+			break;
+		}
+	}
+	return safe;
+
+
+
+}
+uint8_t checkPrechargersOpen() {
+	uint8_t safe = 1;
+	for (int i = 0; i < 6; i++) {
+		if (contactorInfo[i].prechargerClosed == OPEN_CONTACTOR) {
+			safe = 0;
+			break;
+		}
+	}
+	return safe;
+
+
+}
+
+void startupCheck(){
+
+	/* Waiting for contactor heartbeats */
+	// idk this feels kinda sketchy, maybe look at it ...
+	while ((previousHeartbeats[0] == 0) || (previousHeartbeats[1] == 0) || (previousHeartbeats[2] == 0) ||
+		   (previousHeartbeats[3] == 0) || (previousHeartbeats[4] == 0) || (previousHeartbeats[5] == 0))
+	{
+		updateContactorInfoStruct();
+		waitForFirstHeartbeats();
+	}
+
+	/* Check contactors & prechargers are open */
+	if ((checkContactorsOpen() == 0) || checkPrechargersOpen() == 0){
+		//bps fault
+	}
+
+	/* Battery check (orion) */
+
+
+
+}
 
 void checkContactorHeartbeats() {
 	/* The reason i'm checking heartbeats this way and not with a timeout for the message queue (like orion)
@@ -90,15 +186,16 @@ void checkContactorHeartbeats() {
 	 * be accurate of what the problem is, or if there is a proble. For example if a contactor dies, other
 	 * contactor would still be sending messages.
 	 */
-	static uint8_t heartbeatStaticCounter[6] = {0};
 
-	static uint16_t previousHeartbeats[6] = {0}; //check this !!! syntax !
+
+
 	for(int i = 0; i < 6; i++) {
 		if(previousHeartbeats[i] >= 65535) { // check this logic lol
 			previousHeartbeats[i] = 0;
 		}
 		if(previousHeartbeats[i] >= contactorInfo[i].heartbeat){
 			if(((osKernelGetTickCount() - heartbeatLastUpdatedTime[i]) * FREERTOS_TICK_PERIOD) > CONTACTOR_HEARTBEAT_TIMEOUT) {
+
 				// set heartbeat dead trip
 				switch (i) {
 					case 0:
@@ -180,6 +277,10 @@ void updateContactorInfo(uint8_t contactor, uint8_t prechargerClosed, uint8_t pr
 	return;
 }
 
+void updatePowerSelectionStruct() {
+
+}
+
 
 
 void checkIfShutdown() {
@@ -191,11 +292,11 @@ void checkIfShutdown() {
 	}
 	// check key and mps and hard and soft batt limit to possibly set shutdown flags !!!!
 	uint32_t shutoffFlagsSet;
-	if (readKeySwitch() == KEY_OFF){
+	if (read_KeySwitch() == KEY_OFF){
 		shutoffFlagsSet = osEventFlagsSet(shutoffFlagHandle, KEY_FLAG | SHUTOFF_FLAG);
 	}
-	if (readMainPowerSwitch() == MPS_DISABLED){
-		shutoffFlagsSet = osEventFlagsSet(shutoffFlagHandle, MPS_FLAG | SHUTOFF_FLAG);
+	if (read_nMPS_ESD() == nMPS_ESD_DISABLED){
+		shutoffFlagsSet = osEventFlagsSet(shutoffFlagHandle, nMPS_ESD_FLAG | SHUTOFF_FLAG);
 	}
 
 
@@ -271,7 +372,7 @@ void updateTripStatus() {
 
 	// Dead contactor heartbeat trips are done in a diff function
 
-	if(readMainPowerSwitch() == MPS_DISABLED){
+	if(read_nMPS_ESD() == nMPS_ESD_ENABLED){
 		//set trip
 	}
 

@@ -8,22 +8,20 @@
 #ifndef INC_MBMS_H_
 #define INC_MBMS_H_
 
-// can change these later, discuss w khadeeja
-//#define OPEN_CONTACTOR GPIO_PIN_RESET // 0
-//#define CLOSE_CONTACTOR GPIO_PIN_SET // 1
-
 #define KEY_OFF 0
 #define KEY_ON 1
 
-#define MPS_ENABLED 1
-#define MPS_DISABLED 0
+// ESD is the external cutoff off switch (button)
+#define nMPS_ESD_ENABLED 1
+#define nMPS_ESD_DISABLED 0
+
 
 #define FREERTOS_TICK_PERIOD 1/configTICK_RATE_HZ //USE THIS INSTEAD OF SECONFS PER TICK
 
 #define SHUTOFF_FLAG 0b1U // just making the flag an arbitrary number (should be uint32_t,,, this is = 1 in decimal)
 // what was the cause of the shutdown??
 //#define EPCOS_FLAG 0b00000010U // external power cut off switch (push button outside car), starts soft shutdown
-#define MPS_FLAG 0b10U // main power switch is the cause of shutoff
+#define nMPS_ESD_FLAG 0b10U // main power switch is the cause of shutoff
 #define KEY_FLAG 0b100U // turning car key is cause of shutoff
 #define HARD_BL_FLAG 0b1000U // hard battery limit is cause of shutoff
 #define SOFT_BL_FLAG 0b10000U // soft battery limit is cause of shutoff
@@ -53,14 +51,14 @@ enum Contactor {
 
 
 enum startupStates {
-	MPS_OPEN = 0,
-	MPS_CLOSED,
+	nMPS_ESD_HIGH = 0, // couldnt name it nMPS_ESD_ENABLED bc thats already defined
+	nMPS_ESD_LOW,
 	COMMON_CLOSED,
 	LV_CLOSED,
-	DCDC1_CLOSED,
-	DCDC0_OPEN,
+	DCDC1_ON,
 	MOTORS_ENABLED,
-	FULLY_OPERATIONAL // this one is like array and charge perms given :)
+	FULLY_OPERATIONAL, // this one is like array and charge perms given :)
+	DCDC0_OFF
 };
 
 
@@ -88,7 +86,7 @@ typedef struct {
 	uint8_t prechargerError;
 	uint8_t contactorState; // march 8: two bits become one variable, 00 = open, 01 = closed, 10 = closing
 	uint8_t contactorError;
-	uint16_t voltage;
+	int16_t voltage; // CHANGED FROM UINT16 ON APRIL 2
 	uint16_t current;
 	uint16_t heartbeat;
 } ContactorInfo;

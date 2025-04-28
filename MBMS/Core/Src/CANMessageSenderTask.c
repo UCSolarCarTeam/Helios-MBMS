@@ -24,6 +24,8 @@ extern uint16_t tripData;
 
 extern ContactorCommand contactorCommand;
 
+extern PowerSelectionStatus powerSelectionStatus;
+
 extern ContactorInfo contactorInfo[6];
 
 void CANMessageSenderTask(void* arg)
@@ -68,6 +70,22 @@ void sendTripStatusCanMessage(uint16_t * tripData) {
 
 }
 
+void sendPowerSelectionStatus() {
+	CANMsg powSelectStatusMsg;
+	uint16_t data = ((powerSelectionStatus.mainPowerSwitch & 0x1) << 0) + ((powerSelectionStatus.DCDC1Enable & 0x1) << 1)
+			+ ((powerSelectionStatus.nDCDC1Fault & 0x1) << 2) + ((powerSelectionStatus.DCDC0_OV_Fault & 0x1) << 3)
+			+ ((powerSelectionStatus.DCDC0_UV_Fault & 0x1) << 4) + ((powerSelectionStatus.nDCDC0_On & 0x1) << 5)
+			+ ((powerSelectionStatus._3A_OC_UC & 0x1) << 6) + ((powerSelectionStatus.nDCDC1_On & 0x1) << 7)
+			+ ((powerSelectionStatus.nCHG_Fault & 0x1) << 8) + ((powerSelectionStatus.nCHG_On & 0x1) << 9)
+			+ ((powerSelectionStatus.ABATTDisable & 0x1) << 10) + ((powerSelectionStatus.Key & 0x1) << 11);
+	powSelectStatusMsg.data[0] = (data & 0xff);
+	powSelectStatusMsg.data[1] = (data & 0xff00) >> 8;
+	powSelectStatusMsg.DLC = 2;
+	powSelectStatusMsg.extendedID = POWER_SELECTION_STATUS_ID;
+	powSelectStatusMsg.ID = 0x0;
+	osMessageQueuePut(TxCANMessageQueueHandle, &powSelectStatusMsg, 0, osWaitForever);
+
+}
 void sendMBMSStatusCanMessage() {
 	// should send CAN message of trips ???
 	CANMsg mbmsStatusMsg;
