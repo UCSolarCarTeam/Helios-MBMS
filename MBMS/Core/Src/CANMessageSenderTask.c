@@ -54,11 +54,10 @@ void sendTripStatusCanMessage(uint16_t * tripData) {
 			+ ((mbmsTrip.chargeHighCurrentTrip & 0x1) << 6)   			  + ((mbmsTrip.protectionTrip & 0x1) << 7)
 			+ ((mbmsTrip.orionMessageTimeoutTrip & 0x1) << 8) 			  + ((mbmsTrip.contactorDisconnectedUnexpectedlyTrip & 0x1) << 9)
 			+ ((mbmsTrip.contactorConnectedUnexpectedlyTrip & 0x1) << 10) + ((mbmsTrip.highBatteryTrip & 0x1) << 11)
-			+ ((mbmsTrip.commonHeartbeatDeadTrip & 0x1) << 12) 			  + ((mbmsTrip.motor1HeartbeatDeadTrip & 0x1) << 13)
-			+ ((mbmsTrip.motor2HeartbeatDeadTrip & 0x1) << 14) 			  + ((mbmsTrip.arrayHeartbeatDeadTrip & 0x1) << 15)
-			+ ((mbmsTrip.LVHeartbeatDeadTrip & 0x1) << 16) 				  + ((mbmsTrip.chargeHeartbeatDeadTrip & 0x1) << 17)
-			+ ((mbmsTrip.MPSDisabledTrip & 0x1) << 18) 				  	  + ((mbmsTrip.keyOffTrip & 0x1) << 19)
-			+ ((mbmsTrip.hardBatteryLimitTrip & 0x1) << 20) 			  + ((mbmsTrip.softBatteryLimitTrip & 0x1) << 21);
+			+ ((mbmsTrip.commonHeartbeatDeadTrip & 0x1) << 12) 			  + ((mbmsTrip.motorHeartbeatDeadTrip & 0x1) << 13)
+			+ ((mbmsTrip.arrayHeartbeatDeadTrip & 0x1) << 14)			  + ((mbmsTrip.LVHeartbeatDeadTrip & 0x1) << 15)
+			+ ((mbmsTrip.chargeHeartbeatDeadTrip & 0x1) << 16)		      + ((mbmsTrip.MPSDisabledTrip & 0x1) << 17)
+			+ ((mbmsTrip.ESDEnabledTrip & 0x1) << 18);
 
 	tripMsg.data[0] = (*tripData & 0xff);
 	tripMsg.data[1] = (*tripData & 0xff00) >> 8;
@@ -72,12 +71,12 @@ void sendTripStatusCanMessage(uint16_t * tripData) {
 
 void sendPowerSelectionStatus() {
 	CANMsg powSelectStatusMsg;
-	uint16_t data = ((powerSelectionStatus.mainPowerSwitch & 0x1) << 0) + ((powerSelectionStatus.DCDC1Enable & 0x1) << 1)
+	uint16_t data = ((powerSelectionStatus.mainPowerSwitch & 0x1) << 0) + ((powerSelectionStatus.nDCDC1Enable & 0x1) << 1)
 			+ ((powerSelectionStatus.nDCDC1Fault & 0x1) << 2) + ((powerSelectionStatus.DCDC0_OV_Fault & 0x1) << 3)
 			+ ((powerSelectionStatus.DCDC0_UV_Fault & 0x1) << 4) + ((powerSelectionStatus.nDCDC0_On & 0x1) << 5)
-			+ ((powerSelectionStatus._3A_OC_UC & 0x1) << 6) + ((powerSelectionStatus.nDCDC1_On & 0x1) << 7)
+			+ ((powerSelectionStatus.n3A_OC_UC & 0x1) << 6) + ((powerSelectionStatus.nDCDC1_On & 0x1) << 7)
 			+ ((powerSelectionStatus.nCHG_Fault & 0x1) << 8) + ((powerSelectionStatus.nCHG_On & 0x1) << 9)
-			+ ((powerSelectionStatus.ABATTDisable & 0x1) << 10) + ((powerSelectionStatus.Key & 0x1) << 11);
+			+ ((powerSelectionStatus.nABAT_Enable & 0x1) << 10) + ((powerSelectionStatus.Key & 0x1) << 11);
 	powSelectStatusMsg.data[0] = (data & 0xff);
 	powSelectStatusMsg.data[1] = (data & 0xff00) >> 8;
 	powSelectStatusMsg.DLC = 2;
@@ -140,12 +139,8 @@ void sendContactorsCanMessage() {
 			contactorCommand.common = CLOSE_CONTACTOR;
 			sendContactorCommand = 1;
 		}
-		else if (((flags & MOTOR1_FLAG) == MOTOR1_FLAG) && (contactorInfo[MOTOR1].contactorState != CLOSE_CONTACTOR) && (tripData == 0x0) && (mbmsStatus.allowDischarge == 1)) {
-			contactorCommand.motor1 = CLOSE_CONTACTOR;
-			sendContactorCommand = 1;
-		}
-		else if (((flags & MOTOR2_FLAG) == MOTOR2_FLAG) && (contactorInfo[MOTOR2].contactorState != CLOSE_CONTACTOR) && (tripData == 0x0) && (mbmsStatus.allowDischarge == 1)) {
-			contactorCommand.motor2 = CLOSE_CONTACTOR;
+		else if (((flags & MOTOR_FLAG) == MOTOR_FLAG) && (contactorInfo[MOTOR].contactorState != CLOSE_CONTACTOR) && (tripData == 0x0) && (mbmsStatus.allowDischarge == 1)) {
+			contactorCommand.motor = CLOSE_CONTACTOR;
 			sendContactorCommand = 1;
 		}
 		else if (((flags & ARRAY_FLAG) == ARRAY_FLAG) && (contactorInfo[ARRAY].contactorState != CLOSE_CONTACTOR) && (tripData == 0x0) && (mbmsStatus.allowCharge == 1)) {
@@ -165,13 +160,9 @@ void sendContactorsCanMessage() {
 
 
 	// Open contactors as needed SHOULD I CHECK TRIPDATA AS WELL HERE?or naw cuz a diff func will check idkkk i wanna say noo ...
-	if (((flags & MOTOR1_FLAG) == MOTOR1_FLAG) && (contactorInfo[MOTOR1].contactorState != OPEN_CONTACTOR) && (mbmsStatus.allowDischarge == 0)){
-		contactorCommand.motor1 = OPEN_CONTACTOR;
-		sendContactorCommand = 1;
-	}
 
-	if (((flags & MOTOR2_FLAG) == MOTOR2_FLAG) && (contactorInfo[MOTOR2].contactorState != OPEN_CONTACTOR) && (mbmsStatus.allowDischarge == 0)){
-		contactorCommand.motor2 = OPEN_CONTACTOR;
+	if (((flags & MOTOR_FLAG) == MOTOR_FLAG) && (contactorInfo[MOTOR].contactorState != OPEN_CONTACTOR) && (mbmsStatus.allowDischarge == 0)){
+		contactorCommand.motor = OPEN_CONTACTOR;
 		sendContactorCommand = 1;
 	}
 
@@ -194,8 +185,8 @@ void sendContactorsCanMessage() {
 
 
 	if (sendContactorCommand == 1) {
-		contactorCommandMsg.data[0] = ((contactorCommand.common & 0x01) << COMMON) + ((contactorCommand.motor1 & 0x01) << MOTOR1)
-									+ ((contactorCommand.motor2 & 0x01) << MOTOR2) + ((contactorCommand.array & 0x01) << ARRAY)
+		contactorCommandMsg.data[0] = ((contactorCommand.common & 0x01) << COMMON) + ((contactorCommand.motor & 0x01) << MOTOR)
+									+ ((contactorCommand.array & 0x01) << ARRAY)
 									+ ((contactorCommand.LV & 0x01) << LOWV)       + ((contactorCommand.charge & 0x01) << CHARGE);
 		osMessageQueuePut(TxCANMessageQueueHandle, &contactorCommandMsg, 0, osWaitForever);
 	}

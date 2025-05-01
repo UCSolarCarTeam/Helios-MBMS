@@ -26,6 +26,7 @@ extern MBMSStatus mbmsStatus;
 #define DCDC1_WAIT_TIME 10
 #define MOTOR_WAIT_TIME 10
 #define ARRAY_WAIT_TIME 10
+#define CHARGE_WAIT_TIME 10
 
 extern MBMSTrip mbmsTrip;
 
@@ -40,16 +41,25 @@ void StartupTask(void* arg)
 void Startup()
 {
 
-	mbmsStatus.startupState = nMPS_ESD_DISABLED;
 	//aux battery has started up and is powering the MBMS
 
-	while (read_nMPS_ESD() == nMPS_ESD_DISABLED) {
+
+	mbmsStatus.startupState = nMPS_ENABLED;
+
+	while (read_nMPS() == 1) {
+		// wait for MPS to be on/enabled
+	}
+
+	mbmsStatus.startupState = nMPS_DISABLED;
+
+
+	while (read_ESD() == 1) {
 		// do BPS fault & shutdown
-		uint32_t shutoffFlagsSet = osEventFlagsSet(shutoffFlagHandle, nMPS_ESD_FLAG| SHUTOFF_FLAG);
+		uint32_t shutoffFlagsSet = osEventFlagsSet(shutoffFlagHandle, ESD_FLAG| SHUTOFF_FLAG);
 		osThreadTerminate(startupTaskHandle);
 	}
 
-	mbmsStatus.startupState = nMPS_ESD_ENABLED;
+	mbmsStatus.startupState = ESD_DISABLED;
 
 	// DO NEW CHECKS!!!!! if fails, either BPS fault, or keeps checking
 	// maybe call BCT functionto do checks... make a function specific to startup checks
@@ -92,17 +102,21 @@ void Startup()
 
 	// set flag to give permission to precharge/close motor contactor
 	// just check that everything is good still (doesnt HAVE to close motor before moving on to next part)
-	flagsSet = osEventFlagsSet(contactorPermissionsFlagHandle, (MOTOR1_FLAG | MOTOR2_FLAG)); // set both motors contactor flag
+	flagsSet = osEventFlagsSet(contactorPermissionsFlagHandle, MOTOR_FLAG ); // set both motors contactor flag
 
-	mbmsStatus.startupState = MOTORS_ENABLED;
+	mbmsStatus.startupState = MOTORS_PERMS;
 
 	//add a delay for 10 seconds
 	// to give time for batt control to check things r ok, close contactors or not, decide if there needs to be a trip or not etc.
 	osDelay(MOTOR_WAIT_TIME * 1000);
 
+	flagsSet = osEventFlagsSet(contactorPermissionsFlagHandle, CHARGE_FLAG); // set LV contactor flag
+	// give time to battery control task to make sure battery state is still safe
+	osDelay(CHARGE_WAIT_TIME * 1000);
+
 	// set flag to give permission to precharge/close array contactor
 	// wait until array contactor done (same as above, make sure everything okay still, doesnt NEED it to bed closed...)
-	flagsSet = osEventFlagsSet(contactorPermissionsFlagHandle, (ARRAY_FLAG | CHARGE_FLAG)); // set LV contactor flag
+	flagsSet = osEventFlagsSet(contactorPermissionsFlagHandle, ARRAY_FLAG); // set LV contactor flag
 	// give time to battery control task to make sure battery state is still safe
 	osDelay(ARRAY_WAIT_TIME * 1000);
 	// if battery is fully charged, don't do the array!!!!
@@ -111,10 +125,7 @@ void Startup()
 	// if car is fully charged, dont need array
 
 
-	// set flag that everything is done (all perms given!!!)
-	mbmsStatus.startupState = FULLY_OPERATIONAL;
-
-	// disconnect DCDC0 (no longer connect to aux battery)
+	// turn off DCDC0 (no longer connect to aux battery)
 	HAL_GPIO_WritePin(ABATT_DISABLE_GPIO_Port, ABATT_DISABLE_Pin, GPIO_PIN_SET); // assuming disable is disconnect/open,
 	// wait until DCDC0 has been disconnected (while DCDC0 == closed) {}
 	uint32_t DCDC0_Start_Count = osKernelGetTickCount();
@@ -126,6 +137,10 @@ void Startup()
 		}
 	}
 	mbmsStatus.startupState = DCDC0_OFF;
+
+
+	// set flag that everything is done (all perms given!!!)
+	mbmsStatus.startupState = FULLY_OPERATIONAL;
 
 	// end of startup
 	osThreadTerminate(startupTaskHandle);

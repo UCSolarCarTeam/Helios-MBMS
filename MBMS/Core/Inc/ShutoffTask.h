@@ -12,9 +12,10 @@
 
 
 #define KEY 0
-#define MPS 1
-#define HARD 2
-#define SOFT 3
+#define nMPS 1
+#define ESD 2
+#define HARD 3
+#define SOFT 4
 
 
 // function definitions

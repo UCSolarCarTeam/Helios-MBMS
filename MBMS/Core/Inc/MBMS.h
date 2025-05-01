@@ -12,8 +12,7 @@
 #define KEY_ON 1
 
 // ESD is the external cutoff off switch (button)
-#define nMPS_ESD_ENABLED 1
-#define nMPS_ESD_DISABLED 0
+
 
 
 #define FREERTOS_TICK_PERIOD 1/configTICK_RATE_HZ //USE THIS INSTEAD OF SECONFS PER TICK
@@ -21,10 +20,11 @@
 #define SHUTOFF_FLAG 0b1U // just making the flag an arbitrary number (should be uint32_t,,, this is = 1 in decimal)
 // what was the cause of the shutdown??
 //#define EPCOS_FLAG 0b00000010U // external power cut off switch (push button outside car), starts soft shutdown
-#define nMPS_ESD_FLAG 0b10U // main power switch is the cause of shutoff
-#define KEY_FLAG 0b100U // turning car key is cause of shutoff
-#define HARD_BL_FLAG 0b1000U // hard battery limit is cause of shutoff
-#define SOFT_BL_FLAG 0b10000U // soft battery limit is cause of shutoff
+#define ESD_FLAG 0b10U // external shutdown button pressed
+#define nMPS_FLAG 0b100U // main power switch off
+#define KEY_FLAG 0b1000U // turning car key is cause of shutoff
+#define HARD_BL_FLAG 0b10000U // hard battery limit is cause of shutoff
+#define SOFT_BL_FLAG 0b100000U // soft battery limit is cause of shutoff
 
 
 
@@ -41,8 +41,7 @@ enum ContactorState {
 
 enum Contactor {
 	COMMON = 0,
-	MOTOR1,
-	MOTOR2,
+	MOTOR,
 	ARRAY,
 	LOWV,
 	CHARGE
@@ -51,14 +50,17 @@ enum Contactor {
 
 
 enum startupStates {
-	nMPS_ESD_HIGH = 0, // couldnt name it nMPS_ESD_ENABLED bc thats already defined
-	nMPS_ESD_LOW,
+	nMPS_ENABLED = 0,
+	nMPS_DISABLED,
+	ESD_DISABLED,
 	COMMON_CLOSED,
 	LV_CLOSED,
 	DCDC1_ON,
-	MOTORS_ENABLED,
-	FULLY_OPERATIONAL, // this one is like array and charge perms given :)
-	DCDC0_OFF
+	MOTORS_PERMS,
+	CHARGE_PERMS,
+	ARRAY_PERMS,
+	DCDC0_OFF,
+	FULLY_OPERATIONAL,
 };
 
 
@@ -120,29 +122,27 @@ typedef struct {
 	uint8_t contactorConnectedUnexpectedlyTrip;
 	uint8_t highBatteryTrip;
 	uint8_t commonHeartbeatDeadTrip;
-	uint8_t motor1HeartbeatDeadTrip;
-	uint8_t motor2HeartbeatDeadTrip;
+	uint8_t motorHeartbeatDeadTrip;
 	uint8_t arrayHeartbeatDeadTrip;
 	uint8_t LVHeartbeatDeadTrip;
 	uint8_t chargeHeartbeatDeadTrip;
 	uint8_t MPSDisabledTrip;
-	uint8_t keyOffTrip;
-	uint8_t hardBatteryLimitTrip;
-	uint8_t softBatteryLimitTrip;
+	uint8_t ESDEnabledTrip;
+
 } MBMSTrip;
 
 typedef struct {
 	uint8_t mainPowerSwitch;
-	uint8_t DCDC1Enable;
+	uint8_t nDCDC1Enable;
 	uint8_t nDCDC1Fault;
 	uint8_t DCDC0_OV_Fault;
 	uint8_t DCDC0_UV_Fault;
-	uint8_t nDCDC0_On; // um this feels like an input to the bms
-	uint8_t _3A_OC_UC;
+	uint8_t nDCDC0_On; // um this feels like an input to the bms YES IT ISSSSS
+	uint8_t n3A_OC_UC;
 	uint8_t nDCDC1_On;
 	uint8_t nCHG_Fault;
 	uint8_t nCHG_On;
-	uint8_t ABATTDisable;
+	uint8_t nABAT_Enable;
 	uint8_t Key;
 } PowerSelectionStatus;
 
@@ -157,8 +157,7 @@ typedef struct {
 
 typedef struct{
 	uint8_t common;
-	uint8_t motor1;
-	uint8_t motor2;
+	uint8_t motor;
 	uint8_t array;
 	uint8_t LV;
 	uint8_t charge;

@@ -11,7 +11,9 @@
 #include <stdint.h>
 #include "main.h"
 
-uint16_t read_nMPS_ESD(void);
+uint16_t read_nMPS(void);
+
+uint16_t read_ESD(void);
 
 uint16_t read_nDCDC0_ON(void);
 

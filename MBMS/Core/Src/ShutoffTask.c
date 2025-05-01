@@ -50,15 +50,15 @@ void Shutoff()
 
 		// creating the data to send (using bit shifting):
 		// make it so all contactors (if common open, all contactors SHOULD BE opened)
-		uint8_t openCommon = (OPEN_CONTACTOR << COMMON) + (OPEN_CONTACTOR<< MOTOR1) + (OPEN_CONTACTOR << MOTOR2)+ (OPEN_CONTACTOR << ARRAY) + (OPEN_CONTACTOR << LOWV) + (OPEN_CONTACTOR << CHARGE);
+		uint8_t openCommon = (OPEN_CONTACTOR << COMMON) + (OPEN_CONTACTOR<< MOTOR) + (OPEN_CONTACTOR << ARRAY) + (OPEN_CONTACTOR << LOWV) + (OPEN_CONTACTOR << CHARGE);
 		// assuming all HV stuff opened at same time
-		uint8_t openHV = ((contactorInfo[COMMON].contactorState & 0x01) << COMMON ) + (OPEN_CONTACTOR << MOTOR1) + (OPEN_CONTACTOR << MOTOR2) + (OPEN_CONTACTOR << ARRAY) + ((contactorInfo[LOWV].contactorState & 0x01) << LOWV) + (OPEN_CONTACTOR << CHARGE);
+		uint8_t openHV = ((contactorInfo[COMMON].contactorState & 0x01) << COMMON ) + (OPEN_CONTACTOR << MOTOR)  + (OPEN_CONTACTOR << ARRAY) + ((contactorInfo[LOWV].contactorState & 0x01) << LOWV) + (OPEN_CONTACTOR << CHARGE);
 
 		// flag for BPS fault
 		uint16_t BPSFaultSignal = 0;
 
 		// extract the reason for the shut off procedure
-		uint8_t causes[4] = {0, 0, 0, 0};
+		uint8_t causes[4] = {0, 0, 0, 0, 0};
 		if ((flags & KEY_FLAG) == KEY_FLAG) {
 			causes[KEY] = 1;
 		}
@@ -66,25 +66,30 @@ void Shutoff()
 			causes[HARD] = 1;
 		}
 
-		if ((flags & nMPS_ESD_FLAG) == nMPS_ESD_FLAG) {
-			causes[MPS] = 1;
+		if ((flags & nMPS_FLAG) == nMPS_FLAG) {
+			causes[nMPS] = 1;
 		}
+
+		if ((flags & ESD_FLAG) == ESD_FLAG) {
+			causes[ESD] = 1;
+		}
+
 		if ((flags & SOFT_BL_FLAG) == SOFT_BL_FLAG) {
 			causes[SOFT] = 1;
 		}
 
-		if ( causes[SOFT] || causes[HARD] || causes[MPS]) {
+		if ( causes[SOFT] || causes[HARD] || causes[ESD]) {
 			BPSFaultSignal = 1; // if the reason for shut off is one of the above, set BPS Fault Signal
 		}
 
 		if (!causes[HARD]) { // if hitting hard battery limit is not the reason for shut off
 
-			if (mbmsStatus.startupState >= MOTORS_ENABLED) { // check that startup task made it past the poiunt of enabling th motors
+			if (mbmsStatus.startupState >= MOTORS_PERMS) { // check that startup task made it past the poiunt of enabling th motors
 
 				msg.data[0] = openHV; // assign the data to open the HV Contactor Command!
 				osMessageQueuePut(TxCANMessageQueueHandle, &msg, 0, osWaitForever); //adding it to the message queue to send CAN messages
 				// wait for motor contactors to open (dont care abt array/charge contactors
-				while((contactorInfo[MOTOR1].contactorState != OPEN_CONTACTOR) || (contactorInfo[MOTOR2].contactorState != OPEN_CONTACTOR )) {
+				while((contactorInfo[MOTOR].contactorState != OPEN_CONTACTOR)) {
 					 // get shutoff flags to see if hard battery limit has been reached during the time it takes for HV contactors to open
 					// if so, change causes, and break out of this loop!
 					 uint32_t flags = osEventFlagsGet(shutoffFlagHandle);
@@ -150,13 +155,11 @@ void Shutoff()
 
 			while(1) {
 				// Wait for driver to turn key to off, to power everything off
-				// Is this just a non-software thing??????
-				// or does it have to go thru this shutodwn task tooooo ? probably maybe yeah
 				uint32_t flags = osEventFlagsGet(shutoffFlagHandle);
 				if ((flags & KEY_FLAG) == KEY_FLAG) {
 					HAL_GPIO_WritePin(ABATT_DISABLE_GPIO_Port, ABATT_DISABLE_Pin, GPIO_PIN_SET); // disconnect DCDC0, power off mbms
-					while(read_nDCDC0_ON() == 1) {
-						// wait for it to be connected to the aux battery
+					while(read_nDCDC0_ON() == 0) {
+						// wait for DCDC0 to be off
 					}
 					break;
 				}

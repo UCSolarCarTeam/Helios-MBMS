@@ -84,28 +84,25 @@ void BatteryControl()
 
 }
 void waitForFirstHeartbeats() {
-	static uint8_t heartbeatFailCounter[6] = {0};
+	static uint8_t heartbeatFailCounter[5] = {0};
 
 
-	for(int i = 0; i < 6; i++) {
+	for(int i = 0; i < 5; i++) {
 		if(heartbeatFailCounter[i] > 3) {
 			switch (i) {
 				case 0:
 					mbmsTrip.commonHeartbeatDeadTrip = 1;
 					break;
 				case 1:
-					mbmsTrip.motor1HeartbeatDeadTrip = 1;
+					mbmsTrip.motorHeartbeatDeadTrip = 1;
 					break;
 				case 2:
-					mbmsTrip.motor2HeartbeatDeadTrip = 1;
-					break;
-				case 3:
 					mbmsTrip.arrayHeartbeatDeadTrip = 1;
 					break;
-				case 4:
+				case 3:
 					mbmsTrip.LVHeartbeatDeadTrip = 1;
 					break;
-				case 5:
+				case 4:
 					mbmsTrip.chargeHeartbeatDeadTrip = 1;
 					break;
 			}
@@ -134,7 +131,7 @@ void waitForFirstHeartbeats() {
 uint8_t checkContactorsOpen() {
 	// BUT SHOULD I OPEN THE CONTACTOR IF THEY ARE CLOSED? maybe yeah
 	uint8_t safe = 1;
-	for (int i = 0; i < 6; i++) {
+	for (int i = 0; i < 5; i++) {
 		if (contactorInfo[i].contactorState == OPEN_CONTACTOR) {
 			safe = 0;
 			break;
@@ -147,7 +144,7 @@ uint8_t checkContactorsOpen() {
 }
 uint8_t checkPrechargersOpen() {
 	uint8_t safe = 1;
-	for (int i = 0; i < 6; i++) {
+	for (int i = 0; i < 5; i++) {
 		if (contactorInfo[i].prechargerClosed == OPEN_CONTACTOR) {
 			safe = 0;
 			break;
@@ -163,7 +160,7 @@ void startupCheck(){
 	/* Waiting for contactor heartbeats */
 	// idk this feels kinda sketchy, maybe look at it ...
 	while ((previousHeartbeats[0] == 0) || (previousHeartbeats[1] == 0) || (previousHeartbeats[2] == 0) ||
-		   (previousHeartbeats[3] == 0) || (previousHeartbeats[4] == 0) || (previousHeartbeats[5] == 0))
+		   (previousHeartbeats[3] == 0) || (previousHeartbeats[4] == 0))
 	{
 		updateContactorInfoStruct();
 		waitForFirstHeartbeats();
@@ -189,7 +186,7 @@ void checkContactorHeartbeats() {
 
 
 
-	for(int i = 0; i < 6; i++) {
+	for(int i = 0; i < 5; i++) {
 		if(previousHeartbeats[i] >= 65535) { // check this logic lol
 			previousHeartbeats[i] = 0;
 		}
@@ -202,18 +199,15 @@ void checkContactorHeartbeats() {
 						mbmsTrip.commonHeartbeatDeadTrip = 1;
 						break;
 					case 1:
-						mbmsTrip.motor1HeartbeatDeadTrip = 1;
+						mbmsTrip.motorHeartbeatDeadTrip = 1;
 						break;
 					case 2:
-						mbmsTrip.motor2HeartbeatDeadTrip = 1;
-						break;
-					case 3:
 						mbmsTrip.arrayHeartbeatDeadTrip = 1;
 						break;
-					case 4:
+					case 3:
 						mbmsTrip.LVHeartbeatDeadTrip = 1;
 						break;
-					case 5:
+					case 4:
 						mbmsTrip.chargeHeartbeatDeadTrip = 1;
 						break;
 				}
@@ -295,8 +289,12 @@ void checkIfShutdown() {
 	if (read_KeySwitch() == KEY_OFF){
 		shutoffFlagsSet = osEventFlagsSet(shutoffFlagHandle, KEY_FLAG | SHUTOFF_FLAG);
 	}
-	if (read_nMPS_ESD() == nMPS_ESD_DISABLED){
-		shutoffFlagsSet = osEventFlagsSet(shutoffFlagHandle, nMPS_ESD_FLAG | SHUTOFF_FLAG);
+	if (read_nMPS() == 1){
+		shutoffFlagsSet = osEventFlagsSet(shutoffFlagHandle, nMPS_FLAG | SHUTOFF_FLAG);
+	}
+
+	if (read_ESD() == 1){
+		shutoffFlagsSet = osEventFlagsSet(shutoffFlagHandle, ESD_FLAG | SHUTOFF_FLAG);
 	}
 
 
@@ -307,7 +305,7 @@ void updateTripStatus() {
 	if (contactorInfo[COMMON].current >= MAX_COMMON_CONTACTOR_CURRENT){
 		mbmsTrip.commonHighCurrentTrip = 1;
 	}
-	if ((contactorInfo[MOTOR1].current >= MAX_MOTORS_CONTACTOR_CURRENT) || (contactorInfo[MOTOR2].current >= MAX_MOTORS_CONTACTOR_CURRENT)){
+	if ((contactorInfo[MOTOR].current >= MAX_MOTORS_CONTACTOR_CURRENT)){
 		mbmsTrip.motorHighCurrentTrip = 1;
 	}
 	if (contactorInfo[ARRAY].current >= MAX_ARRAY_CONTACTOR_CURRENT){
@@ -343,8 +341,7 @@ void updateTripStatus() {
 	// checking for Contactor Connected/Disconnected Unexpectedly Trip
 	/* To check, we compare a minimum current draw with the state of the contactor */
 	if(((		 contactorCommand.common == CLOSE_CONTACTOR) && (contactorInfo[COMMON].current < NO_CURRENT_THRESHOLD))
-			|| ((contactorCommand.motor1 == CLOSE_CONTACTOR) && (contactorInfo[MOTOR1].current < NO_CURRENT_THRESHOLD))
-			|| ((contactorCommand.motor2 == CLOSE_CONTACTOR) && (contactorInfo[MOTOR2].current < NO_CURRENT_THRESHOLD))
+			|| ((contactorCommand.motor == CLOSE_CONTACTOR) && (contactorInfo[MOTOR].current < NO_CURRENT_THRESHOLD))
 			|| ((contactorCommand.array  == CLOSE_CONTACTOR) && (contactorInfo[ARRAY].current  < NO_CURRENT_THRESHOLD))
 			|| ((contactorCommand.LV     == CLOSE_CONTACTOR) && (contactorInfo[LOWV].current   < NO_CURRENT_THRESHOLD))
 			|| ((contactorCommand.charge == CLOSE_CONTACTOR) && (contactorInfo[CHARGE].current < NO_CURRENT_THRESHOLD))
@@ -354,8 +351,7 @@ void updateTripStatus() {
 		mbmsTrip.contactorDisconnectedUnexpectedlyTrip = 1;
 	}
 	if(((		 contactorCommand.common == OPEN_CONTACTOR) && (contactorInfo[COMMON].current >= NO_CURRENT_THRESHOLD))
-			|| ((contactorCommand.motor1 == OPEN_CONTACTOR) && (contactorInfo[MOTOR1].current >= NO_CURRENT_THRESHOLD))
-			|| ((contactorCommand.motor2 == OPEN_CONTACTOR) && (contactorInfo[MOTOR2].current >= NO_CURRENT_THRESHOLD))
+			|| ((contactorCommand.motor == OPEN_CONTACTOR) && (contactorInfo[MOTOR].current >= NO_CURRENT_THRESHOLD))
 			|| ((contactorCommand.array  == OPEN_CONTACTOR) && (contactorInfo[ARRAY].current  >= NO_CURRENT_THRESHOLD))
 			|| ((contactorCommand.LV     == OPEN_CONTACTOR) && (contactorInfo[LOWV].current   >= NO_CURRENT_THRESHOLD))
 			|| ((contactorCommand.charge == OPEN_CONTACTOR) && (contactorInfo[CHARGE].current >= NO_CURRENT_THRESHOLD))
@@ -372,8 +368,12 @@ void updateTripStatus() {
 
 	// Dead contactor heartbeat trips are done in a diff function
 
-	if(read_nMPS_ESD() == nMPS_ESD_ENABLED){
-		//set trip
+	if(read_nMPS() == 1){
+		mbmsTrip.MPSDisabledTrip = 1;
+	}
+
+	if(read_ESD() == 1){
+		mbmsTrip.ESDEnabledTrip = 1;
 	}
 
 

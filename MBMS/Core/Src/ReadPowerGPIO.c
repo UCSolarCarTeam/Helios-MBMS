@@ -11,7 +11,12 @@
 #include "CANdefines.h"
 
 
-uint16_t read_nMPS_ESD(void) {
+// need to fix these after i redo config after elec changes it i guess ?
+uint16_t read_nMPS(void) {
+    return HAL_GPIO_ReadPin(nMPS_ESD_GPIO_Port, nMPS_ESD_Pin);  // PC4
+}
+
+uint16_t read_ESD(void) {
     return HAL_GPIO_ReadPin(nMPS_ESD_GPIO_Port, nMPS_ESD_Pin);  // PC4
 }
 
