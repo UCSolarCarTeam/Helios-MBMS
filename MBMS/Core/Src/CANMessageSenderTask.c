@@ -26,7 +26,7 @@ extern ContactorCommand contactorCommand;
 
 extern PowerSelectionStatus powerSelectionStatus;
 
-extern ContactorInfo contactorInfo[6];
+extern volatile ContactorInfo contactorInfo[6];
 
 void CANMessageSenderTask(void* arg)
 {

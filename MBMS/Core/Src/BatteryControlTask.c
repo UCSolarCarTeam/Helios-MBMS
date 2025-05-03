@@ -28,7 +28,7 @@ ContactorCommand contactorCommand;
 
 PowerSelectionStatus powerSelectionStatus;
 
-ContactorInfo contactorInfo[6]; // one for each contactor
+volatile ContactorInfo contactorInfo[6]; // one for each contactor        add volatile to the extern thing too
 
 uint16_t tripData = 0;
 
@@ -106,16 +106,15 @@ void waitForFirstHeartbeats() {
 					mbmsTrip.chargeHeartbeatDeadTrip = 1;
 					break;
 			}
-			// MAYBE STRAIGHT UP SET SHUTDOWN FLAG HERE !
+			// MAYBE STRAIGHT UP SET SHUTDOWN FLAG HERE ! um maybe not #modularity or sumn
 
 		}
 		if(previousHeartbeats[i] >= 65535) { // check this logic lol
 			previousHeartbeats[i] = 0;
 		}
 		if(previousHeartbeats[i] >= contactorInfo[i].heartbeat){
-			if(((osKernelGetTickCount() - heartbeatLastUpdatedTime[i]) * FREERTOS_TICK_PERIOD) > CONTACTOR_HEARTBEAT_TIMEOUT) {
+			if(((osKernelGetTickCount() - heartbeatLastUpdatedTime[i]) * FREERTOS_TICK_PERIOD) > CONTACTOR_HEARTBEAT_TIMEOUT) { // where contactor_heartbeat_timeout is how often a heartbeat is sent out/recieved
 				heartbeatFailCounter[i]++;
-
 
 			}
 		}
@@ -128,29 +127,33 @@ void waitForFirstHeartbeats() {
 
 }
 
+/*
+ * returns whether any contactors are closed (0) or not (1). want them all to be open on startup
+ */
 uint8_t checkContactorsOpen() {
-	// BUT SHOULD I OPEN THE CONTACTOR IF THEY ARE CLOSED? maybe yeah
-	uint8_t safe = 1;
+	// BUT SHOULD I OPEN THE CONTACTOR IF THEY ARE CLOSED? maybe yeah. btw contactors r non-latching so theyll open if car powers off yk
+	uint8_t open = 1;
 	for (int i = 0; i < 5; i++) {
-		if (contactorInfo[i].contactorState == OPEN_CONTACTOR) {
-			safe = 0;
+		if (contactorInfo[i].contactorState == CLOSE_CONTACTOR) {
+			open = 0;
 			break;
 		}
 	}
-	return safe;
-
-
-
+	return open;
 }
+
+/*
+ * returns whether any prechargers are closed (0) or not (1).
+ */
 uint8_t checkPrechargersOpen() {
-	uint8_t safe = 1;
+	uint8_t open = 1;
 	for (int i = 0; i < 5; i++) {
-		if (contactorInfo[i].prechargerClosed == OPEN_CONTACTOR) {
-			safe = 0;
+		if (contactorInfo[i].prechargerClosed == CLOSE_CONTACTOR) {
+			open = 0;
 			break;
 		}
 	}
-	return safe;
+	return open;
 
 
 }
@@ -162,6 +165,7 @@ void startupCheck(){
 	while ((previousHeartbeats[0] == 0) || (previousHeartbeats[1] == 0) || (previousHeartbeats[2] == 0) ||
 		   (previousHeartbeats[3] == 0) || (previousHeartbeats[4] == 0))
 	{
+		// maybe add an osDelay so a diff task can run? CAN Rx.. to actually receive heartbeat messages, and also the one that sets trips and does shutdown idk :(
 		updateContactorInfoStruct();
 		waitForFirstHeartbeats();
 	}
@@ -251,11 +255,6 @@ void updateContactorInfoStruct() {
 			updateContactorInfo((contactorMsg.extendedID - CONTACTORIDS), prechargerClosed, prechargerClosing, prechargerError, contactorState, contactorError, contactorCurrent, contactorVoltage);
 
 		}
-		// do update contactor state contactor info stuff !!!!
-
-		// DO HEARTBEATS TOO BUT CLARIFY HOW? IN SAME STRUCT? OR DIFF ONE ? IDK , also should i keep contactorstate, or no, bc now i have contactor info
-
-		// check trips
 	}
 
 }

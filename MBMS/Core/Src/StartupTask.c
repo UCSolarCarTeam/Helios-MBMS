@@ -17,10 +17,9 @@ extern ContactorInfo contactorInfo[6];
 extern MBMSStatus mbmsStatus;
 
 #define FREERTOS_TICK_PERIOD 1/configTICK_RATE_HZ //USE THIS INSTEAD OF SECONFS PER TICK
-// MBMSSys.h
 // all structs important for more than one file, contactor
 
-// wait times in seconds ! um is it ms now? idk check!!!
+// wait times in seconds i think ..
 #define MPS_WAIT_TIME 1
 #define DCDC0_WAIT_TIME 10
 #define DCDC1_WAIT_TIME 10
@@ -54,7 +53,8 @@ void Startup()
 
 
 	while (read_ESD() == 1) {
-		// do BPS fault & shutdown
+		// do BPS fault
+		// instead should i just have an osDelay, for BCT to run and set the trip/fault..? bc we have to keep track of that in the struct
 		uint32_t shutoffFlagsSet = osEventFlagsSet(shutoffFlagHandle, ESD_FLAG| SHUTOFF_FLAG);
 		osThreadTerminate(startupTaskHandle);
 	}
@@ -63,12 +63,19 @@ void Startup()
 
 	// DO NEW CHECKS!!!!! if fails, either BPS fault, or keeps checking
 	// maybe call BCT functionto do checks... make a function specific to startup checks
+	mbmsStatus.startupState = CHECKS_PASSED;
+
+	// clear all saved faults
+	mbmsStatus.startupState = FAULTS_CLEARED;
+
+	// wait for discharge enable sense
 
 	uint32_t flagsSet;
 
 	flagsSet = osEventFlagsSet(contactorPermissionsFlagHandle, COMMON_FLAG);
-	while ((contactorInfo[COMMON].contactorState != CLOSE_CONTACTOR)) { //
+	while ((contactorInfo[COMMON].contactorState != CLOSE_CONTACTOR)) {
 		// wait for common contactor to close
+		//should i add an osDelay here so BCT can run? ask nathan probably (same w lv, or anywhere u want a diff task to be able to run)
 	}
 	if (contactorInfo[COMMON].contactorError) {
 		// TO DO: handle error
@@ -78,14 +85,18 @@ void Startup()
 
 	// set flag to give permission to precharge/close LV
 	flagsSet = osEventFlagsSet(contactorPermissionsFlagHandle, LV_FLAG); // set LV contactor flag
-	while ((contactorInfo[LOWV].contactorState != CLOSE_CONTACTOR)) { //
+	while ((contactorInfo[LOWV].contactorState != CLOSE_CONTACTOR)) {
 		// wait for LV contactor to close
 	}
 	mbmsStatus.startupState = LV_CLOSED;
 
+
 	// enable/connect to DCDC1 and wait until DCDC1 on
-	HAL_GPIO_WritePin(DCDC1_EN_GPIO_Port, DCDC1_EN_Pin, GPIO_PIN_SET);
-	// wait for DCDC1 to connect!
+	HAL_GPIO_WritePin(EN1_GPIO_Port, EN1_Pin, GPIO_PIN_SET); // enable DCDC HV
+
+	/* OLD THING WITH DCDC1 TIMEOUT, keeping for now in case they decide we need a timeout for EN1 but they said no checks for it so
+
+	 // wait for DCDC1 to connect!
 	uint32_t DCDC1_Start_Count = osKernelGetTickCount();
 	while(read_nDCDC1_ON() == 1) { // n stands for NOT
 		//set a timeout, if this fails, trip
@@ -97,7 +108,10 @@ void Startup()
 		}
 	}
 
-	mbmsStatus.startupState = DCDC1_ON;
+
+	 */
+
+	mbmsStatus.startupState = EN1_ON;
 
 
 	// set flag to give permission to precharge/close motor contactor
@@ -111,12 +125,16 @@ void Startup()
 	osDelay(MOTOR_WAIT_TIME * 1000);
 
 	flagsSet = osEventFlagsSet(contactorPermissionsFlagHandle, CHARGE_FLAG); // set LV contactor flag
+
+	mbmsStatus.startupState = CHARGE_PERMS;
 	// give time to battery control task to make sure battery state is still safe
 	osDelay(CHARGE_WAIT_TIME * 1000);
 
 	// set flag to give permission to precharge/close array contactor
 	// wait until array contactor done (same as above, make sure everything okay still, doesnt NEED it to bed closed...)
 	flagsSet = osEventFlagsSet(contactorPermissionsFlagHandle, ARRAY_FLAG); // set LV contactor flag
+
+	mbmsStatus.startupState = ARRAY_PERMS;
 	// give time to battery control task to make sure battery state is still safe
 	osDelay(ARRAY_WAIT_TIME * 1000);
 	// if battery is fully charged, don't do the array!!!!
@@ -124,6 +142,8 @@ void Startup()
 	// because if battery is fully discharged, then motors shouldnt go
 	// if car is fully charged, dont need array
 
+
+	/* OLD CODE TO DISCONNECT FROM AUX BATTERY
 
 	// turn off DCDC0 (no longer connect to aux battery)
 	HAL_GPIO_WritePin(ABATT_DISABLE_GPIO_Port, ABATT_DISABLE_Pin, GPIO_PIN_SET); // assuming disable is disconnect/open,
@@ -138,6 +158,7 @@ void Startup()
 	}
 	mbmsStatus.startupState = DCDC0_OFF;
 
+	 */
 
 	// set flag that everything is done (all perms given!!!)
 	mbmsStatus.startupState = FULLY_OPERATIONAL;

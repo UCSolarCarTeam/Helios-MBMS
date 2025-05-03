@@ -64,6 +64,7 @@ CAN_HandleTypeDef hcan1;
 
 SPI_HandleTypeDef hspi1;
 
+UART_HandleTypeDef huart4;
 UART_HandleTypeDef huart3;
 
 /* Definitions for defaultTask */
@@ -192,6 +193,7 @@ static void MX_GPIO_Init(void);
 static void MX_CAN1_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_USART3_UART_Init(void);
+static void MX_UART4_Init(void);
 void StartDefaultTask(void *argument);
 
 /* USER CODE BEGIN PFP */
@@ -234,6 +236,7 @@ int main(void)
   MX_CAN1_Init();
   MX_SPI1_Init();
   MX_USART3_UART_Init();
+  MX_UART4_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
@@ -523,6 +526,39 @@ static void MX_SPI1_Init(void)
 }
 
 /**
+  * @brief UART4 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_UART4_Init(void)
+{
+
+  /* USER CODE BEGIN UART4_Init 0 */
+
+  /* USER CODE END UART4_Init 0 */
+
+  /* USER CODE BEGIN UART4_Init 1 */
+
+  /* USER CODE END UART4_Init 1 */
+  huart4.Instance = UART4;
+  huart4.Init.BaudRate = 115200;
+  huart4.Init.WordLength = UART_WORDLENGTH_8B;
+  huart4.Init.StopBits = UART_STOPBITS_1;
+  huart4.Init.Parity = UART_PARITY_NONE;
+  huart4.Init.Mode = UART_MODE_TX_RX;
+  huart4.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart4.Init.OverSampling = UART_OVERSAMPLING_16;
+  if (HAL_UART_Init(&huart4) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN UART4_Init 2 */
+
+  /* USER CODE END UART4_Init 2 */
+
+}
+
+/**
   * @brief USART3 Initialization Function
   * @param None
   * @retval None
@@ -579,28 +615,25 @@ static void MX_GPIO_Init(void)
                           |CAN1_MODE_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(DCDC1_EN_GPIO_Port, DCDC1_EN_Pin, GPIO_PIN_RESET);
-
-  /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, ABATT_DISABLE_Pin|GPIO_PIN_2|_12V_PCHG_EN_Pin|_12V_CAN_EN_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, ABATT_DISABLE_Pin|A1_Pin|_12V_PCHG_EN_Pin|_12V_CAN_EN_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOE, G1_Pin|A2_Pin|G2_Pin|A3_Pin
                           |G3_Pin|A4_Pin|G4_Pin|A5_Pin
-                          |G5_Pin, GPIO_PIN_RESET);
+                          |G5_Pin|nCHG_En_Pin|EN1_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pins : nDCDC0_ON_Pin _3A_OC_UC_Pin nDCDC1_ON_Pin nCHG_FAULT_Pin
-                           nCHG_ON_Pin DCDC0_OV_FAULT_Pin DCDC0_UV_FAULT_Pin */
-  GPIO_InitStruct.Pin = nDCDC0_ON_Pin|_3A_OC_UC_Pin|nDCDC1_ON_Pin|nCHG_FAULT_Pin
-                          |nCHG_ON_Pin|DCDC0_OV_FAULT_Pin|DCDC0_UV_FAULT_Pin;
+  /*Configure GPIO pins : NC_Pin n3A_OC_UC_Pin nDCDC_ON_Pin nCHG_FAULT_Pin
+                           nCHG_ON_Pin */
+  GPIO_InitStruct.Pin = NC_Pin|n3A_OC_UC_Pin|nDCDC_ON_Pin|nCHG_FAULT_Pin
+                          |nCHG_ON_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PC13 nMPS_ESD_Pin CHARGE_SAFETY_SENSE_Pin DISCHARGE_ENABLE_SENSE_Pin
-                           CHARGE_ENABLE_SENSE_Pin */
-  GPIO_InitStruct.Pin = GPIO_PIN_13|nMPS_ESD_Pin|CHARGE_SAFETY_SENSE_Pin|DISCHARGE_ENABLE_SENSE_Pin
-                          |CHARGE_ENABLE_SENSE_Pin;
+  /*Configure GPIO pins : nDCDC_Fault_Pin nMPS_Pin ESD_Pin CHARGE_SAFETY_SENSE_Pin
+                           DISCHARGE_ENABLE_SENSE_Pin CHARGE_ENABLE_SENSE_Pin */
+  GPIO_InitStruct.Pin = nDCDC_Fault_Pin|nMPS_Pin|ESD_Pin|CHARGE_SAFETY_SENSE_Pin
+                          |DISCHARGE_ENABLE_SENSE_Pin|CHARGE_ENABLE_SENSE_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
@@ -614,15 +647,8 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : DCDC1_EN_Pin */
-  GPIO_InitStruct.Pin = DCDC1_EN_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(DCDC1_EN_GPIO_Port, &GPIO_InitStruct);
-
-  /*Configure GPIO pins : ABATT_DISABLE_Pin PB2 _12V_PCHG_EN_Pin _12V_CAN_EN_Pin */
-  GPIO_InitStruct.Pin = ABATT_DISABLE_Pin|GPIO_PIN_2|_12V_PCHG_EN_Pin|_12V_CAN_EN_Pin;
+  /*Configure GPIO pins : ABATT_DISABLE_Pin A1_Pin _12V_PCHG_EN_Pin _12V_CAN_EN_Pin */
+  GPIO_InitStruct.Pin = ABATT_DISABLE_Pin|A1_Pin|_12V_PCHG_EN_Pin|_12V_CAN_EN_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -636,10 +662,10 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pins : G1_Pin A2_Pin G2_Pin A3_Pin
                            G3_Pin A4_Pin G4_Pin A5_Pin
-                           G5_Pin */
+                           G5_Pin nCHG_En_Pin EN1_Pin */
   GPIO_InitStruct.Pin = G1_Pin|A2_Pin|G2_Pin|A3_Pin
                           |G3_Pin|A4_Pin|G4_Pin|A5_Pin
-                          |G5_Pin;
+                          |G5_Pin|nCHG_En_Pin|EN1_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;

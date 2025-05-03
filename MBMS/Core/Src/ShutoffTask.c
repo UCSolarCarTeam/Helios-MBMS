@@ -58,7 +58,7 @@ void Shutoff()
 		uint16_t BPSFaultSignal = 0;
 
 		// extract the reason for the shut off procedure
-		uint8_t causes[4] = {0, 0, 0, 0, 0};
+		uint8_t causes[5] = {0, 0, 0, 0, 0};
 		if ((flags & KEY_FLAG) == KEY_FLAG) {
 			causes[KEY] = 1;
 		}

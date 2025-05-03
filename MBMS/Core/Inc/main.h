@@ -70,16 +70,18 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define nDCDC0_ON_Pin GPIO_PIN_2
-#define nDCDC0_ON_GPIO_Port GPIOE
-#define _3A_OC_UC_Pin GPIO_PIN_3
-#define _3A_OC_UC_GPIO_Port GPIOE
-#define nDCDC1_ON_Pin GPIO_PIN_4
-#define nDCDC1_ON_GPIO_Port GPIOE
+#define NC_Pin GPIO_PIN_2
+#define NC_GPIO_Port GPIOE
+#define n3A_OC_UC_Pin GPIO_PIN_3
+#define n3A_OC_UC_GPIO_Port GPIOE
+#define nDCDC_ON_Pin GPIO_PIN_4
+#define nDCDC_ON_GPIO_Port GPIOE
 #define nCHG_FAULT_Pin GPIO_PIN_5
 #define nCHG_FAULT_GPIO_Port GPIOE
 #define nCHG_ON_Pin GPIO_PIN_6
 #define nCHG_ON_GPIO_Port GPIOE
+#define nDCDC_Fault_Pin GPIO_PIN_13
+#define nDCDC_Fault_GPIO_Port GPIOC
 #define BLU_LED_Pin GPIO_PIN_0
 #define BLU_LED_GPIO_Port GPIOA
 #define GRN_LED_Pin GPIO_PIN_1
@@ -88,14 +90,16 @@ void Error_Handler(void);
 #define RED_LED_GPIO_Port GPIOA
 #define STROBE_EN_Pin GPIO_PIN_3
 #define STROBE_EN_GPIO_Port GPIOA
-#define nMPS_ESD_Pin GPIO_PIN_4
-#define nMPS_ESD_GPIO_Port GPIOC
-#define DCDC1_EN_Pin GPIO_PIN_5
-#define DCDC1_EN_GPIO_Port GPIOC
+#define nMPS_Pin GPIO_PIN_4
+#define nMPS_GPIO_Port GPIOC
+#define ESD_Pin GPIO_PIN_5
+#define ESD_GPIO_Port GPIOC
 #define ABATT_DISABLE_Pin GPIO_PIN_0
 #define ABATT_DISABLE_GPIO_Port GPIOB
 #define Key_Pin GPIO_PIN_1
 #define Key_GPIO_Port GPIOB
+#define A1_Pin GPIO_PIN_2
+#define A1_GPIO_Port GPIOB
 #define G1_Pin GPIO_PIN_7
 #define G1_GPIO_Port GPIOE
 #define A2_Pin GPIO_PIN_8
@@ -130,10 +134,10 @@ void Error_Handler(void);
 #define _12V_CAN_EN_GPIO_Port GPIOB
 #define CRITICAL_OV_UV_Pin GPIO_PIN_9
 #define CRITICAL_OV_UV_GPIO_Port GPIOB
-#define DCDC0_OV_FAULT_Pin GPIO_PIN_0
-#define DCDC0_OV_FAULT_GPIO_Port GPIOE
-#define DCDC0_UV_FAULT_Pin GPIO_PIN_1
-#define DCDC0_UV_FAULT_GPIO_Port GPIOE
+#define nCHG_En_Pin GPIO_PIN_0
+#define nCHG_En_GPIO_Port GPIOE
+#define EN1_Pin GPIO_PIN_1
+#define EN1_GPIO_Port GPIOE
 
 /* USER CODE BEGIN Private defines */
 

@@ -47,19 +47,22 @@ enum Contactor {
 	CHARGE
 };
 
+// make enum of all the
+
 
 
 enum startupStates {
 	nMPS_ENABLED = 0,
 	nMPS_DISABLED,
 	ESD_DISABLED,
+	CHECKS_PASSED,
+	FAULTS_CLEARED,
 	COMMON_CLOSED,
 	LV_CLOSED,
-	DCDC1_ON,
+	EN1_ON,
 	MOTORS_PERMS,
 	CHARGE_PERMS,
 	ARRAY_PERMS,
-	DCDC0_OFF,
 	FULLY_OPERATIONAL,
 };
 
@@ -105,7 +108,6 @@ typedef struct {
 	uint8_t dischargeShouldTrip;
 	uint8_t chargeShouldTrip;
 	uint8_t startupState;
-
 } MBMSStatus;
 
 typedef struct {
@@ -132,17 +134,16 @@ typedef struct {
 } MBMSTrip;
 
 typedef struct {
-	uint8_t mainPowerSwitch;
-	uint8_t nDCDC1Enable;
-	uint8_t nDCDC1Fault;
-	uint8_t DCDC0_OV_Fault;
-	uint8_t DCDC0_UV_Fault;
-	uint8_t nDCDC0_On; // um this feels like an input to the bms YES IT ISSSSS
-	uint8_t n3A_OC_UC;
-	uint8_t nDCDC1_On;
+	uint8_t MainPowerSwitch;
+	uint8_t ExternalShutdown;
+	uint8_t EN1;
+	uint8_t nDCDC_Fault;
+	uint8_t n3A_OC; // changed bc not bandwidth
+	uint8_t nDCDC_On;
 	uint8_t nCHG_Fault;
 	uint8_t nCHG_On;
-	uint8_t nABAT_Enable;
+	uint8_t nCHG_LV_En;
+	uint8_t ABATT_Disable;
 	uint8_t Key;
 } PowerSelectionStatus;
 
