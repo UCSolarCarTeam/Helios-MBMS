@@ -49,9 +49,18 @@ uint16_t read_nCHG_LV_En(void) {
 
 uint16_t read_ABATT_Disable(void) {
     return HAL_GPIO_ReadPin(ABATT_Disable_GPIO_Port, ABATT_Disable_Pin);
-
-
+}
 
 uint16_t read_Key(void) {
     return HAL_GPIO_ReadPin(Key_GPIO_Port, Key_Pin);  // PB1
 }
+
+uint16_t read_Charge_Enable(void) {
+    return HAL_GPIO_ReadPin(CHARGE_ENABLE_SENSE_GPIO_Port, CHARGE_ENABLE_SENSE_Pin);
+}
+
+uint16_t read_Discharge_Enable(void) {
+    return HAL_GPIO_ReadPin(DISCHARGE_ENABLE_SENSE_GPIO_Port, DISCHARGE_ENABLE_SENSE_Pin);
+}
+
+

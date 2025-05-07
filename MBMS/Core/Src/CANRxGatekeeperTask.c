@@ -30,6 +30,22 @@ void CANRxGatekeeperTask(void* arg)
 // PROBLEM: WHEN I HAD THIS IN THE OTHER FILE AND IT WAS A SEPERATE QUEUE I WAS ABLE TO USE THE TIMEOUT TO
 // CHECK FOR THE ORION MESSAGE NOT RECEIVED BUT HERE I CANT CUZ ITS THE SAME QUEUE FOR EVERYTHING
 
+// honestly just use the tick count stuff if u must :<, but i still made the other file just in case
+
+void updateContactorInfo(uint8_t contactor, uint8_t prechargerClosed, uint8_t prechargerClosing, uint8_t prechargerError,
+		uint8_t contactorClosed, uint8_t contactorClosing, uint8_t contactorError, int16_t lineCurrent, int16_t chargeCurrent, uint8_t BPSerror) {
+	contactorInfo[contactor].prechargerClosed = prechargerClosed;
+	contactorInfo[contactor].prechargerClosing = prechargerClosing;
+	contactorInfo[contactor].prechargerError = prechargerError;
+	contactorInfo[contactor].contactorClosed = contactorClosed;
+	contactorInfo[contactor].contactorError = contactorError;
+	contactorInfo[contactor].lineCurrent = lineCurrent;
+	contactorInfo[contactor].chargeCurrent = chargeCurrent;
+	contactorInfo[contactor].BPSerror = BPSerror;
+	return;
+}
+
+
 void CANRxGatekeeper()
 {
 
@@ -53,13 +69,15 @@ void CANRxGatekeeper()
 
 			uint8_t prechargerClosed = data[0] & 0x01; // extract bit 0
 			uint8_t prechargerClosing = data[0] & 0x02; // extract bit 1
-			uint8_t prechargerError = data[0] & 0x04; // extraxt bit 2
-			uint8_t contactorState = (data[0] & 0x08) + ((data[0] & 0x10) << 1); // extract bit 3 & 4 and put into one variable
+			uint8_t prechargerError = data[0] & 0x04; // extract bit 2
+			uint8_t contactorClosed = data[0] & 0x08; // extract bit 3
+			uint8_t contactorClosing = data[0] & 0x10; // extract bit 4
 			uint8_t contactorError = data[0] & 0x20; // extract bit 5
-			uint16_t contactorCurrent = ((data[0] & 0xc0) >> 6) + ((data[1] & 0xff) << 2) + ((data[2] & 0x03) << 10); // extract bits 6 to 17
-			uint16_t contactorVoltage = ((data[2] & 0xfc) >> 2) + ((data[3] & 0x3f) << 6); // extract bits 18 to 29
-
-			updateContactorInfo((msg.extendedID - CONTACTORIDS), prechargerClosed, prechargerClosing, prechargerError, contactorState, contactorError, contactorCurrent, contactorVoltage);
+			int16_t lineCurrent = ((data[0] & 0xc0) >> 6) + ((data[1] & 0xff) << 2) + ((data[2] & 0x03) << 10); // extract bits 6 to 17
+			int16_t chargeCurrent = ((data[2] & 0xfc) >> 2) + ((data[3] & 0x3f) << 6); // extract bits 18 to 29
+			uint8_t BPSerror = data[3] & 0x80; //extract bit 30
+			updateContactorInfo((msg.extendedID - CONTACTORIDS), prechargerClosed, prechargerClosing, prechargerError,
+					contactorClosed, contactorClosing, contactorError, lineCurrent, chargeCurrent, BPSerror);
 
 		}
 		// if the message is a contactor heartbeat
@@ -114,16 +132,7 @@ void CANRxGatekeeper()
 	}
 }
 
-void updateContactorInfo(uint8_t contactor, uint8_t prechargerClosed, uint8_t prechargerClosing, uint8_t prechargerError, uint8_t contactorState, uint8_t contactorError, uint16_t contactorCurrent, uint16_t contactorVoltage) {
-	contactorInfo[contactor].prechargerClosed = prechargerClosed;
-	contactorInfo[contactor].prechargerClosing = prechargerClosing;
-	contactorInfo[contactor].prechargerError = prechargerError;
-	contactorInfo[contactor].contactorState = contactorState;
-	contactorInfo[contactor].contactorError = contactorError;
-	contactorInfo[contactor].current = contactorCurrent;
-	contactorInfo[contactor].voltage = contactorVoltage;
-	return;
-}
+
 
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan){
 	CANMsg msg;

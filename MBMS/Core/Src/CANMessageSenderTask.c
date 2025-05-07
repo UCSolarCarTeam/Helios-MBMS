@@ -125,7 +125,7 @@ void sendContactorsCanMessage() {
 
 	static uint8_t contactorClosing = false;
 	for(int i = 0; i < 6; i++){
-		if (contactorInfo[i].contactorState == CLOSING_CONTACTOR){
+		if (contactorInfo[i].contactorClosing == CLOSING_CONTACTOR){
 			contactorClosing = true;
 			break;
 		}
@@ -134,24 +134,24 @@ void sendContactorsCanMessage() {
 	// if no contactors are currently in the state of closing, you may close a contactor!
 	if(!contactorClosing) {
 
-		if (((flags & COMMON_FLAG) == COMMON_FLAG) && (contactorInfo[COMMON].contactorState != CLOSE_CONTACTOR) && (tripData == 0x0)) {
+		if (((flags & COMMON_FLAG) == COMMON_FLAG) && (contactorInfo[COMMON].contactorClosed != CLOSE_CONTACTOR) && (tripData == 0x0)) {
 			// if perms are given, and contactor is not already closed, and there are no trips
 			contactorCommand.common = CLOSE_CONTACTOR;
 			sendContactorCommand = 1;
 		}
-		else if (((flags & MOTOR_FLAG) == MOTOR_FLAG) && (contactorInfo[MOTOR].contactorState != CLOSE_CONTACTOR) && (tripData == 0x0) && (mbmsStatus.allowDischarge == 1)) {
+		else if (((flags & MOTOR_FLAG) == MOTOR_FLAG) && (contactorInfo[MOTOR].contactorClosed != CLOSE_CONTACTOR) && (tripData == 0x0) && (mbmsStatus.allowDischarge == 1)) {
 			contactorCommand.motor = CLOSE_CONTACTOR;
 			sendContactorCommand = 1;
 		}
-		else if (((flags & ARRAY_FLAG) == ARRAY_FLAG) && (contactorInfo[ARRAY].contactorState != CLOSE_CONTACTOR) && (tripData == 0x0) && (mbmsStatus.allowCharge == 1)) {
+		else if (((flags & ARRAY_FLAG) == ARRAY_FLAG) && (contactorInfo[ARRAY].contactorClosed != CLOSE_CONTACTOR) && (tripData == 0x0) && (mbmsStatus.allowCharge == 1)) {
 			contactorCommand.array = CLOSE_CONTACTOR;
 			sendContactorCommand = 1;
 		}
-		else if (((flags & LV_FLAG) == LV_FLAG) && (contactorInfo[LOWV].contactorState != CLOSE_CONTACTOR) && (tripData == 0x0) && (mbmsStatus.allowDischarge == 1)) {
+		else if (((flags & LV_FLAG) == LV_FLAG) && (contactorInfo[LOWV].contactorClosed != CLOSE_CONTACTOR) && (tripData == 0x0) && (mbmsStatus.allowDischarge == 1)) {
 			contactorCommand.LV = CLOSE_CONTACTOR;
 			sendContactorCommand = 1;
 		}
-		else if (((flags & CHARGE_FLAG) == CHARGE_FLAG) && (contactorInfo[CHARGE].contactorState != CLOSE_CONTACTOR) && (tripData == 0x0) && (mbmsStatus.allowCharge == 1)) {
+		else if (((flags & CHARGE_FLAG) == CHARGE_FLAG) && (contactorInfo[CHARGE].contactorClosed != CLOSE_CONTACTOR) && (tripData == 0x0) && (mbmsStatus.allowCharge == 1)) {
 			contactorCommand.charge = CLOSE_CONTACTOR;
 			sendContactorCommand = 1;
 		}
@@ -161,24 +161,24 @@ void sendContactorsCanMessage() {
 
 	// Open contactors as needed SHOULD I CHECK TRIPDATA AS WELL HERE?or naw cuz a diff func will check idkkk i wanna say noo ...
 
-	if (((flags & MOTOR_FLAG) == MOTOR_FLAG) && (contactorInfo[MOTOR].contactorState != OPEN_CONTACTOR) && (mbmsStatus.allowDischarge == 0)){
+	if (((flags & MOTOR_FLAG) == MOTOR_FLAG) && (contactorInfo[MOTOR].contactorClosed != OPEN_CONTACTOR) && (mbmsStatus.allowDischarge == 0)){
 		contactorCommand.motor = OPEN_CONTACTOR;
 		sendContactorCommand = 1;
 	}
 
-	if (((flags & ARRAY_FLAG) == ARRAY_FLAG) && (contactorInfo[ARRAY].contactorState != OPEN_CONTACTOR) && (mbmsStatus.allowCharge == 0)) {
+	if (((flags & ARRAY_FLAG) == ARRAY_FLAG) && (contactorInfo[ARRAY].contactorClosed != OPEN_CONTACTOR) && (mbmsStatus.allowCharge == 0)) {
 		contactorCommand.array = OPEN_CONTACTOR;
 		sendContactorCommand = 1;
 	}
 
 
-	if (((flags & LV_FLAG) == LV_FLAG) && (contactorInfo[LOWV].contactorState != OPEN_CONTACTOR) && (mbmsStatus.allowDischarge == 0)) {
+	if (((flags & LV_FLAG) == LV_FLAG) && (contactorInfo[LOWV].contactorClosed != OPEN_CONTACTOR) && (mbmsStatus.allowDischarge == 0)) {
 		contactorCommand.LV = OPEN_CONTACTOR;
 		sendContactorCommand = 1;
 	}
 
 
-	if (((flags & CHARGE_FLAG) == CHARGE_FLAG) && (contactorInfo[CHARGE].contactorState != OPEN_CONTACTOR) && (mbmsStatus.allowCharge == 0)) {
+	if (((flags & CHARGE_FLAG) == CHARGE_FLAG) && (contactorInfo[CHARGE].contactorClosed != OPEN_CONTACTOR) && (mbmsStatus.allowCharge == 0)) {
 		contactorCommand.charge = OPEN_CONTACTOR;
 		sendContactorCommand = 1;
 	}

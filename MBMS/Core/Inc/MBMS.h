@@ -15,7 +15,7 @@
 
 
 
-#define FREERTOS_TICK_PERIOD 1/configTICK_RATE_HZ //USE THIS INSTEAD OF SECONFS PER TICK
+#define FREERTOS_TICK_PERIOD 1/configTICK_RATE_HZ //USE THIS INSTEAD OF SECONFS PER TICK. this is in ticks per second
 
 #define SHUTOFF_FLAG 0b1U // just making the flag an arbitrary number (should be uint32_t,,, this is = 1 in decimal)
 // what was the cause of the shutdown??
@@ -89,10 +89,12 @@ typedef struct {
 	uint8_t prechargerClosed;
 	uint8_t prechargerClosing;
 	uint8_t prechargerError;
-	uint8_t contactorState; // march 8: two bits become one variable, 00 = open, 01 = closed, 10 = closing
+	uint8_t contactorClosed; // march 8: two bits become one variable, 00 = open, 01 = closed, 10 = closing
+	uint8_t contactorClosing;
 	uint8_t contactorError;
-	int16_t voltage; // CHANGED FROM UINT16 ON APRIL 2
-	uint16_t current;
+	int16_t lineCurrent; // CHANGED FROM UINT16 ON APRIL 2
+	int16_t chargeCurrent;
+	uint8_t BPSerror;
 	uint16_t heartbeat;
 } ContactorInfo;
 
@@ -100,7 +102,7 @@ typedef struct {
 typedef struct {
 	uint8_t auxilaryBattVoltage; // bits 0-4
 	uint8_t strobeBMSLight;
-	uint8_t allowCharge;
+	uint8_t allowCharge; // remember ur question may 7: is it straight up gpio, or is it something i decide
 	uint8_t chargeSafety;
 	uint8_t highVoltageEnableState; // what is this, why doesnt it exist anymore in the excel???
 	uint8_t allowDischarge;

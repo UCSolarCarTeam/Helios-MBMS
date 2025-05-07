@@ -33,4 +33,8 @@ uint16_t read_ABATT_Disable(void);
 
 uint16_t read_Key(void);
 
+uint16_t read_Charge_Enable(void);
+
+uint16_t read_Discharge_Enable(void);
+
 #endif /* INC_READPOWERGPIO_H_ */

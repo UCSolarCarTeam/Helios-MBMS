@@ -73,7 +73,7 @@ void Startup()
 	uint32_t flagsSet;
 
 	flagsSet = osEventFlagsSet(contactorPermissionsFlagHandle, COMMON_FLAG);
-	while ((contactorInfo[COMMON].contactorState != CLOSE_CONTACTOR)) {
+	while ((contactorInfo[COMMON].contactorClosed != CLOSE_CONTACTOR)) {
 		// wait for common contactor to close
 		//should i add an osDelay here so BCT can run? ask nathan probably (same w lv, or anywhere u want a diff task to be able to run)
 	}
@@ -85,7 +85,7 @@ void Startup()
 
 	// set flag to give permission to precharge/close LV
 	flagsSet = osEventFlagsSet(contactorPermissionsFlagHandle, LV_FLAG); // set LV contactor flag
-	while ((contactorInfo[LOWV].contactorState != CLOSE_CONTACTOR)) {
+	while ((contactorInfo[LOWV].contactorClosed != CLOSE_CONTACTOR)) {
 		// wait for LV contactor to close
 	}
 	mbmsStatus.startupState = LV_CLOSED;

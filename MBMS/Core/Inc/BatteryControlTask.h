@@ -13,10 +13,13 @@
 
 void BatteryControlTask(void* arg);
 void BatteryControl();
-void updateContactorInfo(uint8_t contactor, uint8_t prechargerClosed, uint8_t prechargerCLosing, uint8_t prechargerError, uint8_t contactorState, uint8_t contactorError, uint16_t contactorCurrent, uint16_t contactorVoltage);
-void updateContactorInfoStruct();
 
-void updatePackInfoStruct();
+//void updateContactorInfo(uint8_t contactor, uint8_t prechargerClosed, uint8_t prechargerClosing,
+//		uint8_t prechargerError, uint8_t contactorClosed, uint8_t contactorClosing,
+//		uint8_t contactorError, int16_t lineCurrent, int16_t chargeCurrent, uint8_t BPSerror);
+
+//void updateContactorInfoStruct();
+//void updatePackInfoStruct();
 void updateTripStatus();
 
 void checkIfShutdown();

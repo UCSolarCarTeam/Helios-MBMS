@@ -33,6 +33,16 @@ void ShutoffTask(void* arg)
     }
 }
 
+/*
+ * since things have changed quite a bit, I think this task will
+ * likely require quite a bit of changes, and i have not yet discussed with Jenny yet
+ * so i'm just going to leave it all commented out for now :(
+ *
+ * for ex: only key turns off car now, etc.
+ */
+
+/*
+
 void Shutoff()
 {
 
@@ -52,7 +62,7 @@ void Shutoff()
 		// make it so all contactors (if common open, all contactors SHOULD BE opened)
 		uint8_t openCommon = (OPEN_CONTACTOR << COMMON) + (OPEN_CONTACTOR<< MOTOR) + (OPEN_CONTACTOR << ARRAY) + (OPEN_CONTACTOR << LOWV) + (OPEN_CONTACTOR << CHARGE);
 		// assuming all HV stuff opened at same time
-		uint8_t openHV = ((contactorInfo[COMMON].contactorState & 0x01) << COMMON ) + (OPEN_CONTACTOR << MOTOR)  + (OPEN_CONTACTOR << ARRAY) + ((contactorInfo[LOWV].contactorState & 0x01) << LOWV) + (OPEN_CONTACTOR << CHARGE);
+		uint8_t openHV = ((contactorInfo[COMMON].contactorClosed & 0x01) << COMMON ) + (OPEN_CONTACTOR << MOTOR)  + (OPEN_CONTACTOR << ARRAY) + ((contactorInfo[LOWV].contactorClosed & 0x01) << LOWV) + (OPEN_CONTACTOR << CHARGE);
 
 		// flag for BPS fault
 		uint16_t BPSFaultSignal = 0;
@@ -171,3 +181,8 @@ void Shutoff()
 	}
 
 }
+
+
+*/
+
+
