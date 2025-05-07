@@ -71,12 +71,12 @@ void sendTripStatusCanMessage(uint16_t * tripData) {
 
 void sendPowerSelectionStatus() {
 	CANMsg powSelectStatusMsg;
-	uint16_t data = ((powerSelectionStatus.mainPowerSwitch & 0x1) << 0) + ((powerSelectionStatus.nDCDC1Enable & 0x1) << 1)
-			+ ((powerSelectionStatus.nDCDC1Fault & 0x1) << 2) + ((powerSelectionStatus.DCDC0_OV_Fault & 0x1) << 3)
-			+ ((powerSelectionStatus.DCDC0_UV_Fault & 0x1) << 4) + ((powerSelectionStatus.nDCDC0_On & 0x1) << 5)
-			+ ((powerSelectionStatus.n3A_OC_UC & 0x1) << 6) + ((powerSelectionStatus.nDCDC1_On & 0x1) << 7)
-			+ ((powerSelectionStatus.nCHG_Fault & 0x1) << 8) + ((powerSelectionStatus.nCHG_On & 0x1) << 9)
-			+ ((powerSelectionStatus.nABAT_Enable & 0x1) << 10) + ((powerSelectionStatus.Key & 0x1) << 11);
+	uint16_t data = ((powerSelectionStatus.nMainPowerSwitch & 0x1) << 0) + ((powerSelectionStatus.ExternalShutdown & 0x1) << 1)
+			+ ((powerSelectionStatus.EN1 & 0x1) << 2) + ((powerSelectionStatus.nDCDC_Fault & 0x1) << 3)
+			+ ((powerSelectionStatus.n3A_OC & 0x1) << 4) + ((powerSelectionStatus.nDCDC_On & 0x1) << 5)
+			+ ((powerSelectionStatus.nCHG_Fault & 0x1) << 6) + ((powerSelectionStatus.nCHG_On & 0x1) << 7)
+			+ ((powerSelectionStatus.nCHG_LV_En & 0x1) << 8) + ((powerSelectionStatus.ABATT_Disable & 0x1) << 9)
+			+ ((powerSelectionStatus.Key & 0x1) << 10);
 	powSelectStatusMsg.data[0] = (data & 0xff);
 	powSelectStatusMsg.data[1] = (data & 0xff00) >> 8;
 	powSelectStatusMsg.DLC = 2;

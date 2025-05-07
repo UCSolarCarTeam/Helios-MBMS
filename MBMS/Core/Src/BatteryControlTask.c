@@ -271,6 +271,16 @@ void updateContactorInfo(uint8_t contactor, uint8_t prechargerClosed, uint8_t pr
 }
 
 void updatePowerSelectionStruct() {
+	powerSelectionStatus.nMainPowerSwitch = read_nMPS();
+	powerSelectionStatus.ExternalShutdown = read_ESD();
+	powerSelectionStatus.EN1 = read_EN1();
+	powerSelectionStatus.n3A_OC = read_n3A_OC();
+	powerSelectionStatus.nDCDC_Fault = read_nDCDC_Fault();
+	powerSelectionStatus.nCHG_Fault = read_nCHG_Fault();
+	powerSelectionStatus.nCHG_On = read_nCHG_On();
+	powerSelectionStatus.nCHG_LV_En = read_nCHG_LV_En();
+	powerSelectionStatus.ABATT_Disable = read_ABATT_Disable();
+	powerSelectionStatus.Key = read_Key();
 
 }
 

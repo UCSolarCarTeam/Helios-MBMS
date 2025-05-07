@@ -15,10 +15,22 @@ uint16_t read_nMPS(void);
 
 uint16_t read_ESD(void);
 
-uint16_t read_nDCDC0_ON(void);
+uint16_t read_EN1(void);
 
-uint16_t read_nDCDC1_ON(void);
+uint16_t read_nDCDC_Fault(void);
 
-uint16_t read_KeySwitch(void);
+uint16_t read_n3A_OC(void);
+
+uint16_t read_nDCDC_On(void);
+
+uint16_t read_nCHG_Fault(void);
+
+uint16_t read_nCHG_On(void);
+
+uint16_t read_nCHG_LV_En(void);
+
+uint16_t read_ABATT_Disable(void);
+
+uint16_t read_Key(void);
 
 #endif /* INC_READPOWERGPIO_H_ */

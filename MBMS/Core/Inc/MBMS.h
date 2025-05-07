@@ -134,7 +134,7 @@ typedef struct {
 } MBMSTrip;
 
 typedef struct {
-	uint8_t MainPowerSwitch;
+	uint8_t nMainPowerSwitch;
 	uint8_t ExternalShutdown;
 	uint8_t EN1;
 	uint8_t nDCDC_Fault;
