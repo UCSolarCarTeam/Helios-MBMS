@@ -88,7 +88,7 @@ void DebugInterface()
 
 		orionMsg.DLC = 8;
 		orionMsg.ID = 0x0;
-		orionMsg.extendedID = PACKINFOID;
+		orionMsg.extendedID = PACK_INFO_ID;
 
 		osStatus status = osMessageQueuePut(batteryControlMessageQueueHandle, &orionMsg, 0, osWaitForever); // idk maybe shouldnt wait forever tho..
 		if(status != osOK){
@@ -112,7 +112,7 @@ void DebugInterface()
 		orionMsg.DLC = 8;
 
 		orionMsg.ID = 0x0;
-		orionMsg.extendedID = TEMPINFOID;
+		orionMsg.extendedID = TEMP_INFO_ID;
 
 		osStatus status = osMessageQueuePut(batteryControlMessageQueueHandle, &orionMsg, 0, osWaitForever); // idk maybe shouldnt wait forever tho..
 		if(status != osOK){
@@ -143,7 +143,7 @@ void DebugInterface()
 		orionMsg.DLC = 8;
 
 		orionMsg.ID = 0x0;
-		orionMsg.extendedID = MAXMINVOLTAGESID;
+		orionMsg.extendedID = MIN_MAX_VOLTAGES_ID;
 
 		osStatus status = osMessageQueuePut(batteryControlMessageQueueHandle, &orionMsg, 0, osWaitForever); // idk maybe shouldnt wait forever tho..
 		if(status != osOK){
@@ -180,8 +180,8 @@ void DebugInterface()
 			CANMsg orionMsg;
 
 			// voltage info (each 2-bytes)
-			uint16_t maxCellVoltage = MAX_CELL_VOLTAGE + 1; // these two should set the two trips !
-			uint16_t minCellVoltage = MIN_CELL_VOLTAGE - 1;
+			uint16_t maxCellVoltage = HARD_MAX_CELL_VOLTAGE + 1; // these two should set the two trips !
+			uint16_t minCellVoltage = HARD_MIN_CELL_VOLTAGE - 1;
 			uint16_t maxPackVoltage = 80;
 			uint16_t minPackVoltage = 10;
 
@@ -197,7 +197,7 @@ void DebugInterface()
 			orionMsg.DLC = 8;
 
 			orionMsg.ID = 0x0;
-			orionMsg.extendedID = MAXMINVOLTAGESID;
+			orionMsg.extendedID = MIN_MAX_VOLTAGES_ID;
 
 			osStatus status = osMessageQueuePut(batteryControlMessageQueueHandle, &orionMsg, 0, osWaitForever); // idk maybe shouldnt wait forever tho..
 			if(status != osOK){
@@ -212,7 +212,7 @@ void DebugInterface()
 			CANMsg contactorMsg;
 			contactorMsg.DLC = 4;
 			uint8_t state = 0x000100;
-			uint16_t current = MAX_COMMON_CONTACTOR_CURRENT + 1; // CHANGE THIS TO CONTACTOR U WANT
+			uint16_t current = HARD_MAX_COMMON_CONTACTOR_CURRENT + 1; // CHANGE THIS TO CONTACTOR U WANT
 			uint16_t voltage = 13;
 			contactorMsg.data[0] = (state & 0x3f) + ((current & 0x3) << 6);
 			contactorMsg.data[1] = (current & 0x3fc) >> 2;
@@ -271,7 +271,7 @@ void DebugInterface()
 			orionMsg.DLC = 8;
 
 			orionMsg.ID = 0x0;
-			orionMsg.extendedID = MAXMINVOLTAGESID;
+			orionMsg.extendedID = MIN_MAX_VOLTAGES_ID;
 
 			osStatus status = osMessageQueuePut(batteryControlMessageQueueHandle, &orionMsg, 0, osWaitForever); // idk maybe shouldnt wait forever tho..
 			if(status != osOK){

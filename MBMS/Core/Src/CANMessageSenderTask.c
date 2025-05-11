@@ -28,6 +28,8 @@ extern PowerSelectionStatus powerSelectionStatus;
 
 extern volatile ContactorInfo contactorInfo[6];
 
+extern MBMSSoftBatteryLimitWarning mbmsSoftBatteryLimitWarning;
+
 void CANMessageSenderTask(void* arg)
 {
     while(1)
@@ -57,12 +59,30 @@ void sendTripStatusCanMessage(uint16_t * tripData) {
 			+ ((mbmsTrip.commonHeartbeatDeadTrip & 0x1) << 12) 			  + ((mbmsTrip.motorHeartbeatDeadTrip & 0x1) << 13)
 			+ ((mbmsTrip.arrayHeartbeatDeadTrip & 0x1) << 14)			  + ((mbmsTrip.LVHeartbeatDeadTrip & 0x1) << 15)
 			+ ((mbmsTrip.chargeHeartbeatDeadTrip & 0x1) << 16)		      + ((mbmsTrip.MPSDisabledTrip & 0x1) << 17)
-			+ ((mbmsTrip.ESDEnabledTrip & 0x1) << 18);
+			+ ((mbmsTrip.ESDEnabledTrip & 0x1) << 18)					  + ((mbmsTrip.highTemperatureTrip & 0x1 << 19))
+			+ ((mbmsTrip.lowTemperatureTrip & 0x1 << 20));
 
 	tripMsg.data[0] = (*tripData & 0xff);
 	tripMsg.data[1] = (*tripData & 0xff00) >> 8;
 	tripMsg.data[2] = (*tripData & 0xff0000) >> 16;
-	tripMsg.DLC = 3; // 2 bytes
+	tripMsg.DLC = 3; // 3 bytes
+	tripMsg.extendedID = MBMS_TRIP_ID;
+	tripMsg.ID = 0x0;
+	osMessageQueuePut(TxCANMessageQueueHandle, &tripMsg, 0, osWaitForever);
+
+}
+
+void sendSoftBatteryLimitCanMessage() {
+	CANMsg tripMsg;
+	uint16_t tripData = ((mbmsSoftBatteryLimitWarning.highCellVoltageWarning & 0x1) << 0)   	+ ((mbmsSoftBatteryLimitWarning.lowCellVoltageWarning & 0x1) << 1)
+			+ ((mbmsSoftBatteryLimitWarning.commonHighCurrentWarning & 0x1) << 2)   			+ ((mbmsSoftBatteryLimitWarning.motorHighCurrentWarning & 0x1) << 3)
+			+ ((mbmsSoftBatteryLimitWarning.arrayHighCurrentWarning & 0x1) << 4)    			+ ((mbmsSoftBatteryLimitWarning.LVHighCurrentWarning & 0x1) << 5)
+			+ ((mbmsSoftBatteryLimitWarning.chargeHighCurrentWarning & 0x1) << 6)   		    + ((mbmsSoftBatteryLimitWarning.highBatteryWarning & 0x1) << 7)
+		    + ((mbmsSoftBatteryLimitWarning.highTemperatureWarning & 0x1 << 8))		     	+ ((mbmsSoftBatteryLimitWarning.lowTemperatureWarning & 0x1 << 9));
+
+	tripMsg.data[0] = (tripData & 0xff);
+	tripMsg.data[1] = (tripData & 0xff00) >> 8;
+	tripMsg.DLC = 2; // 2 bytes
 	tripMsg.extendedID = MBMS_TRIP_ID;
 	tripMsg.ID = 0x0;
 	osMessageQueuePut(TxCANMessageQueueHandle, &tripMsg, 0, osWaitForever);
@@ -111,6 +131,8 @@ void sendMBMSHeartbeatCanMessage() {
 	mbmsHeartbeatMsg.ID = 0x0;
 	osMessageQueuePut(TxCANMessageQueueHandle, &mbmsHeartbeatMsg, 0, osWaitForever);
 }
+
+
 
 void sendContactorsCanMessage() {
 	// should close contactors if perms given? OH PROBABLY ALSO CHECK IF ALLOWE DTO DISCHARGE

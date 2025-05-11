@@ -5,9 +5,6 @@
  *      Author: millaine
  */
 
-
-
-
 #include "../Inc/ValueUpdaterTask.h"
 #include "BatteryControlTask.h"
 #include "MBMS.h"
@@ -78,19 +75,19 @@ void updateContactorInfoStruct() {
 	}
 
 }
-//
-//void updateContactorInfo(uint8_t contactor, uint8_t prechargerClosed, uint8_t prechargerClosing, uint8_t prechargerError,
-//		uint8_t contactorClosed, uint8_t contactorClosing, uint8_t contactorError, int16_t lineCurrent, int16_t chargeCurrent, uint8_t BPSerror) {
-//	contactorInfo[contactor].prechargerClosed = prechargerClosed;
-//	contactorInfo[contactor].prechargerClosing = prechargerClosing;
-//	contactorInfo[contactor].prechargerError = prechargerError;
-//	contactorInfo[contactor].contactorClosed = contactorClosed;
-//	contactorInfo[contactor].contactorError = contactorError;
-//	contactorInfo[contactor].lineCurrent = lineCurrent;
-//	contactorInfo[contactor].chargeCurrent = chargeCurrent;
-//	contactorInfo[contactor].BPSerror = BPSerror;
-//	return;
-//}
+
+void updateContactorInfo(uint8_t contactor, uint8_t prechargerClosed, uint8_t prechargerClosing, uint8_t prechargerError,
+		uint8_t contactorClosed, uint8_t contactorClosing, uint8_t contactorError, int16_t lineCurrent, int16_t chargeCurrent, uint8_t BPSerror) {
+	contactorInfo[contactor].prechargerClosed = prechargerClosed;
+	contactorInfo[contactor].prechargerClosing = prechargerClosing;
+	contactorInfo[contactor].prechargerError = prechargerError;
+	contactorInfo[contactor].contactorClosed = contactorClosed;
+	contactorInfo[contactor].contactorError = contactorError;
+	contactorInfo[contactor].lineCurrent = lineCurrent;
+	contactorInfo[contactor].chargeCurrent = chargeCurrent;
+	contactorInfo[contactor].BPSerror = BPSerror;
+	return;
+}
 
 void updatePowerSelectionStruct() {
 	powerSelectionStatus.nMainPowerSwitch = read_nMPS();
@@ -123,7 +120,7 @@ void updateOrionInfoStruct() {
 			data[i] = orionMsg.data[i];
 		}
 
-		if (orionMsg.extendedID == PACKINFOID) {
+		if (orionMsg.extendedID == PACK_INFO_ID) {
 			// update batteryInfo instance for the pack info stuff
 			batteryInfo.packCurrent = data[0] + (data[1] << 8);
 			batteryInfo.packVoltage = data[2] + (data[3] << 8);
@@ -143,13 +140,13 @@ void updateOrionInfoStruct() {
 
 
 		}
-		else if (orionMsg.extendedID == TEMPINFOID) {
+		else if (orionMsg.extendedID == TEMP_INFO_ID) {
 			batteryInfo.highTemp = data[0];
 			batteryInfo.lowTemp = data[2];
 			batteryInfo.avgTemp = data[4];
 		}
 
-		else if (orionMsg.extendedID == MAXMINVOLTAGESID) {
+		else if (orionMsg.extendedID == MIN_MAX_VOLTAGES_ID) {
 			batteryInfo.maxCellVoltage = data[0] + (data[1] << 8);
 			batteryInfo.minCellVoltage = data[2] + (data[3] << 8);
 			batteryInfo.maxPackVoltage = data[4] + (data[5] << 8);

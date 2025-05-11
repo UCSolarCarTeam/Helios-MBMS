@@ -426,8 +426,8 @@ static void MX_CAN1_Init(void)
   packInfoFilter.FilterFIFOAssignment = CAN_FILTER_FIFO0;
   packInfoFilter.FilterActivation = CAN_FILTER_ENABLE;
 
-  packInfoFilter.FilterIdHigh = PACKINFOID >> 13; //
-  packInfoFilter.FilterIdLow = (PACKINFOID & 0x1fff) << 3;  // shift left 3 bits because last 13 bits of EXID in low reg, and zero out last 3 bits of low reg (RTR, IDE, 0)
+  packInfoFilter.FilterIdHigh = PACK_INFO_ID >> 13; //
+  packInfoFilter.FilterIdLow = (PACK_INFO_ID & 0x1fff) << 3;  // shift left 3 bits because last 13 bits of EXID in low reg, and zero out last 3 bits of low reg (RTR, IDE, 0)
   if (HAL_CAN_ConfigFilter(&hcan1, &packInfoFilter) != HAL_OK) {
       // handle error!
   }
@@ -440,8 +440,8 @@ static void MX_CAN1_Init(void)
     tempInfoFilter.FilterFIFOAssignment = CAN_FILTER_FIFO0;
     tempInfoFilter.FilterActivation = CAN_FILTER_ENABLE;
 
-  tempInfoFilter.FilterIdHigh = (TEMPINFOID >> 13); // would be zero when u shift it 13 bits left lol
-  tempInfoFilter.FilterIdLow = (TEMPINFOID & 0x1fff) << 3;
+  tempInfoFilter.FilterIdHigh = (TEMP_INFO_ID >> 13); // would be zero when u shift it 13 bits left lol
+  tempInfoFilter.FilterIdLow = (TEMP_INFO_ID & 0x1fff) << 3;
   if (HAL_CAN_ConfigFilter(&hcan1, &tempInfoFilter) != HAL_OK) {
       Error_Handler();
   }
@@ -455,8 +455,8 @@ static void MX_CAN1_Init(void)
 	maxMinVoltagesFilter.FilterActivation = CAN_FILTER_ENABLE;
 
 
-	maxMinVoltagesFilter.FilterIdHigh = MAXMINVOLTAGESID >> 13;
-	maxMinVoltagesFilter.FilterIdLow = (MAXMINVOLTAGESID & 0x1fff) << 3;
+	maxMinVoltagesFilter.FilterIdHigh = MIN_MAX_VOLTAGES_ID >> 13;
+	maxMinVoltagesFilter.FilterIdLow = (MIN_MAX_VOLTAGES_ID & 0x1fff) << 3;
 
 	if (HAL_CAN_ConfigFilter(&hcan1, &maxMinVoltagesFilter) != HAL_OK) {
 	Error_Handler();

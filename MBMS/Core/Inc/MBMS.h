@@ -47,12 +47,10 @@ enum Contactor {
 	CHARGE
 };
 
-// make enum of all the
-
 
 
 enum startupStates {
-	nMPS_ENABLED = 0,
+	nMPS_ENABLED = 0, // when u disconnect mps it kind goes back to this state in the startup okay?? check the draw.io diagram
 	nMPS_DISABLED,
 	ESD_DISABLED,
 	CHECKS_PASSED,
@@ -130,10 +128,26 @@ typedef struct {
 	uint8_t arrayHeartbeatDeadTrip;
 	uint8_t LVHeartbeatDeadTrip;
 	uint8_t chargeHeartbeatDeadTrip;
-	uint8_t MPSDisabledTrip;
+	uint8_t MPSDisabledTrip; // this is not a BPS fault ! (same w currents)
 	uint8_t ESDEnabledTrip;
+	uint8_t highTemperatureTrip;
+	uint8_t lowTemperatureTrip;
 
 } MBMSTrip;
+
+typedef struct {
+	uint8_t highCellVoltageWarning;
+	uint8_t lowCellVoltageWarning;
+	uint8_t commonHighCurrentWarning;
+	uint8_t motorHighCurrentWarning;
+	uint8_t arrayHighCurrentWarning;
+	uint8_t LVHighCurrentWarning;
+	uint8_t chargeHighCurrentWarning;
+	uint8_t highBatteryWarning;
+	uint8_t highTemperatureWarning;
+	uint8_t lowTemperatureWarning;
+
+} MBMSSoftBatteryLimitWarning;
 
 typedef struct {
 	uint8_t nMainPowerSwitch;

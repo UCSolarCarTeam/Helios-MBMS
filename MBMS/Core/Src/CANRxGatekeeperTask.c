@@ -32,18 +32,6 @@ void CANRxGatekeeperTask(void* arg)
 
 // honestly just use the tick count stuff if u must :<, but i still made the other file just in case
 
-void updateContactorInfo(uint8_t contactor, uint8_t prechargerClosed, uint8_t prechargerClosing, uint8_t prechargerError,
-		uint8_t contactorClosed, uint8_t contactorClosing, uint8_t contactorError, int16_t lineCurrent, int16_t chargeCurrent, uint8_t BPSerror) {
-	contactorInfo[contactor].prechargerClosed = prechargerClosed;
-	contactorInfo[contactor].prechargerClosing = prechargerClosing;
-	contactorInfo[contactor].prechargerError = prechargerError;
-	contactorInfo[contactor].contactorClosed = contactorClosed;
-	contactorInfo[contactor].contactorError = contactorError;
-	contactorInfo[contactor].lineCurrent = lineCurrent;
-	contactorInfo[contactor].chargeCurrent = chargeCurrent;
-	contactorInfo[contactor].BPSerror = BPSerror;
-	return;
-}
 
 
 void CANRxGatekeeper()
@@ -54,80 +42,29 @@ void CANRxGatekeeper()
 	osStatus_t status = osMessageQueueGet(RxCANMessageQueueHandle, &msg, 0, osWaitForever);
 	if (status != osOK){
 		// handle error but idk what to do here
+		Error_Handler();
 	}
 	// otherwise if its okay then...
 	else if (status == osOK) {
+		uint32_t eID = msg.extendedID;
 
-
-
-		// if the message is contactor states
-		if ((msg.extendedID & 0xff0) == CONTACTORIDS){
-			uint8_t data[msg.DLC];
-			for (int i = 0; i < msg.DLC; i ++) {
-				data[i] = msg.data[i];
+		if (eID == PACK_INFO_ID || eID == TEMP_INFO_ID || eID == MIN_MAX_VOLTAGES_ID) {
+			// add to queue for battery control task
+			status = osMessageQueuePut(batteryControlMessageQueueHandle, &msg, 0, osWaitForever); // idk maybe shouldnt wait forever tho..
+			if(status != osOK){
+				// also handle error here but idk do what :(
+				Error_Handler();
 			}
-
-			uint8_t prechargerClosed = data[0] & 0x01; // extract bit 0
-			uint8_t prechargerClosing = data[0] & 0x02; // extract bit 1
-			uint8_t prechargerError = data[0] & 0x04; // extract bit 2
-			uint8_t contactorClosed = data[0] & 0x08; // extract bit 3
-			uint8_t contactorClosing = data[0] & 0x10; // extract bit 4
-			uint8_t contactorError = data[0] & 0x20; // extract bit 5
-			int16_t lineCurrent = ((data[0] & 0xc0) >> 6) + ((data[1] & 0xff) << 2) + ((data[2] & 0x03) << 10); // extract bits 6 to 17
-			int16_t chargeCurrent = ((data[2] & 0xfc) >> 2) + ((data[3] & 0x3f) << 6); // extract bits 18 to 29
-			uint8_t BPSerror = data[3] & 0x80; //extract bit 30
-			updateContactorInfo((msg.extendedID - CONTACTORIDS), prechargerClosed, prechargerClosing, prechargerError,
-					contactorClosed, contactorClosing, contactorError, lineCurrent, chargeCurrent, BPSerror);
-
-		}
-		// if the message is a contactor heartbeat
-		else if((msg.extendedID & 0xff0) == CONTACTOR_HEARTBEATS_IDS){
-			uint16_t newHeartbeat = msg.data[0] + (msg.data[1] << 8);
-			contactorInfo[msg.extendedID - CONTACTOR_HEARTBEATS_IDS].heartbeat = newHeartbeat;
 		}
 
-		else if (msg.extendedID == PACKINFOID || msg.extendedID == TEMPINFOID || msg.extendedID == MAXMINVOLTAGESID) {
-
-			uint8_t data[msg.DLC];
-			for (int i = 0; i < msg.DLC; i ++) {
-				data[i] = msg.data[i];
+		else if (eID && CONTACTORMASK == CONTACTOR_HEARTBEATS_IDS) { // if id is 0x20X or 0x21X
+			// add to queue for battery control task
+			status = osMessageQueuePut(contactorMessageQueueHandle, &msg, 0, osWaitForever); // idk maybe shouldnt wait forever tho..
+			if(status != osOK){
+				// also handle error here but idk do what :(
+				Error_Handler();
 			}
-
-			if (msg.extendedID == PACKINFOID) {
-				// update batteryInfo instance for the pack info stuff
-				batteryInfo.packCurrent = data[0] + (data[1] << 8);
-				batteryInfo.packVoltage = data[2] + (data[3] << 8);
-				batteryInfo.packSOC = data[4];
-				batteryInfo.packAmphours = data[5] + (data[6] << 8);
-				batteryInfo.packDOD = data[7];
-
-				mbmsStatus.auxilaryBattVoltage = batteryInfo.packVoltage;
-
-				// updating allow charge/discharge on mbmsStatus, based on SOC
-				if (batteryInfo.packSOC >= SOC_SAFE_FOR_DISCHARGE) {
-					mbmsStatus.allowDischarge = 1;
-				}
-				if (batteryInfo.packSOC <= SOC_SAFE_FOR_CHARGE) {
-					mbmsStatus.allowCharge = 1;
-				}
-
-
-			}
-			else if (msg.extendedID == TEMPINFOID) {
-				batteryInfo.highTemp = data[0];
-				batteryInfo.lowTemp = data[2];
-				batteryInfo.avgTemp = data[4];
-			}
-
-			else if (msg.extendedID == MAXMINVOLTAGESID) {
-				batteryInfo.maxCellVoltage = data[0] + (data[1] << 8);
-				batteryInfo.minCellVoltage = data[2] + (data[3] << 8);
-				batteryInfo.maxPackVoltage = data[4] + (data[5] << 8);
-				batteryInfo.minPackVoltage = data[6] + (data[7] << 8);
-			}
-
 		}
-
 
 	}
 }

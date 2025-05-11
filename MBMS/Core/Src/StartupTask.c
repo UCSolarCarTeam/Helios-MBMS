@@ -63,6 +63,8 @@ void Startup()
 
 	// DO NEW CHECKS!!!!! if fails, either BPS fault, or keeps checking
 	// maybe call BCT functionto do checks... make a function specific to startup checks
+	startupCheck();
+	osDelay(2000); // i just added this check here cuz i wanted to give time for BCT to do stuff
 	mbmsStatus.startupState = CHECKS_PASSED;
 
 	// clear all saved faults
@@ -76,6 +78,7 @@ void Startup()
 	while ((contactorInfo[COMMON].contactorClosed != CLOSE_CONTACTOR)) {
 		// wait for common contactor to close
 		//should i add an osDelay here so BCT can run? ask nathan probably (same w lv, or anywhere u want a diff task to be able to run)
+		// naw i think it should be okay maybe
 	}
 	if (contactorInfo[COMMON].contactorError) {
 		// TO DO: handle error
@@ -88,35 +91,21 @@ void Startup()
 	while ((contactorInfo[LOWV].contactorClosed != CLOSE_CONTACTOR)) {
 		// wait for LV contactor to close
 	}
+	if (contactorInfo[LOWV].contactorError) {
+		// TO DO: handle error
+		Error_Handler();
+	}
 	mbmsStatus.startupState = LV_CLOSED;
 
-
-	// enable/connect to DCDC1 and wait until DCDC1 on
-	HAL_GPIO_WritePin(EN1_GPIO_Port, EN1_Pin, GPIO_PIN_SET); // enable DCDC HV
-
-	/* OLD THING WITH DCDC1 TIMEOUT, keeping for now in case they decide we need a timeout for EN1 but they said no checks for it so
-
-	 // wait for DCDC1 to connect!
-	uint32_t DCDC1_Start_Count = osKernelGetTickCount();
-	while(read_nDCDC1_ON() == 1) { // n stands for NOT
-		//set a timeout, if this fails, trip
-		uint32_t DCDC1_Time_Passed = (osKernelGetTickCount() - DCDC1_Start_Count) * FREERTOS_TICK_PERIOD; // USE THE GIUVEN SECONDS PER TICK MACRO FROM FREE RTOS
-		if(DCDC1_Time_Passed >= DCDC1_WAIT_TIME){
-			// TO DO: trip
-			// but idk which type of trip this is...
-			osThreadTerminate(startupTaskHandle);
-		}
-	}
-
-
-	 */
+	// enable DCDC HV
+	HAL_GPIO_WritePin(EN1_GPIO_Port, EN1_Pin, GPIO_PIN_SET);
 
 	mbmsStatus.startupState = EN1_ON;
 
 
 	// set flag to give permission to precharge/close motor contactor
 	// just check that everything is good still (doesnt HAVE to close motor before moving on to next part)
-	flagsSet = osEventFlagsSet(contactorPermissionsFlagHandle, MOTOR_FLAG ); // set both motors contactor flag
+	flagsSet = osEventFlagsSet(contactorPermissionsFlagHandle, MOTOR_FLAG );
 
 	mbmsStatus.startupState = MOTORS_PERMS;
 
@@ -142,23 +131,6 @@ void Startup()
 	// because if battery is fully discharged, then motors shouldnt go
 	// if car is fully charged, dont need array
 
-
-	/* OLD CODE TO DISCONNECT FROM AUX BATTERY
-
-	// turn off DCDC0 (no longer connect to aux battery)
-	HAL_GPIO_WritePin(ABATT_DISABLE_GPIO_Port, ABATT_DISABLE_Pin, GPIO_PIN_SET); // assuming disable is disconnect/open,
-	// wait until DCDC0 has been disconnected (while DCDC0 == closed) {}
-	uint32_t DCDC0_Start_Count = osKernelGetTickCount();
-	while(read_nDCDC0_ON() == 0) {
-		uint32_t DCDC0_Time_Passed = (osKernelGetTickCount() - DCDC0_Start_Count) * FREERTOS_TICK_PERIOD;
-		if(DCDC0_Time_Passed >= DCDC0_WAIT_TIME){
-			// TO DO: trip
-			osThreadTerminate(startupTaskHandle);
-		}
-	}
-	mbmsStatus.startupState = DCDC0_OFF;
-
-	 */
 
 	// set flag that everything is done (all perms given!!!)
 	mbmsStatus.startupState = FULLY_OPERATIONAL;

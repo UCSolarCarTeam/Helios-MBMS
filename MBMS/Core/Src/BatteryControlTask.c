@@ -18,6 +18,8 @@
 
 //ContactorState contactorState = {0};
 
+MBMSSoftBatteryLimitWarning mbmsSoftBatteryLimitWarning;
+
 BatteryInfo batteryInfo;
 
 MBMSStatus mbmsStatus;
@@ -65,11 +67,10 @@ void BatteryControl()
 
 	checkContactorHeartbeats();
 
+	checkSoftBatteryLimit();
 
 	/* Check for trips based on information at hand */
 	updateTripStatus();
-
-
 
 	checkIfShutdown();
 
@@ -156,9 +157,58 @@ uint8_t checkPrechargersOpen() {
 	}
 	return allOpen;
 
+}
+
+uint8_t batteryCheck() {
+	// maybe set the flag for hard batt lim, soft batt lim here? or idk loll
+	// or just have a var somewhere to keep track and check the var in the check if shutdown stuff?
+	// in case theres multiple things wrong so you can store all the trips before yk, doing whatever BPS procedure
+
+	uint8_t safe = 1;
+
+	if(batteryInfo.maxCellVoltage > HARD_MAX_CELL_VOLTAGE){
+		// hard battery limit
+		mbmsTrip.highCellVoltageTrip = 1;
+		safe = 0;
+	}
+	else if (batteryInfo.maxCellVoltage > SOFT_MAX_CELL_VOLTAGE){
+		// soft battery limit
+		mbmsTrip.highCellVoltageTrip = 1;
+		safe = 0;
+	}
+	if(batteryInfo.minCellVoltage < HARD_MIN_CELL_VOLTAGE) {
+		// hard battery limit
+		mbmsTrip.lowCellVoltageTrip = 1;
+		safe = 0;
+	}
+	else if (batteryInfo.minCellVoltage < SOFT_MIN_CELL_VOLTAGE){
+		// soft battery limit
+		mbmsTrip.lowCellVoltageTrip = 1;
+		safe = 0;
+	}
+
+	if (batteryInfo.packVoltage > HARD_MAX_PACK_VOLTAGE) {
+		// hard battery limit
+		mbmsTrip.highBatteryTrip = 1;
+		safe = 0;
+	}
+	else if (batteryInfo.packVoltage > SOFT_MAX_PACK_VOLTAGE) {
+		// soft battery limit
+		mbmsTrip.highBatteryTrip = 1;
+		safe = 0;
+	}
+
+	return safe;
 
 }
 
+
+/*
+ * This function should be called during the startup procedure
+ * It goes through all the checks needed on startup, such as contactor heartbeats, contactors open,
+ * and battery state (voltages and temperatures)
+ * (Don't need to check current beacuse the contactors should be open anyways..)
+ */
 void startupCheck(){
 
 	/* Waiting for contactor heartbeats */
@@ -174,26 +224,51 @@ void startupCheck(){
 	}
 	if (heartbeatDead == 1){
 		// bps fault
+		initiateBPSFault();
 	}
 
 	/* Check to ensure no contactors are closed */
 	if ((checkContactorsOpen() == 0) || checkPrechargersOpen() == 0){
 		//bps fault
+		initiateBPSFault();
 	}
 
 	/* Battery check (orion) */
+	uint8_t passedBatteryCheck = batteryCheck();
+	if (!passedBatteryCheck) {
+		initiateBPSFault();
+	}
+
 
 }
 
+/*
+ * This function runs when a BPS Fault should occur
+ * It turns on the strobe light, and changes the mbms status
+ * Should set a flag for shutdown...
+ */
+void initiateBPSFault() {
+	// strpbe enable
+	HAL_GPIO_WritePin(Strobe_En_GPIO_Port, Strobe_En_Pin, 1);
+	// update mbms status
+	mbmsStatus.strobeBMSLight = 1;
+	osEventFlagsSet(shutoffFlagHandle, (HARD_BL_FLAG | SHUTOFF_FLAG));
+	// idk if soft battery limit has any purpose in shutoff procedure anymore, since when i talked
+	// to jenny today, she said soft battery limit should just be a warning thru CAN and thats it.... may 10
 
+}
+
+/*
+ * This function checks that all the contactor heartbeats are still being received
+ * If they are not, a contactor has possibly died and a trip should occur which should initiate
+ * a BPS Fault !
+ */
 void checkContactorHeartbeats() {
 	/* The reason i'm checking heartbeats this way and not with a timeout for the message queue (like orion)
 	 * is because there's multiple contactor boards all sending their heartbeats so the timeout wouldn't
 	 * be accurate of what the problem is, or if there is a problem. For example if a contactor dies, other
 	 * contactor would still be sending messages.
 	 */
-
-
 
 	for(int i = 0; i < 5; i++) {
 		if(previousHeartbeats[i] >= 65535) { // check this logic lol
@@ -230,7 +305,7 @@ void checkContactorHeartbeats() {
 	}
 }
 
-
+// this stuff is diff now i think
 void checkIfShutdown() {
 	/* Update System status */
 	if(tripData != 0) { // was og written as tripStruct by violet
@@ -261,30 +336,89 @@ void checkChargerState() {
 
 }
 
+/* This function checks the soft limits of voltages, currents, and temperatures
+ * These warnings should be sent out in a CAN message (CANMessageSender -> CANTxGatekeeper)
+ * You can think of these like a warning on your phone that it's low battery
+ * Don't need to do anything for these soft limits, just send the warning!
+ */
+void checkSoftBatteryLimit() {
+
+	/* Checking the min/max cell voltages */
+	if (batteryInfo.maxCellVoltage > SOFT_MAX_CELL_VOLTAGE) {
+		mbmsSoftBatteryLimitWarning.highCellVoltageWarning = 1;
+	}
+	if (batteryInfo.minCellVoltage < SOFT_MIN_CELL_VOLTAGE) {
+		mbmsSoftBatteryLimitWarning.lowCellVoltageWarning = 1;
+	}
+
+	/* Checking contactors' high current */
+	if (contactorInfo[COMMON].lineCurrent > SOFT_MAX_COMMON_CONTACTOR_CURRENT){
+		mbmsSoftBatteryLimitWarning.commonHighCurrentWarning = 1;
+	}
+	if (contactorInfo[MOTOR].lineCurrent > SOFT_MAX_MOTORS_CONTACTOR_CURRENT){
+		mbmsSoftBatteryLimitWarning.motorHighCurrentWarning = 1;
+	}
+	if (contactorInfo[ARRAY].lineCurrent > SOFT_MAX_ARRAY_CONTACTOR_CURRENT){
+		mbmsSoftBatteryLimitWarning.arrayHighCurrentWarning = 1;
+	}
+	if (contactorInfo[LOWV].lineCurrent > SOFT_MAX_LV_CONTACTOR_CURRENT){
+		mbmsSoftBatteryLimitWarning.LVHighCurrentWarning = 1;
+	}
+	if (contactorInfo[CHARGE].lineCurrent > SOFT_MAX_CHARGE_CONTACTOR_CURRENT){
+		mbmsSoftBatteryLimitWarning.chargeHighCurrentWarning = 1;
+	}
+
+	/* Checking high/low temperature */
+	if (batteryInfo.highTemp > SOFT_MAX_TEMP) {
+		mbmsSoftBatteryLimitWarning.highTemperatureWarning = 1;
+	}
+	if (batteryInfo.lowTemp < SOFT_MIN_TEMP) {
+		mbmsSoftBatteryLimitWarning.lowTemperatureWarning = 1;
+	}
+
+}
+
 void updateTripStatus() {
 	// checking for high current trips
-	if (contactorInfo[COMMON].lineCurrent >= MAX_COMMON_CONTACTOR_CURRENT){
+	if (contactorInfo[COMMON].lineCurrent > HARD_MAX_COMMON_CONTACTOR_CURRENT){
 		mbmsTrip.commonHighCurrentTrip = 1;
 	}
-	if ((contactorInfo[MOTOR].lineCurrent >= MAX_MOTORS_CONTACTOR_CURRENT)){
+
+	if ((contactorInfo[MOTOR].lineCurrent > HARD_MAX_MOTORS_CONTACTOR_CURRENT)){
 		mbmsTrip.motorHighCurrentTrip = 1;
 	}
-	if (contactorInfo[ARRAY].lineCurrent >= MAX_ARRAY_CONTACTOR_CURRENT){
+
+	if (contactorInfo[ARRAY].lineCurrent > HARD_MAX_ARRAY_CONTACTOR_CURRENT){
 		mbmsTrip.arrayHighCurrentTrip = 1;
 	}
-	if (contactorInfo[LOWV].lineCurrent >= MAX_LV_CONTACTOR_CURRENT){
+
+
+	if (contactorInfo[LOWV].lineCurrent > HARD_MAX_LV_CONTACTOR_CURRENT){
 		mbmsTrip.LVHighCurrentTrip = 1;
 	}
-	if (contactorInfo[CHARGE].lineCurrent >= MAX_CHARGE_CONTACTOR_CURRENT){
+
+
+	if (contactorInfo[CHARGE].lineCurrent > HARD_MAX_CHARGE_CONTACTOR_CURRENT){
 		mbmsTrip.chargeHighCurrentTrip = 1;
 	}
 
+
 	// checking for high/low cell voltage trips
-	if(batteryInfo.maxCellVoltage >= MAX_CELL_VOLTAGE){
+	if(batteryInfo.maxCellVoltage > HARD_MAX_CELL_VOLTAGE){
 		mbmsTrip.highCellVoltageTrip = 1;
 	}
-	if(batteryInfo.minCellVoltage <= MIN_CELL_VOLTAGE) {
+
+	if(batteryInfo.minCellVoltage < HARD_MIN_CELL_VOLTAGE) {
 		mbmsTrip.lowCellVoltageTrip = 1;
+	}
+
+
+	/* Checking high/low temperature */
+	if (batteryInfo.highTemp > HARD_MAX_TEMP) {
+		mbmsTrip.highTemperatureTrip = 1;
+	}
+	if(batteryInfo.lowTemp < HARD_MIN_TEMP) {
+		mbmsTrip.lowTemperatureTrip = 1;
 	}
 
 	// checking for Protection Trip
@@ -341,134 +475,6 @@ void updateTripStatus() {
 }
 
 
-// i moved the below elsewhere but since still not 100% sure where it should go i just commented it out
-
-//void updateContactorInfoStruct() {
-//	static uint8_t counter = 0;
-//
-//	CANMsg contactorMsg;
-//	// Non blocking check for messages from contactors !
-//	osStatus status = osMessageQueueGet(contactorMessageQueueHandle, &contactorMsg, NULL, 0);
-//	if (status == osOK) {
-//		// if the message is about the contactor heartbeats
-//		if((contactorMsg.extendedID & 0xff0) == CONTACTOR_HEARTBEATS_IDS){
-//			uint16_t newHeartbeat = contactorMsg.data[0] + (contactorMsg.data[1] << 8);
-//			contactorInfo[contactorMsg.extendedID - CONTACTOR_HEARTBEATS_IDS].heartbeat = newHeartbeat;
-//		}
-//		// if the message is about the contactor info
-//		else{
-//			uint8_t data[contactorMsg.DLC];
-//			for (int i = 0; i < contactorMsg.DLC; i ++) {
-//				data[i] = contactorMsg.data[i];
-//			}
-//
-//			uint8_t prechargerClosed = data[0] & 0x01; // extract bit 0
-//			uint8_t prechargerClosing = data[0] & 0x02; // extract bit 1
-//			uint8_t prechargerError = data[0] & 0x04; // extract bit 2
-//			uint8_t contactorClosed = data[0] & 0x08; // extract bit 3
-//			uint8_t contactorClosing = data[0] & 0x10; // extract bit 4
-//			uint8_t contactorError = data[0] & 0x20; // extract bit 5
-//			int16_t lineCurrent = ((data[0] & 0xc0) >> 6) + ((data[1] & 0xff) << 2) + ((data[2] & 0x03) << 10); // extract bits 6 to 17
-//			int16_t chargeCurrent = ((data[2] & 0xfc) >> 2) + ((data[3] & 0x3f) << 6); // extract bits 18 to 29
-//			uint8_t BPSerror = data[3] & 0x80; //extract bit 30
-//			updateContactorInfo((contactorMsg.extendedID - CONTACTORIDS), prechargerClosed, prechargerClosing, prechargerError,
-//					contactorClosed, contactorClosing, contactorError, lineCurrent, chargeCurrent, BPSerror);
-//
-//		}
-//	}
-//
-//}
-//
-//void updateContactorInfo(uint8_t contactor, uint8_t prechargerClosed, uint8_t prechargerClosing, uint8_t prechargerError,
-//		uint8_t contactorClosed, uint8_t contactorClosing, uint8_t contactorError, int16_t lineCurrent, int16_t chargeCurrent, uint8_t BPSerror) {
-//	contactorInfo[contactor].prechargerClosed = prechargerClosed;
-//	contactorInfo[contactor].prechargerClosing = prechargerClosing;
-//	contactorInfo[contactor].prechargerError = prechargerError;
-//	contactorInfo[contactor].contactorClosed = contactorClosed;
-//	contactorInfo[contactor].contactorError = contactorError;
-//	contactorInfo[contactor].lineCurrent = lineCurrent;
-//	contactorInfo[contactor].chargeCurrent = chargeCurrent;
-//	contactorInfo[contactor].BPSerror = BPSerror;
-//	return;
-//}
-//
-//void updatePowerSelectionStruct() {
-//	powerSelectionStatus.nMainPowerSwitch = read_nMPS();
-//	powerSelectionStatus.ExternalShutdown = read_ESD();
-//	powerSelectionStatus.EN1 = read_EN1();
-//	powerSelectionStatus.n3A_OC = read_n3A_OC();
-//	powerSelectionStatus.nDCDC_Fault = read_nDCDC_Fault();
-//	powerSelectionStatus.nCHG_Fault = read_nCHG_Fault();
-//	powerSelectionStatus.nCHG_On = read_nCHG_On();
-//	powerSelectionStatus.nCHG_LV_En = read_nCHG_LV_En();
-//	powerSelectionStatus.ABATT_Disable = read_ABATT_Disable();
-//	powerSelectionStatus.Key = read_Key();
-//
-//}
-
-
-//// maybe change name of ths lol oop
-//void updatePackInfoStruct() {
-//	//Update all information regarding the battery
-//	CANMsg orionMsg;
-//	osDelay(1000);
-//	static uint8_t orionMessageCounter = 0;
-//	osStatus status = osMessageQueueGet(batteryControlMessageQueueHandle, &orionMsg, NULL, ORION_MSG_WAIT_TIMEOUT);  // Timeout = 0 means non-blocking
-//	if (status == osOK) {
-//		orionMessageCounter = 0; // reset counter to zero now that you've received message
-//		mbmsStatus.orionCANReceived = 1;
-//
-//		// update the struct w the info
-//		// do the checks u need w info given by orion
-//		uint8_t data[orionMsg.DLC];
-//		for (int i = 0; i < orionMsg.DLC; i ++) {
-//			data[i] = orionMsg.data[i];
-//		}
-//
-//		if (orionMsg.extendedID == PACKINFOID) {
-//			// update batteryInfo instance for the pack info stuff
-//			batteryInfo.packCurrent = data[0] + (data[1] << 8);
-//			batteryInfo.packVoltage = data[2] + (data[3] << 8);
-//			batteryInfo.packSOC = data[4];
-//			batteryInfo.packAmphours = data[5] + (data[6] << 8);
-//			batteryInfo.packDOD = data[7];
-//
-//			mbmsStatus.auxilaryBattVoltage = batteryInfo.packVoltage;
-//
-//			// updating allow charge/discharge on mbmsStatus, based on SOC
-//			if (batteryInfo.packSOC >= SOC_SAFE_FOR_DISCHARGE) {
-//				mbmsStatus.allowDischarge = 1;
-//			}
-//			if (batteryInfo.packSOC <= SOC_SAFE_FOR_CHARGE) {
-//				mbmsStatus.allowCharge = 1;
-//			}
-//
-//
-//		}
-//		else if (orionMsg.extendedID == TEMPINFOID) {
-//			batteryInfo.highTemp = data[0];
-//			batteryInfo.lowTemp = data[2];
-//			batteryInfo.avgTemp = data[4];
-//		}
-//
-//		else if (orionMsg.extendedID == MAXMINVOLTAGESID) {
-//			batteryInfo.maxCellVoltage = data[0] + (data[1] << 8);
-//			batteryInfo.minCellVoltage = data[2] + (data[3] << 8);
-//			batteryInfo.maxPackVoltage = data[4] + (data[5] << 8);
-//			batteryInfo.minPackVoltage = data[6] + (data[7] << 8);
-//		}
-//
-//	}
-//
-//	else if (status == osErrorTimeout) // if timeout for orion (no message :0)
-//	{
-//		orionMessageCounter += 1;
-//	}
-//	if(orionMessageCounter >= 3){
-//		mbmsStatus.orionCANReceived = 0; // no orion message recieved !!!
-//	}
-//
-//}
 
 // motor and array cont6actors might still need to open or close during.....
 // but i think LV and common can just stay closed ... ?

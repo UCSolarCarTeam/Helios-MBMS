@@ -11,25 +11,30 @@
 #include <stdint.h>
 #include "cmsis_os.h"
 
-/* Messages Sent By AUX BMS IDs*/
-#define PACKINFOID 0x302
-#define TEMPINFOID 0x304
-#define MAXMINVOLTAGESID 0x30A
 
 #define CONTACTORMASK  0x1fffffe0 // just changed it so it accepts 0x21X and 0x20X
 #define CONTACTORIDS 0x210 // was 0x700,, then was 0x200.. just changed to 0x210 feb 6
 #define CONTACTOR_HEARTBEATS_IDS 0x200
 
-/* Messages Sent By MBMS IDs*/
-#define MBMS_HEARTBEAT_ID 0x100
-#define CONTACTORCOMMANDID 0x101
-#define MBMS_STATUS_ID 0x102
-#define POWER_SELECTION_STATUS_ID 0x103
-#define MBMS_TRIP_ID 0x104
 
+/* CAN message IDS that the MBMS receives */
+enum ReceivedID {
+	CONTACTOR_HEARTBEAT_ID = 0x200,
+	CONTACTOR_ID = 0x210,
+	PACK_INFO_ID = 0x302,
+	TEMP_INFO_ID = 0x304,
+	MIN_MAX_VOLTAGES_ID = 0x30A
+};
 
-
-
+/* CAN message IDS that the MBMS receives */
+enum SentID {
+	MBMS_HEARTBEAT_ID = 0x100,
+	CONTACTOR_COMMAND_ID = 0x101,
+	MBMS_STATUS_ID = 0x102,
+	POWER_SELECTION_STATUS_ID = 0x103,
+	MBMS_TRIP_ID = 0x104,
+	MBMS_SOFT_BATTERY_LIMIT_WARNING_ID = 0x105
+};
 
 typedef struct {
     uint16_t ID;

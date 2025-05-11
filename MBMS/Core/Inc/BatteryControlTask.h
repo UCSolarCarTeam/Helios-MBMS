@@ -27,7 +27,7 @@ void checkIfShutdown();
 
 void checkContactorHeartbeats();
 
-void waitForFirstHeartbeats();
+uint8_t waitForFirstHeartbeats();
 
 void startupCheck();
 
@@ -38,19 +38,19 @@ void startupCheck();
 
 
 // These are random values i made for the batt limit, must be updated
-#define HARD_BATTERY_LIMIT 75
-#define SOFT_BATTERY_LIMIT 73
+//#define HARD_BATTERY_LIMIT 75
+//#define SOFT_BATTERY_LIMIT 73
 // wait.... are these the limits for the cell or the pack ????
 
-#define MAX_CELL_VOLTAGE 10
-#define MIN_CELL_VOLTAGE 2
-
-/* Add contactor max current (motor1/2 should be the same)*/
-#define MAX_COMMON_CONTACTOR_CURRENT 5
-#define MAX_MOTORS_CONTACTOR_CURRENT 5
-#define MAX_ARRAY_CONTACTOR_CURRENT 5
-#define MAX_LV_CONTACTOR_CURRENT 5
-#define MAX_CHARGE_CONTACTOR_CURRENT 5
+//#define MAX_CELL_VOLTAGE 10
+//#define MIN_CELL_VOLTAGE 2
+//
+///* Add contactor max current (motor1/2 should be the same)*/
+//#define MAX_COMMON_CONTACTOR_CURRENT 5
+//#define MAX_MOTORS_CONTACTOR_CURRENT 5
+//#define MAX_ARRAY_CONTACTOR_CURRENT 5
+//#define MAX_LV_CONTACTOR_CURRENT 5
+//#define MAX_CHARGE_CONTACTOR_CURRENT 5
 
 #define ORION_MSG_WAIT_TIMEOUT 200 //ms
 #define CONTACTOR_HEARTBEAT_TIMEOUT 1 // seconds !!
@@ -62,8 +62,36 @@ void startupCheck();
 
 #define MAX_PACK_VOLTAGE 75 // (Volts)
 
+enum VoltageLimits {
+	HARD_MAX_CELL_VOLTAGE = 10,
+	SOFT_MAX_CELL_VOLTAGE = 8,
+	HARD_MIN_CELL_VOLTAGE = 2,
+	SOFT_MIN_CELL_VOLTAGE = 3,
+	HARD_MAX_PACK_VOLTAGE = 76,
+	SOFT_MAX_PACK_VOLTAGE = 75
 
+};
 
+enum CurrentLimits {
+	HARD_MAX_COMMON_CONTACTOR_CURRENT = 5,
+	HARD_MAX_MOTORS_CONTACTOR_CURRENT = 5,
+	HARD_MAX_ARRAY_CONTACTOR_CURRENT = 5,
+	HARD_MAX_LV_CONTACTOR_CURRENT = 5,
+	HARD_MAX_CHARGE_CONTACTOR_CURRENT = 5,
+	SOFT_MAX_COMMON_CONTACTOR_CURRENT = 4,
+	SOFT_MAX_MOTORS_CONTACTOR_CURRENT = 4,
+	SOFT_MAX_ARRAY_CONTACTOR_CURRENT = 4,
+	SOFT_MAX_LV_CONTACTOR_CURRENT = 4,
+	SOFT_MAX_CHARGE_CONTACTOR_CURRENT = 4
+
+};
+
+enum TemperatureLimits {
+	HARD_MAX_TEMP,
+	SOFT_MAX_TEMP,
+	HARD_MIN_TEMP,
+	SOFT_MIN_TEMP
+};
 // make struct w precharge, current, voltage, then have an array of 4 (for the 4 contactors) of the struct type
 // add the individual contactor voltage and current
 
