@@ -7,7 +7,7 @@
 
 // look at orion interface task from old code to see what they did
 
-#include "../Inc/BatteryControlTask.h"
+#include "BatteryControlTask.h"
 #include <stdint.h>
 #include "cmsis_os.h"
 #include "CANdefines.h"
@@ -17,21 +17,13 @@
 #include "MBMS.h"
 
 //ContactorState contactorState = {0};
-
 MBMSSoftBatteryLimitWarning mbmsSoftBatteryLimitWarning;
-
 BatteryInfo batteryInfo;
-
 MBMSStatus mbmsStatus;
-
 MBMSTrip mbmsTrip;
-
 ContactorCommand contactorCommand;
-
 PowerSelectionStatus powerSelectionStatus;
-
-volatile ContactorInfo contactorInfo[6]; // one for each contactor        add volatile to the extern thing too
-
+ContactorInfo contactorInfo[6]; // one for each contactor        add volatile to the extern thing too
 uint16_t tripData = 0;
 
 static uint8_t heartbeatLastUpdatedTime[6] = {0};

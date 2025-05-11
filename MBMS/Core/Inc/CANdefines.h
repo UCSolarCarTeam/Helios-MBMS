@@ -11,7 +11,6 @@
 #include <stdint.h>
 #include "cmsis_os.h"
 
-
 #define CONTACTORMASK  0x1fffffe0 // just changed it so it accepts 0x21X and 0x20X
 #define CONTACTORIDS 0x210 // was 0x700,, then was 0x200.. just changed to 0x210 feb 6
 #define CONTACTOR_HEARTBEATS_IDS 0x200
@@ -36,6 +35,7 @@ enum SentID {
 	MBMS_SOFT_BATTERY_LIMIT_WARNING_ID = 0x105
 };
 
+/* CAN transmit message format */
 typedef struct {
     uint16_t ID;
     uint32_t extendedID;

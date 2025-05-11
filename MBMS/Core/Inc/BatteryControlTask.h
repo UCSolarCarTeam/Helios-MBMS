@@ -13,6 +13,8 @@
 
 void BatteryControlTask(void* arg);
 void BatteryControl();
+void checkSoftBatteryLimit();
+void initiateBPSFault();
 
 //void updateContactorInfo(uint8_t contactor, uint8_t prechargerClosed, uint8_t prechargerClosing,
 //		uint8_t prechargerError, uint8_t contactorClosed, uint8_t contactorClosing,
@@ -23,7 +25,6 @@ void BatteryControl();
 void updateTripStatus();
 
 void checkIfShutdown();
-
 
 void checkContactorHeartbeats();
 
@@ -94,9 +95,6 @@ enum TemperatureLimits {
 };
 // make struct w precharge, current, voltage, then have an array of 4 (for the 4 contactors) of the struct type
 // add the individual contactor voltage and current
-
-
-
 
 //// but this struct should be readable by diff tasks !!!! e.g. startup, shutoff
 //// zero for closed (connected), one for open (disconnected)

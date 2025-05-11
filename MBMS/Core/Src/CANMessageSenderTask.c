@@ -5,29 +5,20 @@
  *      Author: millainel
  */
 
-#include "../Inc/CANMessageSenderTask.h"
-#include <stdint.h>
+#include "CANMessageSenderTask.h"
 #include "BatteryControlTask.h"
 #include "MBMS.h"
-#include "CANdefines.h"
 #include "StartupTask.h"
+#include "CANdefines.h"
 
-// testing comment!! can delete
-
+// Shared status and info structs
 extern BatteryInfo batteryInfo;
-
 extern MBMSStatus mbmsStatus;
-
 extern MBMSTrip mbmsTrip;
-
 extern uint16_t tripData;
-
 extern ContactorCommand contactorCommand;
-
 extern PowerSelectionStatus powerSelectionStatus;
-
-extern volatile ContactorInfo contactorInfo[6];
-
+extern ContactorInfo contactorInfo[6];
 extern MBMSSoftBatteryLimitWarning mbmsSoftBatteryLimitWarning;
 
 void CANMessageSenderTask(void* arg)
@@ -132,8 +123,6 @@ void sendMBMSHeartbeatCanMessage() {
 	osMessageQueuePut(TxCANMessageQueueHandle, &mbmsHeartbeatMsg, 0, osWaitForever);
 }
 
-
-
 void sendContactorsCanMessage() {
 	// should close contactors if perms given? OH PROBABLY ALSO CHECK IF ALLOWE DTO DISCHARGE
 
@@ -177,7 +166,6 @@ void sendContactorsCanMessage() {
 			contactorCommand.charge = CLOSE_CONTACTOR;
 			sendContactorCommand = 1;
 		}
-
 	}
 
 
@@ -213,6 +201,4 @@ void sendContactorsCanMessage() {
 		osMessageQueuePut(TxCANMessageQueueHandle, &contactorCommandMsg, 0, osWaitForever);
 	}
 }
-
-
 

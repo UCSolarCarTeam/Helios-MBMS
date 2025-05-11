@@ -4,16 +4,15 @@
  *  Created on: Sep 7, 2024
  *      Author: khadeejaabbas, millaineli
  */
-#include "../Inc/CANRxGatekeeperTask.h"
+#include "CANRxGatekeeperTask.h"
+
+#include <stdint.h>
+#include "cmsis_os.h"
+#include "stm32f4xx_hal.h"
+
 #include "BatteryControlTask.h"
 #include "MBMS.h"
 #include "CANdefines.h"
-#include <stdint.h>
-#include "main.h"
-
-
-#include "stm32f4xx_hal.h"
-#include "cmsis_os.h"
 
 extern volatile ContactorInfo contactorInfo[6];
 extern MBMSStatus mbmsStatus;
@@ -29,16 +28,11 @@ void CANRxGatekeeperTask(void* arg)
 
 // PROBLEM: WHEN I HAD THIS IN THE OTHER FILE AND IT WAS A SEPERATE QUEUE I WAS ABLE TO USE THE TIMEOUT TO
 // CHECK FOR THE ORION MESSAGE NOT RECEIVED BUT HERE I CANT CUZ ITS THE SAME QUEUE FOR EVERYTHING
-
 // honestly just use the tick count stuff if u must :<, but i still made the other file just in case
-
-
 
 void CANRxGatekeeper()
 {
-
 	CANMsg msg; // CANmsg is struct (defined in CAN.h)
-
 	osStatus_t status = osMessageQueueGet(RxCANMessageQueueHandle, &msg, 0, osWaitForever);
 	if (status != osOK){
 		// handle error but idk what to do here
@@ -65,30 +59,29 @@ void CANRxGatekeeper()
 				Error_Handler();
 			}
 		}
-
 	}
 }
 
-
-
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan){
+	// Receive header and data
+	CAN_RxHeaderTypeDef canRxHeader;
+	uint8_t  			data[8]; 
+
+	// get CAN message from the FIFO 0 queue and store its header and data, return from interrupt if it fails
+	if (HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO0, &canRxHeader, data) != HAL_OK)
+	{
+		return;
+	}
+
 	CANMsg msg;
-
-	CAN_RxHeaderTypeDef CANRxHeader;
-	uint8_t  data[8]; // can hold 8 bytes of data
-	HAL_CAN_GetRxMessage(&hcan1, 0, &CANRxHeader, (unsigned char*)data); // get CAN message from the FIFO 0 queue and store its header and data
-
-	msg.extendedID = CANRxHeader.ExtId; // set CANmsg extended ID
-	msg.DLC = CANRxHeader.DLC; // set CANmsg DLC
-
+	msg.extendedID = canRxHeader.ExtId; // set CANmsg extended ID
+	msg.DLC = canRxHeader.DLC; // set CANmsg DLC
 	for (int i = 0; i < msg.DLC; i++) { // set CANmsg data
 		msg.data[i] = data[i];
 	}
-
 
 	osStatus_t status = osMessageQueuePut(RxCANMessageQueueHandle, &msg, 0, 0); // timeout should be 0
 	if(status != osOK){
 		// need to handle error ,,
 	}
-
 }

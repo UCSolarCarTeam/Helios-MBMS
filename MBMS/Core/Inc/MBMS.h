@@ -13,8 +13,6 @@
 
 // ESD is the external cutoff off switch (button)
 
-
-
 #define FREERTOS_TICK_PERIOD 1/configTICK_RATE_HZ //USE THIS INSTEAD OF SECONFS PER TICK. this is in ticks per second
 
 #define SHUTOFF_FLAG 0b1U // just making the flag an arbitrary number (should be uint32_t,,, this is = 1 in decimal)
@@ -25,7 +23,6 @@
 #define KEY_FLAG 0b1000U // turning car key is cause of shutoff
 #define HARD_BL_FLAG 0b10000U // hard battery limit is cause of shutoff
 #define SOFT_BL_FLAG 0b100000U // soft battery limit is cause of shutoff
-
 
 
 // Define boolean as an enum or typedef in a header

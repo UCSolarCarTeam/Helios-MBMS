@@ -31,8 +31,7 @@ void ValueUpdaterTask(void* arg)
 }
 
 
-void ValueUpdater(){
-
+void ValueUpdater() {
 	updateContactorInfoStruct();
 	updateOrionInfoStruct();
 	updatePowerSelectionStruct();
