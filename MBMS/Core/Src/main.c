@@ -181,8 +181,43 @@ const osThreadAttr_t CANMessageSenderTask_attributes = {
 
 
 
-//// IS THIS THE CORRECT PLACE TO PUT IT??
-//osMessageQueueId_t msgQueueID;
+osMutexId_t MBMSStatusMutexHandle;
+const osMutexAttr_t MBMSStatusMutex_attributes = {
+  .name = "MBMSStatusMutex",
+  .attr_bits = osMutexPrioInherit,
+};
+
+osMutexId_t MBMSTripMutexHandle;
+const osMutexAttr_t MBMSTripMutex_attributes = {
+  .name = "MBMSTripMutex",
+  .attr_bits = osMutexPrioInherit,
+};
+
+osMutexId_t MBMSSoftLimitWarningMutexHandle;
+const osMutexAttr_t MBMSSoftLimitWarningMutex_attributes = {
+  .name = "MBMSSoftLimitWarningMutex",
+  .attr_bits = osMutexPrioInherit,
+};
+
+osMutexId_t BatteryInfoMutexHandle;
+const osMutexAttr_t BatteryInfoMutex_attributes = {
+  .name = "BatteryInfoMutex",
+  .attr_bits = osMutexPrioInherit,
+};
+
+osMutexId_t ContactorInfoMutexHandle;
+const osMutexAttr_t ContactorInfoMutex_attributes = {
+  .name = "ContactorInfoMutex",
+  .attr_bits = osMutexPrioInherit,
+};
+
+osMutexId_t ContactorCommandMutexHandle;
+const osMutexAttr_t ContactorCommandMutex_attributes = {
+  .name = "ContactorCommandMutex",
+  .attr_bits = osMutexPrioInherit,
+};
+
+
 
 
 /* USER CODE END PV */
@@ -248,6 +283,14 @@ int main(void)
 #if 1
   /* add mutexes, ... */
   CANSPIMutexHandle = osMutexNew(&CANSPIMutex_attributes);
+
+  MBMSStatusMutexHandle = osMutexNew(&MBMSStatusMutex_attributes);
+  MBMSTripMutexHandle = osMutexNew(&MBMSTripMutex_attributes);
+  MBMSSoftLimitWarningMutexHandle = osMutexNew(&MBMSSoftLimitWarningMutex_attributes);
+  BatteryInfoMutexHandle = osMutexNew(&BatteryInfoMutex_attributes);
+  ContactorInfoMutexHandle = osMutexNew(&ContactorInfoMutex_attributes);
+  ContactorCommandMutexHandle = osMutexNew(&ContactorCommandMutex_attributes);
+
   /* USER CODE END RTOS_MUTEX */
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */

@@ -68,12 +68,16 @@ void Startup()
 	mbmsStatus.startupState = CHECKS_PASSED;
 
 	// clear all saved faults
+	clearAllFaults();
 	mbmsStatus.startupState = FAULTS_CLEARED;
 
+
 	// wait for discharge enable sense
+	while(read_Discharge_Enable() == 0){
+
+	}
 
 	uint32_t flagsSet;
-
 	flagsSet = osEventFlagsSet(contactorPermissionsFlagHandle, COMMON_FLAG);
 	while ((contactorInfo[COMMON].contactorClosed != CLOSE_CONTACTOR)) {
 		// wait for common contactor to close
@@ -97,11 +101,25 @@ void Startup()
 	}
 	mbmsStatus.startupState = LV_CLOSED;
 
-	// enable DCDC HV
+	// enable DCDC HV through EN1
 	HAL_GPIO_WritePin(EN1_GPIO_Port, EN1_Pin, GPIO_PIN_SET);
 
 	mbmsStatus.startupState = EN1_ON;
 
+	//precharge 12V CAN
+	HAL_GPIO_WritePin(_12V_PCHG_En_GPIO_Port, _12V_PCHG_En_Pin, GPIO_PIN_SET);
+	//wait to finish precharging!
+	while(read_LV_OC() == 1) { // 0 is good to go
+
+	}
+	//Enable 12V CAN
+	HAL_GPIO_WritePin(_12V_CAN_En_GPIO_Port, _12V_CAN_En_Pin, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(_12V_PCHG_En_GPIO_Port, _12V_PCHG_En_Pin, GPIO_PIN_SET);
+
+	// Wait for charge enable
+	while(read_Charge_Enable() == 0) {
+
+	}
 
 	// set flag to give permission to precharge/close motor contactor
 	// just check that everything is good still (doesnt HAVE to close motor before moving on to next part)
@@ -131,6 +149,23 @@ void Startup()
 	// because if battery is fully discharged, then motors shouldnt go
 	// if car is fully charged, dont need array
 
+	// from new diagram revB, we actually do wait for motor and array contactors to close...
+	while ((contactorInfo[MOTOR].contactorClosed != CLOSE_CONTACTOR)) {
+
+	}
+	if (contactorInfo[MOTOR].contactorError) {
+		// TO DO: handle error
+		Error_Handler();
+	}
+	mbmsStatus.startupState = MOTORS_CLOSED;
+	while ((contactorInfo[ARRAY].contactorClosed != CLOSE_CONTACTOR)) {
+
+	}
+	if (contactorInfo[ARRAY].contactorError) {
+		// TO DO: handle error
+		Error_Handler();
+	}
+	mbmsStatus.startupState = ARRAY_CLOSED;
 
 	// set flag that everything is done (all perms given!!!)
 	mbmsStatus.startupState = FULLY_OPERATIONAL;

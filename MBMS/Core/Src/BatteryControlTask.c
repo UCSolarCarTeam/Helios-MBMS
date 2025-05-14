@@ -80,23 +80,29 @@ uint8_t waitForFirstHeartbeats() {
 
 	for(int i = 0; i < 5; i++) {
 		if(heartbeatFailCounter[i] > 3) {
-			switch (i) {
-				case 0:
-					mbmsTrip.commonHeartbeatDeadTrip = 1;
-					break;
-				case 1:
-					mbmsTrip.motorHeartbeatDeadTrip = 1;
-					break;
-				case 2:
-					mbmsTrip.arrayHeartbeatDeadTrip = 1;
-					break;
-				case 3:
-					mbmsTrip.LVHeartbeatDeadTrip = 1;
-					break;
-				case 4:
-					mbmsTrip.chargeHeartbeatDeadTrip = 1;
-					break;
+			osStatus_t a = osMutexAcquire(MBMSTripMutexHandle, 200);
+			if(a == osOK) {
+				switch (i) {
+					case 0:
+						mbmsTrip.commonHeartbeatDeadTrip = 1;
+						break;
+					case 1:
+						mbmsTrip.motorHeartbeatDeadTrip = 1;
+						break;
+					case 2:
+						mbmsTrip.arrayHeartbeatDeadTrip = 1;
+						break;
+					case 3:
+						mbmsTrip.LVHeartbeatDeadTrip = 1;
+						break;
+					case 4:
+						mbmsTrip.chargeHeartbeatDeadTrip = 1;
+						break;
+				}
+				osStatus_t r = osMutexRelease(MBMSTripMutexHandle);
+
 			}
+
 			// MAYBE STRAIGHT UP SET SHUTDOWN FLAG HERE ! um maybe not #modularity or sumn
 			dead = 1;
 			return dead;
@@ -113,6 +119,7 @@ uint8_t waitForFirstHeartbeats() {
 		}
 		else {
 			heartbeatLastUpdatedTime[i] = osKernelGetTickCount();
+
 			previousHeartbeats[i] = contactorInfo[i].heartbeat;
 			heartbeatFailCounter[i] = 0;
 		}
@@ -121,18 +128,60 @@ uint8_t waitForFirstHeartbeats() {
 
 }
 
+void clearAllFaults(){
+
+	osStatus_t acquire = osMutexAcquire(MBMSTripMutexHandle, 200);
+	if(acquire == osOK) {
+		// now its acquired, can transmit over
+		mbmsTrip.highCellVoltageTrip = 0;
+		mbmsTrip.lowCellVoltageTrip = 0;
+		mbmsTrip.commonHighCurrentTrip = 0;
+		mbmsTrip.motorHighCurrentTrip = 0;
+		mbmsTrip.arrayHighCurrentTrip = 0;
+		mbmsTrip.LVHighCurrentTrip = 0;
+		mbmsTrip.chargeHighCurrentTrip = 0;
+		mbmsTrip.protectionTrip = 0;
+		mbmsTrip.orionMessageTimeoutTrip = 0;
+		mbmsTrip.contactorDisconnectedUnexpectedlyTrip = 0;
+		mbmsTrip.contactorConnectedUnexpectedlyTrip = 0;
+		mbmsTrip.highBatteryTrip = 0;
+		mbmsTrip.commonHeartbeatDeadTrip = 0;
+		mbmsTrip.motorHeartbeatDeadTrip = 0;
+		mbmsTrip.arrayHeartbeatDeadTrip = 0;
+		mbmsTrip.LVHeartbeatDeadTrip = 0;
+		mbmsTrip.chargeHeartbeatDeadTrip = 0;
+		mbmsTrip.MPSDisabledTrip = 0; //
+		mbmsTrip.ESDEnabledTrip = 0;
+		mbmsTrip.highTemperatureTrip = 0;
+		mbmsTrip.lowTemperatureTrip = 0;
+
+		//release the mutex !!!!
+		osStatus_t release = osMutexRelease(MBMSTripMutexHandle);
+	}
+
+}
+
 /*
  * returns whether any contactors are closed (0) or not (1). want them all to be open on startup
  */
 uint8_t checkContactorsOpen() {
 	// BUT SHOULD I OPEN THE CONTACTOR IF THEY ARE CLOSED? maybe yeah. btw contactors r non-latching so theyll open if car powers off yk
+
 	uint8_t allOpen = 1;
-	for (int i = 0; i < 5; i++) {
-		if (contactorInfo[i].contactorClosed == CLOSE_CONTACTOR) {
-			allOpen = 0;
-			break;
+	osStatus_t acquire = osMutexAcquire(ContactorInfoMutexHandle, 200);
+	if (acquire == osOK) {
+
+		for (int i = 0; i < 5; i++) {
+			if (contactorInfo[i].contactorClosed == CLOSE_CONTACTOR) {
+				allOpen = 0;
+				break;
+			}
 		}
+
+		osStatus_t release = osMutexRelease(ContactorInfoMutexHandle);
+
 	}
+
 	return allOpen;
 }
 
@@ -140,13 +189,21 @@ uint8_t checkContactorsOpen() {
  * returns whether any prechargers are closed (0) or not (1).
  */
 uint8_t checkPrechargersOpen() {
+
 	uint8_t allOpen = 1;
-	for (int i = 0; i < 5; i++) {
-		if (contactorInfo[i].prechargerClosed == CLOSE_CONTACTOR) {
-			allOpen = 0;
-			break;
+	osStatus_t acquire = osMutexAcquire(ContactorInfoMutexHandle, 200);
+	if (acquire == osOK) {
+
+		for (int i = 0; i < 5; i++) {
+			if (contactorInfo[i].prechargerClosed == CLOSE_CONTACTOR) {
+				allOpen = 0;
+				break;
+			}
 		}
+		osStatus_t release = osMutexRelease(ContactorInfoMutexHandle);
+
 	}
+
 	return allOpen;
 
 }
@@ -157,37 +214,47 @@ uint8_t batteryCheck() {
 	// in case theres multiple things wrong so you can store all the trips before yk, doing whatever BPS procedure
 
 	uint8_t safe = 1;
+	// check this mutex stuff ngl...
+	osStatus_t acquire = osMutexAcquire(MBMSTripMutexHandle, 200);
+	if(acquire == osOK) {
+		uint8_t safe = 1;
 
-	if(batteryInfo.maxCellVoltage > HARD_MAX_CELL_VOLTAGE){
-		// hard battery limit
-		mbmsTrip.highCellVoltageTrip = 1;
-		safe = 0;
-	}
-	else if (batteryInfo.maxCellVoltage > SOFT_MAX_CELL_VOLTAGE){
-		// soft battery limit
-		mbmsTrip.highCellVoltageTrip = 1;
-		safe = 0;
-	}
-	if(batteryInfo.minCellVoltage < HARD_MIN_CELL_VOLTAGE) {
-		// hard battery limit
-		mbmsTrip.lowCellVoltageTrip = 1;
-		safe = 0;
-	}
-	else if (batteryInfo.minCellVoltage < SOFT_MIN_CELL_VOLTAGE){
-		// soft battery limit
-		mbmsTrip.lowCellVoltageTrip = 1;
-		safe = 0;
-	}
+		if(batteryInfo.maxCellVoltage > HARD_MAX_CELL_VOLTAGE){
+			// hard battery limit
+			mbmsTrip.highCellVoltageTrip = 1;
+			safe = 0;
+		}
+		else if (batteryInfo.maxCellVoltage > SOFT_MAX_CELL_VOLTAGE){
+			// soft battery limit
+			mbmsSoftBatteryLimitWarning.highCellVoltageWarning = 1;
+			safe = 0;
+		}
+		if(batteryInfo.minCellVoltage < HARD_MIN_CELL_VOLTAGE) {
+			// hard battery limit
+			mbmsTrip.lowCellVoltageTrip = 1;
+			safe = 0;
+		}
+		else if (batteryInfo.minCellVoltage < SOFT_MIN_CELL_VOLTAGE){
+			// soft battery limit
+			mbmsSoftBatteryLimitWarning.lowCellVoltageWarning = 1;
+			safe = 0;
+		}
 
-	if (batteryInfo.packVoltage > HARD_MAX_PACK_VOLTAGE) {
-		// hard battery limit
-		mbmsTrip.highBatteryTrip = 1;
-		safe = 0;
-	}
-	else if (batteryInfo.packVoltage > SOFT_MAX_PACK_VOLTAGE) {
-		// soft battery limit
-		mbmsTrip.highBatteryTrip = 1;
-		safe = 0;
+		//NOTE THIS IS NOT HIGH BATT TRIP !!!! FIX this
+		if (batteryInfo.packVoltage > HARD_MAX_PACK_VOLTAGE) {
+			// hard battery limit
+			mbmsTrip.highBatteryTrip = 1;
+			safe = 0;
+		}
+		else if (batteryInfo.packVoltage > SOFT_MAX_PACK_VOLTAGE) {
+			// soft battery limit
+			mbmsTrip.highBatteryTrip = 1;
+			safe = 0;
+		}
+
+
+		//release the mutex !!!!
+		osStatus_t release = osMutexRelease(MBMSTripMutexHandle);
 	}
 
 	return safe;
@@ -242,8 +309,15 @@ void startupCheck(){
 void initiateBPSFault() {
 	// strpbe enable
 	HAL_GPIO_WritePin(Strobe_En_GPIO_Port, Strobe_En_Pin, 1);
-	// update mbms status
-	mbmsStatus.strobeBMSLight = 1;
+
+	osStatus_t a = osMutexAcquire(MBMSStatusMutexHandle, 200);
+	if(a == osOK) {
+		// update mbms status
+		mbmsStatus.strobeBMSLight = 1;
+		osStatus_t r = osMutexRelease(MBMSStatusMutexHandle);
+
+	}
+
 	osEventFlagsSet(shutoffFlagHandle, (HARD_BL_FLAG | SHUTOFF_FLAG));
 	// idk if soft battery limit has any purpose in shutoff procedure anymore, since when i talked
 	// to jenny today, she said soft battery limit should just be a warning thru CAN and thats it.... may 10
@@ -269,30 +343,42 @@ void checkContactorHeartbeats() {
 		if(previousHeartbeats[i] >= contactorInfo[i].heartbeat){
 			if(((osKernelGetTickCount() - heartbeatLastUpdatedTime[i]) / FREERTOS_TICK_PERIOD) > CONTACTOR_HEARTBEAT_TIMEOUT) {
 
-				// set heartbeat dead trip
-				switch (i) {
-					case 0:
-						mbmsTrip.commonHeartbeatDeadTrip = 1;
-						break;
-					case 1:
-						mbmsTrip.motorHeartbeatDeadTrip = 1;
-						break;
-					case 2:
-						mbmsTrip.arrayHeartbeatDeadTrip = 1;
-						break;
-					case 3:
-						mbmsTrip.LVHeartbeatDeadTrip = 1;
-						break;
-					case 4:
-						mbmsTrip.chargeHeartbeatDeadTrip = 1;
-						break;
+				osStatus_t acquire = osMutexAcquire(MBMSTripMutexHandle, 200);
+				if(acquire == osOK) {
+					// set heartbeat dead trip
+					switch (i) {
+						case 0:
+							mbmsTrip.commonHeartbeatDeadTrip = 1;
+							break;
+						case 1:
+							mbmsTrip.motorHeartbeatDeadTrip = 1;
+							break;
+						case 2:
+							mbmsTrip.arrayHeartbeatDeadTrip = 1;
+							break;
+						case 3:
+							mbmsTrip.LVHeartbeatDeadTrip = 1;
+							break;
+						case 4:
+							mbmsTrip.chargeHeartbeatDeadTrip = 1;
+							break;
+					}
+					osStatus_t release = osMutexRelease(MBMSTripMutexHandle);
+
 				}
+
 
 			}
 		}
 		else {
 			heartbeatLastUpdatedTime[i] = osKernelGetTickCount();
-			previousHeartbeats[i] = contactorInfo[i].heartbeat;
+			osStatus_t a = osMutexAcquire(ContactorInfoMutexHandle, 200);
+			if (a == osOK) {
+				previousHeartbeats[i] = contactorInfo[i].heartbeat;
+				osStatus_t r = osMutexRelease(ContactorInfoMutexHandle);
+
+			}
+
 		}
 	}
 }
@@ -334,134 +420,184 @@ void checkChargerState() {
  * Don't need to do anything for these soft limits, just send the warning!
  */
 void checkSoftBatteryLimit() {
+	/// ummmmm be careful deadlock mauybe check everything once ur done all the mutexes
+	osStatus_t acquire = osMutexAcquire(MBMSSoftLimitWarningMutexHandle, 200);
+	if(acquire == osOK) {
 
-	/* Checking the min/max cell voltages */
-	if (batteryInfo.maxCellVoltage > SOFT_MAX_CELL_VOLTAGE) {
-		mbmsSoftBatteryLimitWarning.highCellVoltageWarning = 1;
-	}
-	if (batteryInfo.minCellVoltage < SOFT_MIN_CELL_VOLTAGE) {
-		mbmsSoftBatteryLimitWarning.lowCellVoltageWarning = 1;
-	}
+		osStatus_t a1 = osMutexAcquire(BatteryInfoMutexHandle, 200);
+		if (a1 == osOK){
+			/* Checking the min/max cell voltages */
+			if (batteryInfo.maxCellVoltage > SOFT_MAX_CELL_VOLTAGE) {
+				mbmsSoftBatteryLimitWarning.highCellVoltageWarning = 1;
+			}
+			if (batteryInfo.minCellVoltage < SOFT_MIN_CELL_VOLTAGE) {
+				mbmsSoftBatteryLimitWarning.lowCellVoltageWarning = 1;
+			}
 
-	/* Checking contactors' high current */
-	if (contactorInfo[COMMON].lineCurrent > SOFT_MAX_COMMON_CONTACTOR_CURRENT){
-		mbmsSoftBatteryLimitWarning.commonHighCurrentWarning = 1;
-	}
-	if (contactorInfo[MOTOR].lineCurrent > SOFT_MAX_MOTORS_CONTACTOR_CURRENT){
-		mbmsSoftBatteryLimitWarning.motorHighCurrentWarning = 1;
-	}
-	if (contactorInfo[ARRAY].lineCurrent > SOFT_MAX_ARRAY_CONTACTOR_CURRENT){
-		mbmsSoftBatteryLimitWarning.arrayHighCurrentWarning = 1;
-	}
-	if (contactorInfo[LOWV].lineCurrent > SOFT_MAX_LV_CONTACTOR_CURRENT){
-		mbmsSoftBatteryLimitWarning.LVHighCurrentWarning = 1;
-	}
-	if (contactorInfo[CHARGE].lineCurrent > SOFT_MAX_CHARGE_CONTACTOR_CURRENT){
-		mbmsSoftBatteryLimitWarning.chargeHighCurrentWarning = 1;
-	}
+			/* Checking high/low temperature */
+			if (batteryInfo.highTemp > SOFT_MAX_TEMP) {
+				mbmsSoftBatteryLimitWarning.highTemperatureWarning = 1;
+			}
+			if (batteryInfo.lowTemp < SOFT_MIN_TEMP) {
+				mbmsSoftBatteryLimitWarning.lowTemperatureWarning = 1;
+			}
 
-	/* Checking high/low temperature */
-	if (batteryInfo.highTemp > SOFT_MAX_TEMP) {
-		mbmsSoftBatteryLimitWarning.highTemperatureWarning = 1;
-	}
-	if (batteryInfo.lowTemp < SOFT_MIN_TEMP) {
-		mbmsSoftBatteryLimitWarning.lowTemperatureWarning = 1;
+			osStatus_t r1 = osMutexRelease(BatteryInfoMutexHandle);
+
+		}
+
+		osStatus_t a2 = osMutexAcquire(ContactorInfoMutexHandle, 200);
+		if (a2 == osOK) {
+			/* Checking contactors' high current */
+			if (contactorInfo[COMMON].lineCurrent > SOFT_MAX_COMMON_CONTACTOR_CURRENT){
+				mbmsSoftBatteryLimitWarning.commonHighCurrentWarning = 1;
+			}
+			if (contactorInfo[MOTOR].lineCurrent > SOFT_MAX_MOTORS_CONTACTOR_CURRENT){
+				mbmsSoftBatteryLimitWarning.motorHighCurrentWarning = 1;
+			}
+			if (contactorInfo[ARRAY].lineCurrent > SOFT_MAX_ARRAY_CONTACTOR_CURRENT){
+				mbmsSoftBatteryLimitWarning.arrayHighCurrentWarning = 1;
+			}
+			if (contactorInfo[LOWV].lineCurrent > SOFT_MAX_LV_CONTACTOR_CURRENT){
+				mbmsSoftBatteryLimitWarning.LVHighCurrentWarning = 1;
+			}
+			if (contactorInfo[CHARGE].lineCurrent > SOFT_MAX_CHARGE_CONTACTOR_CURRENT){
+				mbmsSoftBatteryLimitWarning.chargeHighCurrentWarning = 1;
+			}
+			osStatus_t r2 = osMutexRelease(ContactorInfoMutexHandle);
+		}
+
+		//release mutex
+		osStatus_t release = osMutexRelease(MBMSSoftLimitWarningMutexHandle);
 	}
 
 }
 
 void updateTripStatus() {
-	// checking for high current trips
-	if (contactorInfo[COMMON].lineCurrent > HARD_MAX_COMMON_CONTACTOR_CURRENT){
-		mbmsTrip.commonHighCurrentTrip = 1;
+
+	osStatus_t acquire = osMutexAcquire(MBMSTripMutexHandle, 200);
+	if (acquire == osOK){
+
+		osStatus_t a1 = osMutexAcquire(ContactorInfoMutexHandle, 200);
+		if (a1 == osOK){
+			// checking for high current trips
+			if (contactorInfo[COMMON].lineCurrent > HARD_MAX_COMMON_CONTACTOR_CURRENT){
+				mbmsTrip.commonHighCurrentTrip = 1;
+			}
+
+			if ((contactorInfo[MOTOR].lineCurrent > HARD_MAX_MOTORS_CONTACTOR_CURRENT)){
+				mbmsTrip.motorHighCurrentTrip = 1;
+			}
+
+			if (contactorInfo[ARRAY].lineCurrent > HARD_MAX_ARRAY_CONTACTOR_CURRENT){
+				mbmsTrip.arrayHighCurrentTrip = 1;
+			}
+
+			if (contactorInfo[LOWV].lineCurrent > HARD_MAX_LV_CONTACTOR_CURRENT){
+				mbmsTrip.LVHighCurrentTrip = 1;
+			}
+
+
+			if (contactorInfo[CHARGE].lineCurrent > HARD_MAX_CHARGE_CONTACTOR_CURRENT){
+				mbmsTrip.chargeHighCurrentTrip = 1;
+			}
+
+			// checking for Protection Trip
+			// CHECK THIS !!!!!!!!
+			if ((contactorInfo[CHARGE].lineCurrent < 0) || (contactorInfo[LOWV].lineCurrent < 0) || (contactorInfo[ARRAY].lineCurrent < 0) || (contactorInfo[COMMON].lineCurrent < 0)){
+				mbmsTrip.protectionTrip = 1;
+			}
+
+			osStatus_t r1 = osMutexRelease(ContactorInfoMutexHandle);
+
+		}
+
+		osStatus_t a2 = osMutexAcquire(BatteryInfoMutexHandle, 200);
+		if (a2 == osOK){
+			// checking for high/low cell voltage trips
+			if(batteryInfo.maxCellVoltage > HARD_MAX_CELL_VOLTAGE){
+				mbmsTrip.highCellVoltageTrip = 1;
+			}
+
+			if(batteryInfo.minCellVoltage < HARD_MIN_CELL_VOLTAGE) {
+				mbmsTrip.lowCellVoltageTrip = 1;
+			}
+
+
+			/* Checking high/low temperature */
+			if (batteryInfo.highTemp > HARD_MAX_TEMP) {
+				mbmsTrip.highTemperatureTrip = 1;
+			}
+			if(batteryInfo.lowTemp < HARD_MIN_TEMP) {
+				mbmsTrip.lowTemperatureTrip = 1;
+			}
+
+			// checking for high battery trip (voltage?) THIS IS NOT PACK VOLTAGE!!! redo this
+			if (batteryInfo.packVoltage > MAX_PACK_VOLTAGE) {
+				mbmsTrip.highBatteryTrip = 1;
+			}
+
+			osStatus_t r2 = osMutexRelease(BatteryInfoMutexHandle);
+
+		}
+
+		osStatus_t a3 = osMutexAcquire(MBMSStatusMutexHandle, 200);
+		if (a3 == osOK) {
+			// if orion can message wasn't received recently, set trip
+			if (!(mbmsStatus.orionCANReceived)) {
+				mbmsTrip.orionMessageTimeoutTrip = 1;
+			}
+
+			osStatus_t r3 = osMutexRelease(MBMSStatusMutexHandle);
+
+		}
+
+		osStatus_t a4 = osMutexAcquire(ContactorCommandMutexHandle, 200);
+		if(a4 == osOK) {
+			// checking for Contactor Connected/Disconnected Unexpectedly Trip
+			/* To check, we compare a minimum current draw with the state of the contactor */
+			if(((		 contactorCommand.common == CLOSE_CONTACTOR) && (contactorInfo[COMMON].lineCurrent < NO_CURRENT_THRESHOLD))
+					|| ((contactorCommand.motor == CLOSE_CONTACTOR) && (contactorInfo[MOTOR].lineCurrent < NO_CURRENT_THRESHOLD))
+					|| ((contactorCommand.array  == CLOSE_CONTACTOR) && (contactorInfo[ARRAY].lineCurrent  < NO_CURRENT_THRESHOLD))
+					|| ((contactorCommand.LV     == CLOSE_CONTACTOR) && (contactorInfo[LOWV].lineCurrent   < NO_CURRENT_THRESHOLD))
+					|| ((contactorCommand.charge == CLOSE_CONTACTOR) && (contactorInfo[CHARGE].lineCurrent < NO_CURRENT_THRESHOLD))
+				)
+			{
+				// if supposed to be closed but theres no current (means its unexpectedly opened/disconnected
+				mbmsTrip.contactorDisconnectedUnexpectedlyTrip = 1;
+			}
+			if(((		 contactorCommand.common == OPEN_CONTACTOR) && (contactorInfo[COMMON].lineCurrent >= NO_CURRENT_THRESHOLD))
+					|| ((contactorCommand.motor == OPEN_CONTACTOR) && (contactorInfo[MOTOR].lineCurrent >= NO_CURRENT_THRESHOLD))
+					|| ((contactorCommand.array  == OPEN_CONTACTOR) && (contactorInfo[ARRAY].lineCurrent  >= NO_CURRENT_THRESHOLD))
+					|| ((contactorCommand.LV     == OPEN_CONTACTOR) && (contactorInfo[LOWV].lineCurrent   >= NO_CURRENT_THRESHOLD))
+					|| ((contactorCommand.charge == OPEN_CONTACTOR) && (contactorInfo[CHARGE].lineCurrent >= NO_CURRENT_THRESHOLD))
+				)
+			{
+				// if supposed to be closed but theres no current (means its unexpectedly opened/disconnected
+				mbmsTrip.contactorConnectedUnexpectedlyTrip = 1;
+			}
+
+			osStatus_t r4 = osMutexRelease(ContactorCommandMutexHandle);
+
+		}
+
+
+		// Dead contactor heartbeat trips are done in a diff function
+
+		if(read_nMPS() == 1){
+			mbmsTrip.MPSDisabledTrip = 1;
+		}
+
+		if(read_ESD() == 1){
+			mbmsTrip.ESDEnabledTrip = 1;
+		}
+
+
+		// rlrease trip mutex
+		osStatus_t release = osMutexRelease(MBMSTripMutexHandle);
 	}
 
-	if ((contactorInfo[MOTOR].lineCurrent > HARD_MAX_MOTORS_CONTACTOR_CURRENT)){
-		mbmsTrip.motorHighCurrentTrip = 1;
-	}
 
-	if (contactorInfo[ARRAY].lineCurrent > HARD_MAX_ARRAY_CONTACTOR_CURRENT){
-		mbmsTrip.arrayHighCurrentTrip = 1;
-	}
-
-
-	if (contactorInfo[LOWV].lineCurrent > HARD_MAX_LV_CONTACTOR_CURRENT){
-		mbmsTrip.LVHighCurrentTrip = 1;
-	}
-
-
-	if (contactorInfo[CHARGE].lineCurrent > HARD_MAX_CHARGE_CONTACTOR_CURRENT){
-		mbmsTrip.chargeHighCurrentTrip = 1;
-	}
-
-
-	// checking for high/low cell voltage trips
-	if(batteryInfo.maxCellVoltage > HARD_MAX_CELL_VOLTAGE){
-		mbmsTrip.highCellVoltageTrip = 1;
-	}
-
-	if(batteryInfo.minCellVoltage < HARD_MIN_CELL_VOLTAGE) {
-		mbmsTrip.lowCellVoltageTrip = 1;
-	}
-
-
-	/* Checking high/low temperature */
-	if (batteryInfo.highTemp > HARD_MAX_TEMP) {
-		mbmsTrip.highTemperatureTrip = 1;
-	}
-	if(batteryInfo.lowTemp < HARD_MIN_TEMP) {
-		mbmsTrip.lowTemperatureTrip = 1;
-	}
-
-	// checking for Protection Trip
-	// CHECK THIS !!!!!!!!
-	if ((contactorInfo[CHARGE].lineCurrent < 0) || (contactorInfo[LOWV].lineCurrent < 0) || (contactorInfo[ARRAY].lineCurrent < 0) || (contactorInfo[COMMON].lineCurrent < 0)){
-		mbmsTrip.protectionTrip = 1;
-	}
-
-	// if orion can message wasn't received recently, set trip
-	if (!(mbmsStatus.orionCANReceived)) {
-		mbmsTrip.orionMessageTimeoutTrip = 1;
-	}
-
-
-	// checking for Contactor Connected/Disconnected Unexpectedly Trip
-	/* To check, we compare a minimum current draw with the state of the contactor */
-	if(((		 contactorCommand.common == CLOSE_CONTACTOR) && (contactorInfo[COMMON].lineCurrent < NO_CURRENT_THRESHOLD))
-			|| ((contactorCommand.motor == CLOSE_CONTACTOR) && (contactorInfo[MOTOR].lineCurrent < NO_CURRENT_THRESHOLD))
-			|| ((contactorCommand.array  == CLOSE_CONTACTOR) && (contactorInfo[ARRAY].lineCurrent  < NO_CURRENT_THRESHOLD))
-			|| ((contactorCommand.LV     == CLOSE_CONTACTOR) && (contactorInfo[LOWV].lineCurrent   < NO_CURRENT_THRESHOLD))
-			|| ((contactorCommand.charge == CLOSE_CONTACTOR) && (contactorInfo[CHARGE].lineCurrent < NO_CURRENT_THRESHOLD))
-		)
-	{
-		// if supposed to be closed but theres no current (means its unexpectedly opened/disconnected
-		mbmsTrip.contactorDisconnectedUnexpectedlyTrip = 1;
-	}
-	if(((		 contactorCommand.common == OPEN_CONTACTOR) && (contactorInfo[COMMON].lineCurrent >= NO_CURRENT_THRESHOLD))
-			|| ((contactorCommand.motor == OPEN_CONTACTOR) && (contactorInfo[MOTOR].lineCurrent >= NO_CURRENT_THRESHOLD))
-			|| ((contactorCommand.array  == OPEN_CONTACTOR) && (contactorInfo[ARRAY].lineCurrent  >= NO_CURRENT_THRESHOLD))
-			|| ((contactorCommand.LV     == OPEN_CONTACTOR) && (contactorInfo[LOWV].lineCurrent   >= NO_CURRENT_THRESHOLD))
-			|| ((contactorCommand.charge == OPEN_CONTACTOR) && (contactorInfo[CHARGE].lineCurrent >= NO_CURRENT_THRESHOLD))
-		)
-	{
-		// if supposed to be closed but theres no current (means its unexpectedly opened/disconnected
-		mbmsTrip.contactorConnectedUnexpectedlyTrip = 1;
-	}
-
-	// checking for high battery trip (voltage?)
-	if (batteryInfo.packVoltage > MAX_PACK_VOLTAGE) {
-		mbmsTrip.highBatteryTrip = 1;
-	}
-
-	// Dead contactor heartbeat trips are done in a diff function
-
-	if(read_nMPS() == 1){
-		mbmsTrip.MPSDisabledTrip = 1;
-	}
-
-	if(read_ESD() == 1){
-		mbmsTrip.ESDEnabledTrip = 1;
-	}
 
 
 }

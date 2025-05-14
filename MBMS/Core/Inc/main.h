@@ -42,13 +42,20 @@ extern osMessageQueueId_t TxCANMessageQueueHandle;
 extern osMessageQueueId_t RxCANMessageQueueHandle;
 extern osMessageQueueId_t batteryControlMessageQueueHandle;
 extern osMessageQueueId_t contactorMessageQueueHandle;
+
 extern osThreadId_t batteryControlTaskHandle;
 extern osEventFlagsId_t shutoffFlagHandle;
 extern osEventFlagsId_t contactorPermissionsFlagHandle;
 extern osThreadId_t startupTaskHandle;
 extern osThreadId_t CANMessageSenderTaskHandle;
-
 extern osThreadId_t debugInterfaceTaskHandle;
+
+extern osMutexId_t MBMSStatusMutexHandle;
+extern osMutexId_t MBMSTripMutexHandle;
+extern osMutexId_t MBMSSoftLimitWarningMutexHandle;
+extern osMutexId_t BatteryInfoMutexHandle;
+extern osMutexId_t ContactorInfoMutexHandle;
+extern osMutexId_t ContactorCommandMutexHandle;
 
 /* USER CODE END ET */
 

@@ -34,4 +34,6 @@ GPIO_PinState read_Charge_Enable(void);
 
 GPIO_PinState read_Discharge_Enable(void);
 
+GPIO_PinState read_LV_OC(void);
+
 #endif /* INC_READPOWERGPIO_H_ */

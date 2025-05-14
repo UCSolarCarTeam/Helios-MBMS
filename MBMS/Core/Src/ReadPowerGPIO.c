@@ -62,4 +62,8 @@ GPIO_PinState read_Discharge_Enable(void) {
     return HAL_GPIO_ReadPin(DISCHARGE_ENABLE_SENSE_GPIO_Port, DISCHARGE_ENABLE_SENSE_Pin);
 }
 
+GPIO_PinState read_LV_OC(void) {
+	return HAL_GPIO_ReadPin(LV_OC_GPIO_Port, LV_OC_Pin);
+}
+
 

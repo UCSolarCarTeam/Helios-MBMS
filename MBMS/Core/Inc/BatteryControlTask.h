@@ -26,6 +26,8 @@ void updateTripStatus();
 
 void checkIfShutdown();
 
+void clearAllFaults();
+
 void checkContactorHeartbeats();
 
 uint8_t waitForFirstHeartbeats();

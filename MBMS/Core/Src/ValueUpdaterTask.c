@@ -49,7 +49,11 @@ void updateContactorInfoStruct() {
 		// if the message is about the contactor heartbeats
 		if((contactorMsg.extendedID & 0xff0) == CONTACTOR_HEARTBEATS_IDS){
 			uint16_t newHeartbeat = contactorMsg.data[0] + (contactorMsg.data[1] << 8);
-			contactorInfo[contactorMsg.extendedID - CONTACTOR_HEARTBEATS_IDS].heartbeat = newHeartbeat;
+			osStatus_t a = osMutexAcquire(ContactorInfoMutexHandle, 200);
+			if (a == osOK) {
+				contactorInfo[contactorMsg.extendedID - CONTACTOR_HEARTBEATS_IDS].heartbeat = newHeartbeat;
+				osStatus_t r = osMutexRelease(ContactorInfoMutexHandle);
+			}
 		}
 		// if the message is about the contactor info
 		else{
@@ -77,14 +81,21 @@ void updateContactorInfoStruct() {
 
 void updateContactorInfo(uint8_t contactor, uint8_t prechargerClosed, uint8_t prechargerClosing, uint8_t prechargerError,
 		uint8_t contactorClosed, uint8_t contactorClosing, uint8_t contactorError, int16_t lineCurrent, int16_t chargeCurrent, uint8_t BPSerror) {
-	contactorInfo[contactor].prechargerClosed = prechargerClosed;
-	contactorInfo[contactor].prechargerClosing = prechargerClosing;
-	contactorInfo[contactor].prechargerError = prechargerError;
-	contactorInfo[contactor].contactorClosed = contactorClosed;
-	contactorInfo[contactor].contactorError = contactorError;
-	contactorInfo[contactor].lineCurrent = lineCurrent;
-	contactorInfo[contactor].chargeCurrent = chargeCurrent;
-	contactorInfo[contactor].BPSerror = BPSerror;
+	osStatus_t a = osMutexAcquire(ContactorInfoMutexHandle, 200);
+	if(a == osOK) {
+		contactorInfo[contactor].prechargerClosed = prechargerClosed;
+		contactorInfo[contactor].prechargerClosing = prechargerClosing;
+		contactorInfo[contactor].prechargerError = prechargerError;
+		contactorInfo[contactor].contactorClosed = contactorClosed;
+		contactorInfo[contactor].contactorError = contactorError;
+		contactorInfo[contactor].lineCurrent = lineCurrent;
+		contactorInfo[contactor].chargeCurrent = chargeCurrent;
+		contactorInfo[contactor].BPSerror = BPSerror;
+
+		osStatus_t r = osMutexRelease(ContactorInfoMutexHandle);
+	}
+
+
 	return;
 }
 
@@ -120,13 +131,19 @@ void updateOrionInfoStruct() {
 		}
 
 		if (orionMsg.extendedID == PACK_INFO_ID) {
-			// update batteryInfo instance for the pack info stuff
-			batteryInfo.packCurrent = data[0] + (data[1] << 8);
-			batteryInfo.packVoltage = data[2] + (data[3] << 8);
-			batteryInfo.packSOC = data[4];
-			batteryInfo.packAmphours = data[5] + (data[6] << 8);
-			batteryInfo.packDOD = data[7];
+			osStatus_t a = osMutexAcquire(BatteryInfoMutexHandle, 200);
+			if(a == osOK) {
+				// update batteryInfo instance for the pack info stuff
+				batteryInfo.packCurrent = data[0] + (data[1] << 8);
+				batteryInfo.packVoltage = data[2] + (data[3] << 8);
+				batteryInfo.packSOC = data[4];
+				batteryInfo.packAmphours = data[5] + (data[6] << 8);
+				batteryInfo.packDOD = data[7];
+				osStatus_t r = osMutexRelease(BatteryInfoMutexHandle);
 
+			}
+
+			// huh
 			mbmsStatus.auxilaryBattVoltage = batteryInfo.packVoltage;
 
 			// updating allow charge/discharge on mbmsStatus, based on SOC
@@ -140,16 +157,25 @@ void updateOrionInfoStruct() {
 
 		}
 		else if (orionMsg.extendedID == TEMP_INFO_ID) {
-			batteryInfo.highTemp = data[0];
-			batteryInfo.lowTemp = data[2];
-			batteryInfo.avgTemp = data[4];
+			osStatus_t a = osMutexAcquire(BatteryInfoMutexHandle, 200);
+			if(a == osOK) {
+				batteryInfo.highTemp = data[0];
+				batteryInfo.lowTemp = data[2];
+				batteryInfo.avgTemp = data[4];
+				osStatus_t r = osMutexRelease(BatteryInfoMutexHandle);
+			}
 		}
 
 		else if (orionMsg.extendedID == MIN_MAX_VOLTAGES_ID) {
-			batteryInfo.maxCellVoltage = data[0] + (data[1] << 8);
-			batteryInfo.minCellVoltage = data[2] + (data[3] << 8);
-			batteryInfo.maxPackVoltage = data[4] + (data[5] << 8);
-			batteryInfo.minPackVoltage = data[6] + (data[7] << 8);
+			osStatus_t a = osMutexAcquire(BatteryInfoMutexHandle, 200);
+			if(a == osOK) {
+				batteryInfo.maxCellVoltage = data[0] + (data[1] << 8);
+				batteryInfo.minCellVoltage = data[2] + (data[3] << 8);
+				batteryInfo.maxPackVoltage = data[4] + (data[5] << 8);
+				batteryInfo.minPackVoltage = data[6] + (data[7] << 8);
+				osStatus_t r = osMutexRelease(BatteryInfoMutexHandle);
+			}
+
 		}
 
 	}
@@ -159,7 +185,11 @@ void updateOrionInfoStruct() {
 		orionMessageCounter += 1;
 	}
 	if(orionMessageCounter >= 3){
-		mbmsStatus.orionCANReceived = 0; // no orion message recieved !!!
+		osStatus_t a = osMutexAcquire(MBMSStatusMutexHandle, 200);
+		if (a == osOK) {
+			mbmsStatus.orionCANReceived = 0; // no orion message recieved !!!
+			osStatus_t r = osMutexRelease(MBMSStatusMutexHandle);
+		}
 	}
 
 }
