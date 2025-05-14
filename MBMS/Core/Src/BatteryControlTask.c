@@ -411,7 +411,36 @@ void checkIfShutdown() {
 
 void checkChargerState() {
 	//dequeue CAN message to see if charger is plugged in or not???
+	// lets just call the var plugged for now
 
+	// im thinking keep state of whether car is fully op (not charging) or charging
+
+	//if (plugged && (state == fully op)
+		//open motor contactor
+		//disable 12V CAN
+		//open LV contactor
+		//Enable charging (CHG_En thing)
+		//Close Charge contactor
+		//state = charging...
+
+	//else if (!plugged && (state == charging)
+		//open charge contatcor
+		//close LV contactor
+		//open 12V Charge (CHG_En)
+		//Enable 12V CAN
+		//close motor contatcor
+		//state = fully op...
+
+
+	// go to can message sender and change the contactor stuff cuz contactors should only change here, or w mps and bps stuff etc..
+}
+
+void checkShutdownDuringCharge() {
+	//if state = charging && key is off
+	// turn off CHG_En... lol
+
+	// or set flag for key and do this thing in a shutdown task ...
+	// i feel like doing it here is kinda faster tho idk..
 }
 
 /* This function checks the soft limits of voltages, currents, and temperatures
