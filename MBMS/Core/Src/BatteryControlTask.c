@@ -52,9 +52,6 @@ void BatteryControlTask(void* arg)
 void BatteryControl()
 {
 
-
-
-
 	// before u set shutdown flag, check startupState and terminate the task if its not finished... ?
 
 	checkContactorHeartbeats();
@@ -224,30 +221,16 @@ uint8_t batteryCheck() {
 			mbmsTrip.highCellVoltageTrip = 1;
 			safe = 0;
 		}
-		else if (batteryInfo.maxCellVoltage > SOFT_MAX_CELL_VOLTAGE){
-			// soft battery limit
-			mbmsSoftBatteryLimitWarning.highCellVoltageWarning = 1;
-			safe = 0;
-		}
+
 		if(batteryInfo.minCellVoltage < HARD_MIN_CELL_VOLTAGE) {
 			// hard battery limit
 			mbmsTrip.lowCellVoltageTrip = 1;
-			safe = 0;
-		}
-		else if (batteryInfo.minCellVoltage < SOFT_MIN_CELL_VOLTAGE){
-			// soft battery limit
-			mbmsSoftBatteryLimitWarning.lowCellVoltageWarning = 1;
 			safe = 0;
 		}
 
 		//NOTE THIS IS NOT HIGH BATT TRIP !!!! FIX this
 		if (batteryInfo.packVoltage > HARD_MAX_PACK_VOLTAGE) {
 			// hard battery limit
-			mbmsTrip.highBatteryTrip = 1;
-			safe = 0;
-		}
-		else if (batteryInfo.packVoltage > SOFT_MAX_PACK_VOLTAGE) {
-			// soft battery limit
 			mbmsTrip.highBatteryTrip = 1;
 			safe = 0;
 		}
@@ -297,8 +280,6 @@ void startupCheck(){
 	if (!passedBatteryCheck) {
 		initiateBPSFault();
 	}
-
-
 }
 
 /*
@@ -328,6 +309,9 @@ void initiateBPSFault() {
  * This function checks that all the contactor heartbeats are still being received
  * If they are not, a contactor has possibly died and a trip should occur which should initiate
  * a BPS Fault !
+ * The way I did BPS Fault rn is that it iterates through every contactor before going to BPS
+ * that way the trips will track all dead ones (not just the first one....)
+ * But honestly I think it would be okay to just call it right after the switch case directly.. idk
  */
 void checkContactorHeartbeats() {
 	/* The reason i'm checking heartbeats this way and not with a timeout for the message queue (like orion)
@@ -335,7 +319,7 @@ void checkContactorHeartbeats() {
 	 * be accurate of what the problem is, or if there is a problem. For example if a contactor dies, other
 	 * contactor would still be sending messages.
 	 */
-
+	static uint8_t BPSFault = 0;
 	for(int i = 0; i < 5; i++) {
 		if(previousHeartbeats[i] >= 65535) { // check this logic lol
 			previousHeartbeats[i] = 0;
@@ -364,10 +348,9 @@ void checkContactorHeartbeats() {
 							break;
 					}
 					osStatus_t release = osMutexRelease(MBMSTripMutexHandle);
+					BPSFault = 1;
 
 				}
-
-
 			}
 		}
 		else {
@@ -380,6 +363,11 @@ void checkContactorHeartbeats() {
 			}
 
 		}
+
+	}
+
+	if(BPSFault) {
+		initiateBPSFault();
 	}
 }
 
@@ -403,7 +391,6 @@ void checkIfShutdown() {
 	if (read_ESD() == 1){
 		shutoffFlagsSet = osEventFlagsSet(shutoffFlagHandle, ESD_FLAG | SHUTOFF_FLAG);
 	}
-
 
 }
 
@@ -478,7 +465,6 @@ void switchChargerState() {
 
 	}
 
-
 	// go to can message sender and change the contactor stuff cuz contactors should only change here, or w mps and bps stuff etc..
 }
 
@@ -544,6 +530,7 @@ void checkSoftBatteryLimit() {
 
 void updateTripStatus() {
 
+	static uint8_t BPS_Fault = 0;
 	osStatus_t acquire = osMutexAcquire(MBMSTripMutexHandle, 200);
 	if (acquire == osOK){
 
@@ -572,9 +559,10 @@ void updateTripStatus() {
 			}
 
 			// checking for Protection Trip
-			// CHECK THIS !!!!!!!!
-			if ((contactorInfo[CHARGE].lineCurrent < 0) || (contactorInfo[LOWV].lineCurrent < 0) || (contactorInfo[ARRAY].lineCurrent < 0) || (contactorInfo[COMMON].lineCurrent < 0)){
+			// CHECK THIS !! but  its made from april 5 notes
+			if ((contactorInfo[CHARGE].lineCurrent > 0) || (contactorInfo[LOWV].lineCurrent < 0)){
 				mbmsTrip.protectionTrip = 1;
+				BPS_Fault = 1;
 			}
 
 			osStatus_t r1 = osMutexRelease(ContactorInfoMutexHandle);
@@ -586,24 +574,29 @@ void updateTripStatus() {
 			// checking for high/low cell voltage trips
 			if(batteryInfo.maxCellVoltage > HARD_MAX_CELL_VOLTAGE){
 				mbmsTrip.highCellVoltageTrip = 1;
+				BPS_Fault = 1;
 			}
 
 			if(batteryInfo.minCellVoltage < HARD_MIN_CELL_VOLTAGE) {
 				mbmsTrip.lowCellVoltageTrip = 1;
+				BPS_Fault = 1;
 			}
 
 
 			/* Checking high/low temperature */
 			if (batteryInfo.highTemp > HARD_MAX_TEMP) {
 				mbmsTrip.highTemperatureTrip = 1;
+				BPS_Fault = 1;
 			}
 			if(batteryInfo.lowTemp < HARD_MIN_TEMP) {
 				mbmsTrip.lowTemperatureTrip = 1;
+				BPS_Fault = 1;
 			}
 
 			// checking for high battery trip (voltage?) THIS IS NOT PACK VOLTAGE!!! redo this
 			if (batteryInfo.packVoltage > MAX_PACK_VOLTAGE) {
 				mbmsTrip.highBatteryTrip = 1;
+				BPS_Fault = 1;
 			}
 
 			osStatus_t r2 = osMutexRelease(BatteryInfoMutexHandle);
@@ -615,6 +608,7 @@ void updateTripStatus() {
 			// if orion can message wasn't received recently, set trip
 			if (!(mbmsStatus.orionCANReceived)) {
 				mbmsTrip.orionMessageTimeoutTrip = 1;
+				BPS_Fault = 1;
 			}
 
 			osStatus_t r3 = osMutexRelease(MBMSStatusMutexHandle);
@@ -634,6 +628,7 @@ void updateTripStatus() {
 			{
 				// if supposed to be closed but theres no current (means its unexpectedly opened/disconnected
 				mbmsTrip.contactorDisconnectedUnexpectedlyTrip = 1;
+				BPS_Fault = 1;
 			}
 			if(((		 contactorCommand.common == OPEN_CONTACTOR) && (contactorInfo[COMMON].lineCurrent >= NO_CURRENT_THRESHOLD))
 					|| ((contactorCommand.motor == OPEN_CONTACTOR) && (contactorInfo[MOTOR].lineCurrent >= NO_CURRENT_THRESHOLD))
@@ -644,6 +639,7 @@ void updateTripStatus() {
 			{
 				// if supposed to be closed but theres no current (means its unexpectedly opened/disconnected
 				mbmsTrip.contactorConnectedUnexpectedlyTrip = 1;
+				BPS_Fault = 1;
 			}
 
 			osStatus_t r4 = osMutexRelease(ContactorCommandMutexHandle);
@@ -655,18 +651,21 @@ void updateTripStatus() {
 
 		if(read_nMPS() == 1){
 			mbmsTrip.MPSDisabledTrip = 1;
+
 		}
 
 		if(read_ESD() == 1){
 			mbmsTrip.ESDEnabledTrip = 1;
+			BPS_Fault = 1;
 		}
-
 
 		// rlrease trip mutex
 		osStatus_t release = osMutexRelease(MBMSTripMutexHandle);
+
+		if(BPS_Fault) {
+			initiateBPSFault();
+		}
 	}
-
-
 
 
 }

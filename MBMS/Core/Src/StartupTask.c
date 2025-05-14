@@ -28,6 +28,7 @@ extern MBMSStatus mbmsStatus;
 #define CHARGE_WAIT_TIME 10
 
 extern MBMSTrip mbmsTrip;
+extern ContactorCommand contactorCommand;
 
 void StartupTask(void* arg)
 {
@@ -150,6 +151,14 @@ void Startup()
 	// if car is fully charged, dont need array
 
 	// from new diagram revB, we actually do wait for motor and array contactors to close...
+	//close motor contactor
+	osStatus_t acquire1 = osMutexAcquire(ContactorInfoMutexHandle, 200);
+	if(acquire1 == osOK) {
+		contactorCommand.motor = CLOSE_CONTACTOR;
+		osStatus_t release1 = osMutexRelease(ContactorCommandMutexHandle);
+
+	}
+
 	while ((contactorInfo[MOTOR].contactorClosed != CLOSE_CONTACTOR)) {
 
 	}
@@ -158,6 +167,14 @@ void Startup()
 		Error_Handler();
 	}
 	mbmsStatus.startupState = MOTORS_CLOSED;
+
+	// close array contactor
+	osStatus_t acquire2 = osMutexAcquire(ContactorInfoMutexHandle, 200);
+	if(acquire2 == osOK) {
+		contactorCommand.array = CLOSE_CONTACTOR;
+		osStatus_t release2 = osMutexRelease(ContactorCommandMutexHandle);
+
+	}
 	while ((contactorInfo[ARRAY].contactorClosed != CLOSE_CONTACTOR)) {
 
 	}

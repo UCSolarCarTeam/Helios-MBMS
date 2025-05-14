@@ -97,7 +97,6 @@ void sendPowerSelectionStatus() {
 
 }
 void sendMBMSStatusCanMessage() {
-	// should send CAN message of trips ???
 	CANMsg mbmsStatusMsg;
 	uint16_t mbmsStatusData = ((mbmsStatus.auxilaryBattVoltage & 0x1f) << 0) + ((mbmsStatus.strobeBMSLight & 0x1) << 5)
 			+ ((mbmsStatus.allowCharge & 0x1) << 6) + ((mbmsStatus.chargeSafety & 0x1) << 7)
@@ -129,76 +128,26 @@ void sendContactorsCanMessage() {
 	/* Update contactor state based on permissions and other things */
 	uint32_t flags = osEventFlagsGet(contactorPermissionsFlagHandle);
 	CANMsg contactorCommandMsg; // NEED TO SET ATTRIBUTES OF CAN MSG
-//	tripMsg.DLC = 2; // 2 bytes
-//	tripMsg.extendedID = MBMS_TRIP_ID;
-//	tripMsg.ID = 0x0;
-	uint8_t sendContactorCommand = 0;
-
-	static uint8_t contactorClosing = false;
-	for(int i = 0; i < 6; i++){
-		if (contactorInfo[i].contactorClosing == CLOSING_CONTACTOR){
-			contactorClosing = true;
-			break;
-		}
-	}
-
-	// if no contactors are currently in the state of closing, you may close a contactor!
-	if(!contactorClosing) {
-
-		if (((flags & COMMON_FLAG) == COMMON_FLAG) && (contactorInfo[COMMON].contactorClosed != CLOSE_CONTACTOR) && (tripData == 0x0)) {
-			// if perms are given, and contactor is not already closed, and there are no trips
-			contactorCommand.common = CLOSE_CONTACTOR;
-			sendContactorCommand = 1;
-		}
-		else if (((flags & MOTOR_FLAG) == MOTOR_FLAG) && (contactorInfo[MOTOR].contactorClosed != CLOSE_CONTACTOR) && (tripData == 0x0) && (mbmsStatus.allowDischarge == 1)) {
-			contactorCommand.motor = CLOSE_CONTACTOR;
-			sendContactorCommand = 1;
-		}
-		else if (((flags & ARRAY_FLAG) == ARRAY_FLAG) && (contactorInfo[ARRAY].contactorClosed != CLOSE_CONTACTOR) && (tripData == 0x0) && (mbmsStatus.allowCharge == 1)) {
-			contactorCommand.array = CLOSE_CONTACTOR;
-			sendContactorCommand = 1;
-		}
-		else if (((flags & LV_FLAG) == LV_FLAG) && (contactorInfo[LOWV].contactorClosed != CLOSE_CONTACTOR) && (tripData == 0x0) && (mbmsStatus.allowDischarge == 1)) {
-			contactorCommand.LV = CLOSE_CONTACTOR;
-			sendContactorCommand = 1;
-		}
-		else if (((flags & CHARGE_FLAG) == CHARGE_FLAG) && (contactorInfo[CHARGE].contactorClosed != CLOSE_CONTACTOR) && (tripData == 0x0) && (mbmsStatus.allowCharge == 1)) {
-			contactorCommand.charge = CLOSE_CONTACTOR;
-			sendContactorCommand = 1;
-		}
-	}
+	contactorCommandMsg.DLC = 1;
+	contactorCommandMsg.extendedID = CONTACTOR_COMMAND_ID;
+	contactorCommandMsg.ID = 0x0;
 
 
-	// Open contactors as needed SHOULD I CHECK TRIPDATA AS WELL HERE?or naw cuz a diff func will check idkkk i wanna say noo ...
+	contactorCommandMsg.data[0] = ((contactorCommand.common & 0x01) << COMMON) + ((contactorCommand.motor & 0x01) << MOTOR)
+								+ ((contactorCommand.array & 0x01) << ARRAY)   + ((contactorCommand.LV & 0x01) << LOWV)
+								+ ((contactorCommand.charge & 0x01) << CHARGE);
 
-	if (((flags & MOTOR_FLAG) == MOTOR_FLAG) && (contactorInfo[MOTOR].contactorClosed != OPEN_CONTACTOR) && (mbmsStatus.allowDischarge == 0)){
-		contactorCommand.motor = OPEN_CONTACTOR;
-		sendContactorCommand = 1;
-	}
+	osMessageQueuePut(TxCANMessageQueueHandle, &contactorCommandMsg, 0, osWaitForever);
 
-	if (((flags & ARRAY_FLAG) == ARRAY_FLAG) && (contactorInfo[ARRAY].contactorClosed != OPEN_CONTACTOR) && (mbmsStatus.allowCharge == 0)) {
-		contactorCommand.array = OPEN_CONTACTOR;
-		sendContactorCommand = 1;
-	}
-
-
-	if (((flags & LV_FLAG) == LV_FLAG) && (contactorInfo[LOWV].contactorClosed != OPEN_CONTACTOR) && (mbmsStatus.allowDischarge == 0)) {
-		contactorCommand.LV = OPEN_CONTACTOR;
-		sendContactorCommand = 1;
-	}
-
-
-	if (((flags & CHARGE_FLAG) == CHARGE_FLAG) && (contactorInfo[CHARGE].contactorClosed != OPEN_CONTACTOR) && (mbmsStatus.allowCharge == 0)) {
-		contactorCommand.charge = OPEN_CONTACTOR;
-		sendContactorCommand = 1;
-	}
-
-
-	if (sendContactorCommand == 1) {
-		contactorCommandMsg.data[0] = ((contactorCommand.common & 0x01) << COMMON) + ((contactorCommand.motor & 0x01) << MOTOR)
-									+ ((contactorCommand.array & 0x01) << ARRAY)
-									+ ((contactorCommand.LV & 0x01) << LOWV)       + ((contactorCommand.charge & 0x01) << CHARGE);
-		osMessageQueuePut(TxCANMessageQueueHandle, &contactorCommandMsg, 0, osWaitForever);
-	}
 }
+
+
+
+
+
+
+
+
+
+
 

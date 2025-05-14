@@ -1,5 +1,5 @@
 /*
- * ShutoffTask.cpp
+ * ShutoffTask.c
  *
  *  Created on: Sep 7, 2024
  *      Author: khadeejaabbas, millaine li
@@ -12,11 +12,12 @@
 #include "CANdefines.h"
 #include "cmsis_os.h"
 #include "main.h"
-//#include "BatteryControlTask.h"
+#include "BatteryControlTask.h"
 #include "ReadPowerGPIO.h"
 #include "MBMS.h"
 
 extern MBMSStatus mbmsStatus;
+extern MBMSTrip mbmsTrip;
 extern ContactorInfo contactorInfo[6];
 //extern ContactorState contactorState;
 
@@ -52,7 +53,7 @@ void Shutoff()
 		// Making the CAN Message
 		CANMsg msg;
 		msg.ID = 0x0; // because we're using the extended id
-		msg.extendedID = CONTACTORCOMMANDID;  // this is so the node that receives it checks id to see if this message is for it
+		msg.extendedID = CONTACTOR_COMMAND_ID;  // this is so the node that receives it checks id to see if this message is for it
 		msg.DLC = 1;  // 1 byte data
 
 		// wait for shutoff flag
@@ -182,7 +183,9 @@ void Shutoff()
 
 }
 
-
 */
+
+
+
 
 

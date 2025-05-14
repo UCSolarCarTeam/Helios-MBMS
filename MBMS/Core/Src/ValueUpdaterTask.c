@@ -99,6 +99,14 @@ void updateContactorInfo(uint8_t contactor, uint8_t prechargerClosed, uint8_t pr
 	return;
 }
 
+/*
+ * but honestly whats the point of ABATT disable now...
+ * now that EN2 is always on and aux batt is always on,
+ * ik u could maybe use it to turn the car off but it
+ * would just turn right back on if the key is still on..?
+ * also reminder that its an output
+ *
+ */
 void updatePowerSelectionStruct() {
 	powerSelectionStatus.nMainPowerSwitch = read_nMPS();
 	powerSelectionStatus.ExternalShutdown = read_ESD();
@@ -108,7 +116,7 @@ void updatePowerSelectionStruct() {
 	powerSelectionStatus.nCHG_Fault = read_nCHG_Fault();
 	powerSelectionStatus.nCHG_On = read_nCHG_On();
 	powerSelectionStatus.nCHG_LV_En = read_nCHG_LV_En();
-	powerSelectionStatus.ABATT_Disable = read_ABATT_Disable();
+	powerSelectionStatus.ABATT_Disable = read_ABATT_Disable(); //
 	powerSelectionStatus.Key = read_Key();
 
 }
