@@ -44,6 +44,11 @@ enum Contactor {
 	CHARGE
 };
 
+enum ChargeState {
+	CHARGING = 0,
+	NOT_CHARGING
+};
+
 
 
 enum startupStates {

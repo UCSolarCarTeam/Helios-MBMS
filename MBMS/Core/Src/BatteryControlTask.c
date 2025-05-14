@@ -409,39 +409,79 @@ void checkIfShutdown() {
 
 
 
-void checkChargerState() {
+void switchChargerState() {
 	//dequeue CAN message to see if charger is plugged in or not???
 	// lets just call the var plugged for now
 
-	// im thinking keep state of whether car is fully op (not charging) or charging
+	uint8_t plugged = 0; // UPDATE THIS WHEN DYLAN/JENNY FIGURE OUT HOW MBMS KNOWS CHARGER IS PLUGGED IN
+	static uint8_t chargeState = NOT_CHARGING;
 
-	//if (plugged && (state == fully op)
+	if(plugged && (chargeState == NOT_CHARGING) && (read_Charge_Enable() == 1)) {
 		//open motor contactor
-		//disable 12V CAN
-		//open LV contactor
-		//Enable charging (CHG_En thing)
-		//Close Charge contactor
-		//state = charging...
+		contactorCommand.motor = OPEN_CONTACTOR;
+		while(contactorInfo[MOTOR].contactorClosed == CLOSE_CONTACTOR){
+			// wait to open
+			// CANMessageSender task will run and send the command
+			// ValueUpdater task will update contactorInfo[MOTOR]
+		}
+		// disable 12V CAN to save power consumption..
+		HAL_GPIO_WritePin(_12V_CAN_En_GPIO_Port, _12V_CAN_En_Pin, GPIO_PIN_RESET);
+		// open LV contactor
+		contactorCommand.LV = OPEN_CONTACTOR;
+		while(contactorInfo[LOWV].contactorClosed == CLOSE_CONTACTOR){
+			// wait to open
+		}
+		// enable CHG_LV_En to allow charging
+		HAL_GPIO_WritePin(nCHG_LV_En_GPIO_Port, nCHG_LV_En_Pin, GPIO_PIN_RESET);
+		// close charge contactor to start charging
+		contactorCommand.charge = CLOSE_CONTACTOR;
+		while(contactorInfo[CHARGE].contactorClosed == OPEN_CONTACTOR){
+			// wait to close
+		}
+		// update charge state
+		chargeState = CHARGING;
+	}
 
-	//else if (!plugged && (state == charging)
-		//open charge contatcor
-		//close LV contactor
-		//open 12V Charge (CHG_En)
-		//Enable 12V CAN
-		//close motor contatcor
-		//state = fully op...
+	else if (!plugged && (chargeState == CHARGING) && (read_Discharge_Enable() == 1)
+					  && (mbmsStatus.startupState == FULLY_OPERATIONAL))
+	{
+		// open charge contactor
+		contactorCommand.charge = OPEN_CONTACTOR;
+		while(contactorInfo[CHARGE].contactorClosed == CLOSE_CONTACTOR){
+			// wait to open
+		}
+		// close LV Contactor
+		contactorCommand.LV = CLOSE_CONTACTOR;
+		while(contactorInfo[LOWV].contactorClosed == OPEN_CONTACTOR){
+			// wait to close
+		}
+		// open 12V Charge through nCHG_En
+		HAL_GPIO_WritePin(nCHG_LV_En_GPIO_Port, nCHG_LV_En_Pin, GPIO_PIN_SET);
+
+		// enable 12V CAN
+		HAL_GPIO_WritePin(_12V_CAN_En_GPIO_Port, _12V_CAN_En_Pin, GPIO_PIN_SET);
+
+		// close motor contactor
+		contactorCommand.motor = CLOSE_CONTACTOR;
+		while(contactorInfo[MOTOR].contactorClosed == OPEN_CONTACTOR){
+			// wait to close
+		}
+		// update charge state
+		chargeState = NOT_CHARGING;
+
+	}
+
+	// I'll just check for shutdown during charging here as well..
+	if ((chargeState == CHARGING) && (read_Key() == 0)) {
+		// turn off charge LV enable to shutoff car..
+		HAL_GPIO_WritePin(nCHG_LV_En_GPIO_Port, nCHG_LV_En_Pin, GPIO_PIN_SET);
+
+	}
 
 
 	// go to can message sender and change the contactor stuff cuz contactors should only change here, or w mps and bps stuff etc..
 }
 
-void checkShutdownDuringCharge() {
-	//if state = charging && key is off
-	// turn off CHG_En... lol
-
-	// or set flag for key and do this thing in a shutdown task ...
-	// i feel like doing it here is kinda faster tho idk..
-}
 
 /* This function checks the soft limits of voltages, currents, and temperatures
  * These warnings should be sent out in a CAN message (CANMessageSender -> CANTxGatekeeper)
