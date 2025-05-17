@@ -185,7 +185,7 @@ void Startup()
 	mbmsStatus.startupState = ARRAY_CLOSED;
 
 	// set flag that everything is done (all perms given!!!)
-	mbmsStatus.startupState = FULLY_OPERATIONAL;
+	mbmsStatus.startupState = COMPLETED;
 
 	// end of startup
 	osThreadTerminate(startupTaskHandle);

@@ -15,6 +15,7 @@
 extern BatteryInfo batteryInfo;
 extern MBMSStatus mbmsStatus;
 extern MBMSTrip mbmsTrip;
+
 extern uint16_t tripData;
 extern ContactorCommand contactorCommand;
 extern PowerSelectionStatus powerSelectionStatus;
@@ -131,7 +132,6 @@ void sendContactorsCanMessage() {
 	contactorCommandMsg.DLC = 1;
 	contactorCommandMsg.extendedID = CONTACTOR_COMMAND_ID;
 	contactorCommandMsg.ID = 0x0;
-
 
 	contactorCommandMsg.data[0] = ((contactorCommand.common & 0x01) << COMMON) + ((contactorCommand.motor & 0x01) << MOTOR)
 								+ ((contactorCommand.array & 0x01) << ARRAY)   + ((contactorCommand.LV & 0x01) << LOWV)

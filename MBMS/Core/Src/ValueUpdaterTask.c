@@ -17,7 +17,7 @@
 #include "stm32f4xx_hal.h"
 #include "cmsis_os.h"
 
-extern volatile ContactorInfo contactorInfo[6];
+extern ContactorInfo contactorInfo[6];
 extern MBMSStatus mbmsStatus;
 extern BatteryInfo batteryInfo;
 extern PowerSelectionStatus powerSelectionStatus;
@@ -81,7 +81,7 @@ void updateContactorInfoStruct() {
 
 void updateContactorInfo(uint8_t contactor, uint8_t prechargerClosed, uint8_t prechargerClosing, uint8_t prechargerError,
 		uint8_t contactorClosed, uint8_t contactorClosing, uint8_t contactorError, int16_t lineCurrent, int16_t chargeCurrent, uint8_t BPSerror) {
-	osStatus_t a = osMutexAcquire(ContactorInfoMutexHandle, 200);
+	osStatus_t a = osMutexAcquire(ContactorInfoMutexHandle, UPDATING_MUTEX_TIMEOUT);
 	if(a == osOK) {
 		contactorInfo[contactor].prechargerClosed = prechargerClosed;
 		contactorInfo[contactor].prechargerClosing = prechargerClosing;

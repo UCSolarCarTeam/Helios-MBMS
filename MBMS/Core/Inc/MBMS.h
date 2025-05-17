@@ -11,6 +11,9 @@
 #define KEY_OFF 0
 #define KEY_ON 1
 
+#define UPDATING_MUTEX_TIMEOUT 200
+#define READING_MUTEX_TIMEOUT 200
+
 // ESD is the external cutoff off switch (button)
 
 #define FREERTOS_TICK_PERIOD 1/configTICK_RATE_HZ //USE THIS INSTEAD OF SECONFS PER TICK. this is in ticks per second
@@ -44,10 +47,10 @@ enum Contactor {
 	CHARGE
 };
 
-enum ChargeState {
-	CHARGING = 0,
-	NOT_CHARGING
-};
+//enum ChargeState {
+//	CHARGING = 0,
+//	NOT_CHARGING
+//};
 
 
 
@@ -65,8 +68,24 @@ enum startupStates {
 	ARRAY_PERMS,
 	MOTORS_CLOSED,
 	ARRAY_CLOSED,
-	FULLY_OPERATIONAL,
+	COMPLETED,
 };
+
+enum carStates {
+	STARTUP,
+	FULLY_OPERATIONAL,
+	CHARGING,
+	BPS_FAULT,
+	MPS_DISCONNECTED
+};
+
+typedef struct {
+	uint8_t common;
+	uint8_t motor;
+	uint8_t lv;
+	uint8_t array;
+	uint8_t charge;
+} Permissions;
 
 
 typedef struct {

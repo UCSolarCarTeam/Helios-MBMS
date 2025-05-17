@@ -108,18 +108,25 @@ uint8_t waitForFirstHeartbeats() {
 		if(previousHeartbeats[i] >= 65535) { // check this logic lol
 			previousHeartbeats[i] = 0;
 		}
-		if(previousHeartbeats[i] >= contactorInfo[i].heartbeat){
-			if(((osKernelGetTickCount() - heartbeatLastUpdatedTime[i]) / FREERTOS_TICK_PERIOD) > CONTACTOR_HEARTBEAT_TIMEOUT) { // where contactor_heartbeat_timeout is how often a heartbeat is sent out/recieved
-				heartbeatFailCounter[i]++;
+		osStatus_t a = osMutexAcquire(ContactorInfoMutexHandle, READING_MUTEX_TIMEOUT);
+		if (a == osOK) {
+			if(previousHeartbeats[i] >= contactorInfo[i].heartbeat){
+				if(((osKernelGetTickCount() - heartbeatLastUpdatedTime[i]) / FREERTOS_TICK_PERIOD) > CONTACTOR_HEARTBEAT_TIMEOUT) { // where contactor_heartbeat_timeout is how often a heartbeat is sent out/recieved
+					heartbeatFailCounter[i]++;
 
+				}
 			}
-		}
-		else {
-			heartbeatLastUpdatedTime[i] = osKernelGetTickCount();
+			else {
+				heartbeatLastUpdatedTime[i] = osKernelGetTickCount();
 
-			previousHeartbeats[i] = contactorInfo[i].heartbeat;
-			heartbeatFailCounter[i] = 0;
+				previousHeartbeats[i] = contactorInfo[i].heartbeat;
+				heartbeatFailCounter[i] = 0;
+			}
+			osStatus_t r = osMutexRelease(ContactorInfoMutexHandle);
+
 		}
+
+
 	}
 	return dead;
 
@@ -235,6 +242,8 @@ uint8_t batteryCheck() {
 			safe = 0;
 		}
 
+		//DO TEMP
+
 
 		//release the mutex !!!!
 		osStatus_t release = osMutexRelease(MBMSTripMutexHandle);
@@ -324,10 +333,12 @@ void checkContactorHeartbeats() {
 		if(previousHeartbeats[i] >= 65535) { // check this logic lol
 			previousHeartbeats[i] = 0;
 		}
+
+
 		if(previousHeartbeats[i] >= contactorInfo[i].heartbeat){
 			if(((osKernelGetTickCount() - heartbeatLastUpdatedTime[i]) / FREERTOS_TICK_PERIOD) > CONTACTOR_HEARTBEAT_TIMEOUT) {
 
-				osStatus_t acquire = osMutexAcquire(MBMSTripMutexHandle, 200);
+				osStatus_t acquire = osMutexAcquire(MBMSTripMutexHandle, UPDATING_MUTEX_TIMEOUT);
 				if(acquire == osOK) {
 					// set heartbeat dead trip
 					switch (i) {
@@ -355,7 +366,7 @@ void checkContactorHeartbeats() {
 		}
 		else {
 			heartbeatLastUpdatedTime[i] = osKernelGetTickCount();
-			osStatus_t a = osMutexAcquire(ContactorInfoMutexHandle, 200);
+			osStatus_t a = osMutexAcquire(ContactorInfoMutexHandle, READING_MUTEX_TIMEOUT);
 			if (a == osOK) {
 				previousHeartbeats[i] = contactorInfo[i].heartbeat;
 				osStatus_t r = osMutexRelease(ContactorInfoMutexHandle);
@@ -395,14 +406,15 @@ void checkIfShutdown() {
 }
 
 
-
+/*
 void switchChargerState() {
 	//dequeue CAN message to see if charger is plugged in or not???
 	// lets just call the var plugged for now
+	uint8_t NOT_CHARGING = 0; // putting temp var here rn cuz i commented out enum for now lol may 17
 
 	uint8_t plugged = 0; // UPDATE THIS WHEN DYLAN/JENNY FIGURE OUT HOW MBMS KNOWS CHARGER IS PLUGGED IN
-	static uint8_t chargeState = NOT_CHARGING;
 
+	static uint8_t chargeState = NOT_CHARGING;
 	if(plugged && (chargeState == NOT_CHARGING) && (read_Charge_Enable() == 1)) {
 		//open motor contactor
 		contactorCommand.motor = OPEN_CONTACTOR;
@@ -467,6 +479,7 @@ void switchChargerState() {
 
 	// go to can message sender and change the contactor stuff cuz contactors should only change here, or w mps and bps stuff etc..
 }
+*/
 
 
 /* This function checks the soft limits of voltages, currents, and temperatures
@@ -670,6 +683,152 @@ void updateTripStatus() {
 
 }
 
+/*
+ * Saturday May 17
+ * Redoing things
+ * Note: Maybe make the perms a struct instead of flags lol... so its easier to give & take
+ */
+
+// move this elsehwere, just here for now to keep things easily readable
+Permissions perms = {0};
+
+// make var plugged for now
+
+// the functions that update battery info struct and contactor info array structs!!! (from valueUpdater)
+
+// need to fix enums that have same name... but only if this is good ish ..
+void func() {
+	uint8_t plugged = 0;
+	uint8_t carState = STARTUP;
+	switch (carState) {
+		case STARTUP:
+			if(read_Discharge_Enable() == 1){
+				perms.common = 1;
+				perms.motor = 1;
+				perms.lv = 1;
+
+			}
+			if(read_Charge_Enable() == 1) {
+				perms.array = 1;
+			}
+
+			//perms.charge = 1; NAW NOT CHARGE NOT HERE assuming perms means u can close it
+			if (mbmsStatus.startupState == FULLY_OPERATIONAL){ // maybe change this to COMPLETED so its diff
+				carState = FULLY_OPERATIONAL;
+			}
+			break;
+		case FULLY_OPERATIONAL:
+			if (plugged && (read_Charge_Enable() == 1)) {
+				perms.lv = 0;
+				perms.motor = 0;
+				HAL_GPIO_WritePin(_12V_CAN_En_GPIO_Port, _12V_CAN_En_Pin, GPIO_PIN_RESET); // disable 12V CAN
+			}
+			if((contactorInfo[LOWV].contactorClosed == OPEN_CONTACTOR) && (contactorInfo[MOTOR].contactorClosed == OPEN_CONTACTOR)) {
+				HAL_GPIO_WritePin(nCHG_LV_En_GPIO_Port, nCHG_LV_En_Pin, GPIO_PIN_RESET); // enable charging
+				perms.charge = 1;
+			}
+			if(contactorInfo[CHARGE].contactorClosed == CLOSE_CONTACTOR) {
+				carState = CHARGING;
+			}
+			// if discharge En no longer enabled then...
+			// open the motor, lv, contactors??? idk.. idk..
+
+			break;
+		case CHARGING:
+			if (!plugged && (read_Discharge_Enable() == 1)) {
+				HAL_GPIO_WritePin(nCHG_LV_En_GPIO_Port, nCHG_LV_En_Pin, GPIO_PIN_SET); // disable charging
+				perms.charge = 0;
+			}
+			if(contactorInfo[CHARGE].contactorClosed == OPEN_CONTACTOR) {
+				HAL_GPIO_WritePin(_12V_CAN_En_GPIO_Port, _12V_CAN_En_Pin, GPIO_PIN_SET); // enable 12V CAN
+				perms.lv = 1;
+				perms.motor = 1;
+			}
+			if((contactorInfo[LOWV].contactorClosed == CLOSE_CONTACTOR) && (contactorInfo[MOTOR].contactorClosed == CLOSE_CONTACTOR)) {
+				carState = FULLY_OPERATIONAL;
+			}
+			// if charge En no longer enabled then...
+			// open the charge, array, contactors??? idk.. idk
+			break;
+		case BPS_FAULT: // SET TO THIS CASE for all the checking stuffs :3
+			// idk does this open them all at same time.... sus how to do specific order? and for shutdown....
+			HAL_GPIO_WritePin(Strobe_En_GPIO_Port, Strobe_En_Pin, GPIO_PIN_SET);
+			mbmsStatus.strobeBMSLight = 1;
+			//set flag for shutdwon procedure.... ? mm idk
+
+			perms.common = 0;
+			perms.lv = 0;
+			perms.motor = 0;
+			perms. array = 0;
+			perms.charge = 0;
+			break;
+		case MPS_DISCONNECTED:
+			// reset all the variables so we can restart at startup...?
+
+	}
+
+
+}
+
+void updateContactors() {
+
+
+    uint8_t sendContactorCommand = 0;
+    static uint8_t contactorClosing = false;
+
+    // Check if any contactors are currently closing
+    for (int i = 0; i < 5; i++) {
+        if (contactorInfo[i].contactorClosing == CLOSING_CONTACTOR) { // lowkey switch this back to an enum if u have time smh.. stoopid fr
+            contactorClosing = true;
+            break;
+        }
+    }
+
+    // If no contactors are currently closing, you may close a contactor
+    if (!contactorClosing) {
+        if ((perms.common) && (contactorInfo[COMMON].contactorClosed != CLOSE_CONTACTOR)) {
+            contactorCommand.common = CLOSE_CONTACTOR;
+//            sendContactorCommand = 1; // had this here before but i think ill just consistently send lowkey..
+        }
+        else if ((perms.lv) && (contactorInfo[LOWV].contactorClosed != CLOSE_CONTACTOR) && (mbmsStatus.allowDischarge == 1)) {
+            contactorCommand.LV = CLOSE_CONTACTOR;
+
+        }
+        else if ((perms.motor) && (contactorInfo[MOTOR].contactorClosed != CLOSE_CONTACTOR) && (mbmsStatus.allowDischarge == 1)) {
+            contactorCommand.motor = CLOSE_CONTACTOR;
+
+        }
+        else if ((perms.array) && (contactorInfo[ARRAY].contactorClosed != CLOSE_CONTACTOR) && (mbmsStatus.allowCharge == 1)) {
+            contactorCommand.array = CLOSE_CONTACTOR;
+
+        }
+        else if ((perms.charge) && (contactorInfo[CHARGE].contactorClosed != CLOSE_CONTACTOR) && (mbmsStatus.allowCharge == 1)) {
+            contactorCommand.charge = CLOSE_CONTACTOR;
+
+        }
+    }
+
+    // Open contactors as needed
+    if ((!perms.motor) && (contactorInfo[MOTOR].contactorClosed != OPEN_CONTACTOR)) {
+        contactorCommand.motor = OPEN_CONTACTOR;
+//        sendContactorCommand = 1;
+    }
+
+    if ((!perms.array) && (contactorInfo[ARRAY].contactorClosed != OPEN_CONTACTOR)) {
+        contactorCommand.array = OPEN_CONTACTOR;
+
+    }
+
+    if ((!perms.lv) && (contactorInfo[LOWV].contactorClosed != OPEN_CONTACTOR)) {
+        contactorCommand.LV = OPEN_CONTACTOR;
+
+    }
+
+    if ((!perms.charge) && (contactorInfo[CHARGE].contactorClosed != OPEN_CONTACTOR)) {
+        contactorCommand.charge = OPEN_CONTACTOR;
+
+    }
+}
 
 
 // motor and array cont6actors might still need to open or close during.....
