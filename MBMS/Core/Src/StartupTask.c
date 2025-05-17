@@ -29,6 +29,7 @@ extern MBMSStatus mbmsStatus;
 
 extern MBMSTrip mbmsTrip;
 extern ContactorCommand contactorCommand;
+extern Permissions perms;
 
 void StartupTask(void* arg)
 {
@@ -42,6 +43,11 @@ void Startup()
 {
 
 	//aux battery has started up and is powering the MBMS
+	perms.common = 0;
+	perms.lv = 0;
+	perms.motor = 0;
+	perms.array = 0;
+	perms.charge = 0;
 
 
 	mbmsStatus.startupState = nMPS_ENABLED;
@@ -78,8 +84,7 @@ void Startup()
 
 	}
 
-	uint32_t flagsSet;
-	flagsSet = osEventFlagsSet(contactorPermissionsFlagHandle, COMMON_FLAG);
+	perms.common = 1;
 	while ((contactorInfo[COMMON].contactorClosed != CLOSE_CONTACTOR)) {
 		// wait for common contactor to close
 		//should i add an osDelay here so BCT can run? ask nathan probably (same w lv, or anywhere u want a diff task to be able to run)
@@ -92,7 +97,7 @@ void Startup()
 	mbmsStatus.startupState = COMMON_CLOSED;
 
 	// set flag to give permission to precharge/close LV
-	flagsSet = osEventFlagsSet(contactorPermissionsFlagHandle, LV_FLAG); // set LV contactor flag
+	perms.lv = 1;
 	while ((contactorInfo[LOWV].contactorClosed != CLOSE_CONTACTOR)) {
 		// wait for LV contactor to close
 	}
@@ -124,7 +129,7 @@ void Startup()
 
 	// set flag to give permission to precharge/close motor contactor
 	// just check that everything is good still (doesnt HAVE to close motor before moving on to next part)
-	flagsSet = osEventFlagsSet(contactorPermissionsFlagHandle, MOTOR_FLAG );
+	perms.motor = 1;
 
 	mbmsStatus.startupState = MOTORS_PERMS;
 
@@ -132,15 +137,18 @@ void Startup()
 	// to give time for batt control to check things r ok, close contactors or not, decide if there needs to be a trip or not etc.
 	osDelay(MOTOR_WAIT_TIME * 1000);
 
-	flagsSet = osEventFlagsSet(contactorPermissionsFlagHandle, CHARGE_FLAG); // set LV contactor flag
+////////////// i think we shouldnt give charge persm in startup...
+	perms.charge = 1;
 
 	mbmsStatus.startupState = CHARGE_PERMS;
 	// give time to battery control task to make sure battery state is still safe
 	osDelay(CHARGE_WAIT_TIME * 1000);
+/////////////
+
 
 	// set flag to give permission to precharge/close array contactor
 	// wait until array contactor done (same as above, make sure everything okay still, doesnt NEED it to bed closed...)
-	flagsSet = osEventFlagsSet(contactorPermissionsFlagHandle, ARRAY_FLAG); // set LV contactor flag
+	perms.array = 1;
 
 	mbmsStatus.startupState = ARRAY_PERMS;
 	// give time to battery control task to make sure battery state is still safe

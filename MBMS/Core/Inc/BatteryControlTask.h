@@ -13,47 +13,37 @@
 
 void BatteryControlTask(void* arg);
 void BatteryControl();
-void checkSoftBatteryLimit();
+
+
+/* "private" helper functions */
 void initiateBPSFault();
-
-//void updateContactorInfo(uint8_t contactor, uint8_t prechargerClosed, uint8_t prechargerClosing,
-//		uint8_t prechargerError, uint8_t contactorClosed, uint8_t contactorClosing,
-//		uint8_t contactorError, int16_t lineCurrent, int16_t chargeCurrent, uint8_t BPSerror);
-
-//void updateContactorInfoStruct();
-//void updatePackInfoStruct();
-void updateTripStatus();
-
-void checkIfShutdown();
-
-void clearAllFaults();
-
-void checkContactorHeartbeats();
-
-uint8_t waitForFirstHeartbeats();
+void checkKeyShutdown();
+void updateContactorInfo(uint8_t contactor, uint8_t prechargerClosed, uint8_t prechargerClosing,
+		uint8_t prechargerError, uint8_t contactorClosed, uint8_t contactorClosing,
+		uint8_t contactorError, int16_t lineCurrent, int16_t chargeCurrent, uint8_t BPSerror);
 
 void startupCheck();
+uint8_t waitForFirstHeartbeats();
+uint8_t startupBatteryCheck();
+uint8_t checkPrechargersOpen();
+uint8_t checkContactorsOpen();
 
 
 
-//#define CLOSED 0x0
-//#define OPEN 0x1
+/* "public" functions */
+void UpdateContactorInfoStruct();
+void UpdateOrionInfoStruct();
+void UpdatePowerSelectionStruct();
 
+void UpdateTripStatus();
+void CheckContactorHeartbeats();
+void CheckSoftBatteryLimit();
 
-// These are random values i made for the batt limit, must be updated
-//#define HARD_BATTERY_LIMIT 75
-//#define SOFT_BATTERY_LIMIT 73
-// wait.... are these the limits for the cell or the pack ????
+void SystemStateMachine();
+void UpdateContactors();
 
-//#define MAX_CELL_VOLTAGE 10
-//#define MIN_CELL_VOLTAGE 2
-//
-///* Add contactor max current (motor1/2 should be the same)*/
-//#define MAX_COMMON_CONTACTOR_CURRENT 5
-//#define MAX_MOTORS_CONTACTOR_CURRENT 5
-//#define MAX_ARRAY_CONTACTOR_CURRENT 5
-//#define MAX_LV_CONTACTOR_CURRENT 5
-//#define MAX_CHARGE_CONTACTOR_CURRENT 5
+void UpdateCounter(uint32_t * counter);
+
 
 #define ORION_MSG_WAIT_TIMEOUT 200 //ms
 #define CONTACTOR_HEARTBEAT_TIMEOUT 1 // seconds !!
@@ -95,23 +85,6 @@ enum TemperatureLimits {
 	HARD_MIN_TEMP,
 	SOFT_MIN_TEMP
 };
-// make struct w precharge, current, voltage, then have an array of 4 (for the 4 contactors) of the struct type
-// add the individual contactor voltage and current
-
-//// but this struct should be readable by diff tasks !!!! e.g. startup, shutoff
-//// zero for closed (connected), one for open (disconnected)
-//typedef struct{
-//	uint8_t common;
-//	uint8_t motor;
-//	uint8_t array;
-//	uint8_t LV;
-//	uint8_t charge;
-//} ContactorState;
-
-//extern ContactorState contactorState = {0};
-
-
-// so should probably dequeue CAN messages and update the values in this struct, and do appropriate checks of values
 
 
 #endif /* INC_TASK_H_FILES_BATTERYCONTROLTASK_H_ */

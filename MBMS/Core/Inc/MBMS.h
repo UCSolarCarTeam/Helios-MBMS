@@ -76,7 +76,8 @@ enum carStates {
 	FULLY_OPERATIONAL,
 	CHARGING,
 	BPS_FAULT,
-	MPS_DISCONNECTED
+	MPS_DISCONNECTED,
+	SOFT_TRIP
 };
 
 typedef struct {
@@ -85,6 +86,8 @@ typedef struct {
 	uint8_t lv;
 	uint8_t array;
 	uint8_t charge;
+	uint8_t startupDone;
+	uint8_t faulted;
 } Permissions;
 
 
