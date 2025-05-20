@@ -36,6 +36,8 @@ static Permissions perms = {0};
 
 static uint8_t carState = STARTUP;
 
+static SoftBatteryTrip softBatteryTrip = {0};
+
 
 // if trip, check if startup state is less than fully operational, if so, kill it, otherwise if its at fully operational it would've already killed itself
 
@@ -360,13 +362,22 @@ void SystemStateMachine() {
 
 		case SOFT_TRIP:
 			perms.faulted = 1;
-			// i think track which contactors need to be opened due to soft batt limit
-			// and take away its perms !!!!!!! RAH
-			uint8_t contactor = 0;
-			switch(contactor) {
-			case 0:
+			if (softBatteryTrip.cell_OV == 1){
+				perms.charge = 0;
+				perms.array = 0;
+
+			}
+			if(softBatteryTrip.cell_UV == 1) {
+				perms.motor = 0;
+			}
+			if(read_nMPS() == 1) {
+				carState = MPS_DISCONNECTED;
 				break;
 			}
+			/* Running checks */
+			CheckContactorHeartbeats();
+			CheckSoftBatteryLimit();
+			UpdateTripStatus();
 
 			break;
 	}
@@ -436,7 +447,7 @@ void UpdateContactors() {
 }
 
 
-/* FUNCTIOS RELATED TO STARTUP */
+/* FUNCTIONS RELATED TO STARTUP */
 
 /*
  * This function should be called during the startup procedure
@@ -745,9 +756,14 @@ void CheckSoftBatteryLimit() {
 		if (a1 == osOK){
 			/* Checking the min/max cell voltages */
 			if (batteryInfo.maxCellVoltage > SOFT_MAX_CELL_VOLTAGE) {
+				softBatteryTrip.cell_OV = 1;
+				carState = SOFT_TRIP;
 				mbmsSoftBatteryLimitWarning.highCellVoltageWarning = 1;
+
 			}
 			if (batteryInfo.minCellVoltage < SOFT_MIN_CELL_VOLTAGE) {
+				softBatteryTrip.cell_UV = 1;
+				carState = SOFT_TRIP;
 				mbmsSoftBatteryLimitWarning.lowCellVoltageWarning = 1;
 			}
 

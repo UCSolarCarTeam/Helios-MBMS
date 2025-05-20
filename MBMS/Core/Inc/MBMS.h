@@ -8,36 +8,31 @@
 #ifndef INC_MBMS_H_
 #define INC_MBMS_H_
 
-#define KEY_OFF 0
-#define KEY_ON 1
-
 #define UPDATING_MUTEX_TIMEOUT 200
 #define READING_MUTEX_TIMEOUT 200
 
-// ESD is the external cutoff off switch (button)
 
 #define FREERTOS_TICK_PERIOD 1/configTICK_RATE_HZ //USE THIS INSTEAD OF SECONFS PER TICK. this is in ticks per second
 
-#define SHUTOFF_FLAG 0b1U // just making the flag an arbitrary number (should be uint32_t,,, this is = 1 in decimal)
-// what was the cause of the shutdown??
-//#define EPCOS_FLAG 0b00000010U // external power cut off switch (push button outside car), starts soft shutdown
-#define ESD_FLAG 0b10U // external shutdown button pressed
-#define nMPS_FLAG 0b100U // main power switch off
-#define KEY_FLAG 0b1000U // turning car key is cause of shutoff
-#define HARD_BL_FLAG 0b10000U // hard battery limit is cause of shutoff
-#define SOFT_BL_FLAG 0b100000U // soft battery limit is cause of shutoff
+#define SHUTOFF_FLAG 0x01 // just making the flag an arbitrary number (should be uint32_t,,, this is = 1 in decimal)
+#define nMPS_FLAG 0x02 // main power switch disconnected
+#define HARD_BL_FLAG 0x04 // hard battery limit hit
 
+#define OPEN_CONTACTOR 0
+#define CLOSE_CONTACTOR 1
+#define CLOSING_CONTACTOR 1
 
 // Define boolean as an enum or typedef in a header
 typedef enum { false = 0, true = 1 } boolean;
 
-// new enum made march 7
-enum ContactorState {
-	OPEN_CONTACTOR = 0,
-	CLOSE_CONTACTOR,
-	CLOSING_CONTACTOR
-
-};
+/* oops sorry i accidentally changed it back to two separate things */
+//// new enum made march 7
+//enum ContactorState {
+//	OPEN_CONTACTOR = 0, //00
+//	CLOSE_CONTACTOR,    //01
+//	CLOSING_CONTACTOR   //10
+//
+//};
 
 enum Contactor {
 	COMMON = 0,
@@ -47,29 +42,20 @@ enum Contactor {
 	CHARGE
 };
 
-//enum ChargeState {
-//	CHARGING = 0,
-//	NOT_CHARGING
-//};
-
-
 
 enum startupStates {
 	nMPS_ENABLED = 0, // when u disconnect mps it kind goes back to this state in the startup okay?? check the draw.io diagram
 	nMPS_DISABLED,
 	ESD_DISABLED,
 	CHECKS_PASSED,
-	FAULTS_CLEARED,
 	COMMON_CLOSED,
 	LV_CLOSED,
 	EN1_ON,
 	MOTORS_PERMS,
-	CHARGE_PERMS,
 	ARRAY_PERMS,
-	MOTORS_CLOSED,
-	ARRAY_CLOSED,
-	COMPLETED,
+	COMPLETED
 };
+
 
 enum carStates {
 	STARTUP,
@@ -80,11 +66,18 @@ enum carStates {
 	SOFT_TRIP
 };
 
+
+typedef struct {
+	uint8_t cell_OV;
+	uint8_t cell_UV;
+} SoftBatteryTrip;
+
+
 typedef struct {
 	uint8_t common;
 	uint8_t motor;
-	uint8_t lv;
 	uint8_t array;
+	uint8_t lv;
 	uint8_t charge;
 	uint8_t startupDone;
 	uint8_t faulted;
@@ -109,6 +102,7 @@ typedef struct {
     uint16_t minPackVoltage;
 } BatteryInfo;
 
+
 typedef struct {
 	uint8_t prechargerClosed;
 	uint8_t prechargerClosing;
@@ -121,6 +115,7 @@ typedef struct {
 	uint8_t BPSerror;
 	uint16_t heartbeat;
 } ContactorInfo;
+
 
 // add startup state
 typedef struct {
@@ -135,6 +130,7 @@ typedef struct {
 	uint8_t chargeShouldTrip;
 	uint8_t startupState;
 } MBMSStatus;
+
 
 typedef struct {
 	uint8_t highCellVoltageTrip;
@@ -154,12 +150,13 @@ typedef struct {
 	uint8_t arrayHeartbeatDeadTrip;
 	uint8_t LVHeartbeatDeadTrip;
 	uint8_t chargeHeartbeatDeadTrip;
-	uint8_t MPSDisabledTrip; // this is not a BPS fault ! (same w currents)
+	uint8_t MPSDisabledTrip; // this is not a BPS fault !
 	uint8_t ESDEnabledTrip;
 	uint8_t highTemperatureTrip;
 	uint8_t lowTemperatureTrip;
 
 } MBMSTrip;
+
 
 typedef struct {
 	uint8_t highCellVoltageWarning;
@@ -175,6 +172,7 @@ typedef struct {
 
 } MBMSSoftBatteryLimitWarning;
 
+
 typedef struct {
 	uint8_t nMainPowerSwitch;
 	uint8_t ExternalShutdown;
@@ -189,14 +187,6 @@ typedef struct {
 	uint8_t Key;
 } PowerSelectionStatus;
 
-//typedef struct{
-//	uint8_t common;
-//	uint8_t motor1;
-//	uint8_t motor2;
-//	uint8_t array;
-//	uint8_t LV;
-//	uint8_t charge;
-//} ContactorState; // maybe i could use this struct for when its proper closed/proper open.. ? idk i might not even rly need this tsruct anymnore but idk
 
 typedef struct{
 	uint8_t common;
