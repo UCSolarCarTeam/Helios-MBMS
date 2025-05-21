@@ -111,9 +111,9 @@ void UpdateContactorInfoStruct() {
 			uint8_t contactorError = data[0] & 0x20; // extract bit 5
 			int16_t lineCurrent = ((data[0] & 0xc0) >> 6) + ((data[1] & 0xff) << 2) + ((data[2] & 0x03) << 10); // extract bits 6 to 17
 			int16_t chargeCurrent = ((data[2] & 0xfc) >> 2) + ((data[3] & 0x3f) << 6); // extract bits 18 to 29
-			uint8_t BPSerror = data[3] & 0x80; //extract bit 30
+			uint8_t contactorOpeningError = data[3] & 0x80; //extract bit 30
 			updateContactorInfo((contactorMsg.extendedID - CONTACTORIDS), prechargerClosed, prechargerClosing, prechargerError,
-					contactorClosed, contactorClosing, contactorError, lineCurrent, chargeCurrent, BPSerror);
+					contactorClosed, contactorClosing, contactorError, lineCurrent, chargeCurrent, contactorOpeningError);
 
 		}
 	}
@@ -121,7 +121,7 @@ void UpdateContactorInfoStruct() {
 }
 
 void updateContactorInfo(uint8_t contactor, uint8_t prechargerClosed, uint8_t prechargerClosing, uint8_t prechargerError,
-		uint8_t contactorClosed, uint8_t contactorClosing, uint8_t contactorError, int16_t lineCurrent, int16_t chargeCurrent, uint8_t BPSerror) {
+		uint8_t contactorClosed, uint8_t contactorClosing, uint8_t contactorError, int16_t lineCurrent, int16_t chargeCurrent, uint8_t contactorOpeningError) {
 	osStatus_t a = osMutexAcquire(ContactorInfoMutexHandle, UPDATING_MUTEX_TIMEOUT);
 	if(a == osOK) {
 		contactorInfo[contactor].prechargerClosed = prechargerClosed;
@@ -131,7 +131,7 @@ void updateContactorInfo(uint8_t contactor, uint8_t prechargerClosed, uint8_t pr
 		contactorInfo[contactor].contactorError = contactorError;
 		contactorInfo[contactor].lineCurrent = lineCurrent;
 		contactorInfo[contactor].chargeCurrent = chargeCurrent;
-		contactorInfo[contactor].BPSerror = BPSerror;
+		contactorInfo[contactor].contactorOpeningError = contactorOpeningError;
 
 		osStatus_t r = osMutexRelease(ContactorInfoMutexHandle);
 	}
@@ -925,7 +925,16 @@ void UpdateTripStatus() {
 				mbmsTrip.contactorConnectedUnexpectedlyTrip = 1;
 				BPS_Fault = 1;
 
-				// HEY YOU NEED TO ADD THE CONTACTOR WONT OPEN (FROM CONTACTOR CAN) STUFF HERE !!!!
+
+			}
+
+			/* Here, it is also a contactor connected unexpectedly trip if the contactor won't open when told to */
+			for (int i = 0; i < 5; i++) {
+				if(contactorInfo[i].contactorOpeningError == 1) {
+					mbmsTrip.contactorConnectedUnexpectedlyTrip = 1;
+					BPS_Fault = 1;
+					break;
+				}
 			}
 
 

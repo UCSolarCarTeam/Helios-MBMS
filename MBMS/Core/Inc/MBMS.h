@@ -112,7 +112,7 @@ typedef struct {
 	uint8_t contactorError;
 	int16_t lineCurrent; // CHANGED FROM UINT16 ON APRIL 2
 	int16_t chargeCurrent;
-	uint8_t BPSerror;
+	uint8_t contactorOpeningError;
 	uint16_t heartbeat;
 } ContactorInfo;
 
@@ -183,7 +183,7 @@ typedef struct {
 	uint8_t nCHG_Fault;
 	uint8_t nCHG_On;
 	uint8_t nCHG_LV_En;
-	uint8_t ABATT_Disable;
+	uint8_t ABATT_Disable; // lowkey why is this here
 	uint8_t Key;
 } PowerSelectionStatus;
 
