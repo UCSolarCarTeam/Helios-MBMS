@@ -426,6 +426,9 @@ void UpdateContactors() {
     }
 
     // Open contactors as needed
+    if ((!perms.common) && (contactorInfo[COMMON].contactorClosed != OPEN_CONTACTOR)) {
+    	contactorCommand.motor = OPEN_CONTACTOR;
+    }
     if ((!perms.motor) && (contactorInfo[MOTOR].contactorClosed != OPEN_CONTACTOR)) {
         contactorCommand.motor = OPEN_CONTACTOR;
     }
@@ -782,7 +785,7 @@ void CheckSoftBatteryLimit() {
 		osStatus_t a2 = osMutexAcquire(ContactorInfoMutexHandle, 200);
 		if (a2 == osOK) {
 			/* Checking contactors' high current */
-			if (contactorInfo[COMMON].lineCurrent > SOFT_MAX_COMMON_CONTACTOR_CURRENT){
+			if (batteryInfo.packCurrent > SOFT_MAX_COMMON_CONTACTOR_CURRENT){
 				mbmsSoftBatteryLimitWarning.commonHighCurrentWarning = 1;
 			}
 			if (contactorInfo[MOTOR].lineCurrent > SOFT_MAX_MOTORS_CONTACTOR_CURRENT){
@@ -900,7 +903,7 @@ void UpdateTripStatus() {
 
 			/* Contactor disconnected unexpectedely */
 			/* To check, we compare a minimum current draw with the state of the contactor */
-			if(((		 contactorCommand.common == CLOSE_CONTACTOR) && (contactorInfo[COMMON].lineCurrent < NO_CURRENT_THRESHOLD))
+			if(((		 contactorCommand.common == CLOSE_CONTACTOR) && (batteryInfo.packCurrent < NO_CURRENT_THRESHOLD))
 					|| ((contactorCommand.motor == CLOSE_CONTACTOR) && (contactorInfo[MOTOR].lineCurrent < NO_CURRENT_THRESHOLD))
 					|| ((contactorCommand.array  == CLOSE_CONTACTOR) && (contactorInfo[ARRAY].lineCurrent  < NO_CURRENT_THRESHOLD))
 					|| ((contactorCommand.LV     == CLOSE_CONTACTOR) && (contactorInfo[LOWV].lineCurrent   < NO_CURRENT_THRESHOLD))
@@ -912,7 +915,7 @@ void UpdateTripStatus() {
 			}
 
 			/* Contactor connected unexpectedly trip */
-			if(((		 contactorCommand.common == OPEN_CONTACTOR) && (contactorInfo[COMMON].lineCurrent >= NO_CURRENT_THRESHOLD))
+			if(((		 contactorCommand.common == OPEN_CONTACTOR) && (batteryInfo.packCurrent >= NO_CURRENT_THRESHOLD))
 					|| ((contactorCommand.motor == OPEN_CONTACTOR) && (contactorInfo[MOTOR].lineCurrent >= NO_CURRENT_THRESHOLD))
 					|| ((contactorCommand.array  == OPEN_CONTACTOR) && (contactorInfo[ARRAY].lineCurrent  >= NO_CURRENT_THRESHOLD))
 					|| ((contactorCommand.LV     == OPEN_CONTACTOR) && (contactorInfo[LOWV].lineCurrent   >= NO_CURRENT_THRESHOLD))
