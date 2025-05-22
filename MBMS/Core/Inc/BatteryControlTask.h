@@ -11,9 +11,15 @@
 #include <stdint.h>
 #include "main.h"
 
+
+
+
 void BatteryControlTask(void* arg);
 void BatteryControl();
 
+
+void perms_init();
+void MBMSStatus_init();
 
 /* "private" helper functions */
 void initiateBPSFault();
@@ -85,6 +91,8 @@ enum TemperatureLimits {
 	HARD_MIN_TEMP,
 	SOFT_MIN_TEMP
 };
+
+
 
 
 #endif /* INC_TASK_H_FILES_BATTERYCONTROLTASK_H_ */

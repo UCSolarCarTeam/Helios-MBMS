@@ -304,16 +304,9 @@ int main(void)
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
   TxCANMessageQueueHandle = osMessageQueueNew(QUEUE_SIZE, sizeof(CANMsg), &TxCANMessageQueue_attributes);
-  if(TxCANMessageQueueHandle == NULL){
-	  uint8_t x = 0;
-	  //
-  }
+
   RxCANMessageQueueHandle = osMessageQueueNew(QUEUE_SIZE, sizeof(CANMsg), &RxCANMessageQueue_attributes);
-  batteryControlMessageQueueHandle = osMessageQueueNew(QUEUE_SIZE, sizeof(CANMsg), &batteryControlMessageQueue_attributes);
-  if(batteryControlMessageQueueHandle == NULL){
-	  uint8_t x = 0;
-	  //
-  }
+
   contactorMessageQueueHandle = osMessageQueueNew(QUEUE_SIZE, sizeof(CANMsg), &contactorMessageQueue_attributes);
   // IS THIS CORRECT??? THE NUMBER IN QUEUE AND SIZE
 
@@ -326,23 +319,18 @@ int main(void)
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
 
-//  CANTxGatekeeperTaskHandle = osThreadNew(CANTxGatekeeperTask, NULL, &CANTxGatekeeperTask_attributes);
-//  CANRxGatekeeperTaskHandle = osThreadNew(CANRxGatekeeperTask, NULL, &CANRxGatekeeperTask_attributes);
+  CANTxGatekeeperTaskHandle = osThreadNew(CANTxGatekeeperTask, NULL, &CANTxGatekeeperTask_attributes);
+  CANRxGatekeeperTaskHandle = osThreadNew(CANRxGatekeeperTask, NULL, &CANRxGatekeeperTask_attributes);
 
   batteryControlTaskHandle = osThreadNew(BatteryControlTask, NULL, &batteryControlTask_attributes);
-  if(batteryControlTaskHandle == NULL)
-  {
-	  uint8_t x = 0;
-  }
-//  shutoffTaskHandle = osThreadNew(ShutoffTask, NULL, &shutoffTask_attributes);
-//  startupTaskHandle = osThreadNew(StartupTask, NULL, &startupTask_attributes);
+
+  shutoffTaskHandle = osThreadNew(ShutoffTask, NULL, &shutoffTask_attributes);
+  startupTaskHandle = osThreadNew(StartupTask, NULL, &startupTask_attributes);
 
   debugInterfaceTaskHandle = osThreadNew(DebugInterfaceTask, NULL, &debugInterfaceTask_attributes);
-  if(debugInterfaceTaskHandle == NULL) {
-	  uint8_t x = 0;
-  }
 
-//  CANMessageSenderTaskHandle = osThreadNew(CANMessageSenderTask, NULL, &CANMessageSenderTask_attributes);
+
+  CANMessageSenderTaskHandle = osThreadNew(CANMessageSenderTask, NULL, &CANMessageSenderTask_attributes);
 
 
 

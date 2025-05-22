@@ -44,26 +44,29 @@ void Startup()
 {
 
 	//aux battery has started up and is powering the MBMS
-	perms.common = 0;
-	perms.lv = 0;
-	perms.motor = 0;
-	perms.array = 0;
-	perms.charge = 0;
+
+	perms_init();
+	MBMSStatus_init();
 
 
 	mbmsStatus.startupState = nMPS_ENABLED;
 
 	while (read_nMPS() == 1) {
+
+		// SET TRIP HERE
 		// wait for MPS to be on/enabled
 	}
 
 	mbmsStatus.startupState = nMPS_DISABLED;
 
 
+
 	while (read_ESD() == 1) {
 		// do BPS fault
 		// instead should i just have an osDelay, for BCT to run and set the trip/fault..? bc we have to keep track of that in the struct
-		uint32_t shutoffFlagsSet = osEventFlagsSet(shutoffFlagHandle, HARD_BL_FLAG| SHUTOFF_FLAG);
+
+		// SET TRIP HERE
+		osEventFlagsSet(shutoffFlagHandle, HARD_BL_FLAG);
 		osThreadTerminate(startupTaskHandle);
 	}
 

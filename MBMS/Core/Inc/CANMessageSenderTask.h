@@ -12,7 +12,7 @@
 
 void CANMessageSenderTask(void * arg);
 void CANMessageSender();
-void sendTripStatusCanMessage(uint16_t* tripData);
+void sendTripStatusCanMessage();
 void sendMBMSStatusCanMessage();
 void sendMBMSHeartbeatCanMessage();
 void sendContactorsCanMessage();

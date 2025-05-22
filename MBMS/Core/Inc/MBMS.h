@@ -12,7 +12,7 @@
 #define READING_MUTEX_TIMEOUT 200
 
 
-#define FREERTOS_TICK_PERIOD 1/configTICK_RATE_HZ //USE THIS INSTEAD OF SECONFS PER TICK. this is in ticks per second
+#define FREERTOS_TICK_PERIOD 1/configTICK_RATE_HZ //USE THIS INSTEAD OF SECONFS PER TICK
 
 #define SHUTOFF_FLAG 0x01 // just making the flag an arbitrary number (should be uint32_t,,, this is = 1 in decimal)
 #define nMPS_FLAG 0x02 // main power switch disconnected
@@ -121,14 +121,14 @@ typedef struct {
 typedef struct {
 	uint8_t auxilaryBattVoltage; // bits 0-4
 	uint8_t strobeBMSLight;
-	uint8_t allowCharge; // remember ur question may 7: is it straight up gpio, or is it something i decide
-	uint8_t chargeSafety;
-	uint8_t highVoltageEnableState; // what is this, why doesnt it exist anymore in the excel???
-	uint8_t allowDischarge;
+	uint8_t nChargeEnable; // remember ur question may 7: is it straight up gpio, or is it something i decide
+	uint8_t nChargeSafety;
+	uint8_t nDischargeEnable;
 	uint8_t orionCANReceived;
 	uint8_t dischargeShouldTrip;
 	uint8_t chargeShouldTrip;
 	uint8_t startupState;
+	uint8_t carState;
 } MBMSStatus;
 
 
