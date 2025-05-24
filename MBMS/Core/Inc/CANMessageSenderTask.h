@@ -19,7 +19,7 @@ void sendContactorsCanMessage();
 void sendMBMSStatusCanMessage();
 void sendPowerSelectionStatus();
 void sendTripStatusCanMessage();
-void sendSoftBatteryLimitCanMessage()
+void sendSoftBatteryLimitCanMessage();
 
 
 void lastSentTime_init();
