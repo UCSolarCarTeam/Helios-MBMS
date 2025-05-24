@@ -41,7 +41,7 @@ void CANMessageSenderTask(void* arg)
 void CANMessageSender() {
 
 	for (int i = 0; i < 6; i++) {
-		if(((osKernelGetTickCount() - lastSentTime[i]) * FREERTOS_TICK_PERIOD) >= messageFrequency[i]/1) { // where contactor_heartbeat_timeout is how often a heartbeat is sent out/recieved
+		if(((osKernelGetTickCount() - lastSentTime[i]) * FREERTOS_TICK_PERIOD) >= 1/messageFrequency[i]) { // where contactor_heartbeat_timeout is how often a heartbeat is sent out/recieved
 
 			switch(i) {
 				case HEARTBEAT:
@@ -73,6 +73,7 @@ void CANMessageSender() {
 
 		}
 	}
+	osDelay(50);
 
 
 }
