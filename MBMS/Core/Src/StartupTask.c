@@ -17,7 +17,6 @@ extern ContactorInfo contactorInfo[6];
 extern MBMSStatus mbmsStatus;
 extern uint32_t BCT_Counter;
 
-#define FREERTOS_TICK_PERIOD 1/configTICK_RATE_HZ //USE THIS INSTEAD OF SECONFS PER TICK
 // all structs important for more than one file, contactor
 
 // wait times in seconds i think ..

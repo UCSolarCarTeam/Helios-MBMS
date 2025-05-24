@@ -22,8 +22,8 @@ extern PowerSelectionStatus powerSelectionStatus;
 extern ContactorInfo contactorInfo[6];
 extern MBMSSoftBatteryLimitWarning mbmsSoftBatteryLimitWarning;
 
-uint8_t lastSentTime[6] = {0};
-uint8_t messageFrequency[6] = { HEARTBEAT_FREQ, CONTACTOR_COMMAND_FREQ,
+uint32_t lastSentTime[6] = {0};
+float messageFrequency[6] = { HEARTBEAT_FREQ, CONTACTOR_COMMAND_FREQ,
 								MBMS_STATUS_FREQ, POWER_SELECTION_STATUS_FREQ,
 								MBMS_TRIP_FREQ, MBMS_SOFT_BATTERY_LIMIT_WARNING_FREQ};
 
@@ -41,12 +41,11 @@ void CANMessageSenderTask(void* arg)
 void CANMessageSender() {
 
 	for (int i = 0; i < 6; i++) {
-		if((((float)osKernelGetTickCount() - lastSentTime[i]) * FREERTOS_TICK_PERIOD) >= ((float)1/messageFrequency[i])) { // where contactor_heartbeat_timeout is how often a heartbeat is sent out/recieved
+		if((osKernelGetTickCount() - (float)lastSentTime[i]) * FREERTOS_TICK_PERIOD >= 1/(messageFrequency[i])) { // where contactor_heartbeat_timeout is how often a heartbeat is sent out/recieved
 
 			switch(i) {
 				case HEARTBEAT:
 					sendMBMSHeartbeatCanMessage();
-					lastSentTime[i] = osKernelGetTickCount();
 					break;
 
 				case CONTACTOR_COMMAND:
@@ -70,10 +69,10 @@ void CANMessageSender() {
 					break;
 			}
 			lastSentTime[i] = osKernelGetTickCount();
+			osDelay(10);
 
 		}
 	}
-	osDelay(50);
 
 
 }
@@ -124,7 +123,7 @@ void sendSoftBatteryLimitCanMessage() {
 	tripMsg.data[0] = (tripData & 0xff);
 	tripMsg.data[1] = (tripData & 0xff00) >> 8;
 	tripMsg.DLC = 2; // 2 bytes
-	tripMsg.extendedID = MBMS_TRIP_ID;
+	tripMsg.extendedID = MBMS_SOFT_BATTERY_LIMIT_WARNING_ID;
 	tripMsg.ID = 0x0;
 	osMessageQueuePut(TxCANMessageQueueHandle, &tripMsg, 0, osWaitForever);
 

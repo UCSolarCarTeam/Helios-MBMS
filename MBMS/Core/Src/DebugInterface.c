@@ -28,7 +28,7 @@ void DebugInterface()
 	if (1) {
 		CANMsg contactorMsg;
 		contactorMsg.DLC = 4;
-		uint8_t state = 0x000100; // contactor is closed
+		uint32_t state = 0x000100; // contactor is closed
 		uint16_t current = 12;
 		uint16_t voltage = 13;
 		contactorMsg.data[0] = (state & 0x3f) + ((current & 0x3) << 6);

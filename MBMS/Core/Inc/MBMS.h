@@ -12,7 +12,7 @@
 #define READING_MUTEX_TIMEOUT 200
 
 
-#define FREERTOS_TICK_PERIOD 1/configTICK_RATE_HZ //USE THIS INSTEAD OF SECONFS PER TICK
+#define FREERTOS_TICK_PERIOD 1.0/configTICK_RATE_HZ //USE THIS INSTEAD OF SECONFS PER TICK
 
 #define SHUTOFF_FLAG 0x01 // just making the flag an arbitrary number (should be uint32_t,,, this is = 1 in decimal)
 #define nMPS_FLAG 0x02 // main power switch disconnected
