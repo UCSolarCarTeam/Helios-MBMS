@@ -514,6 +514,8 @@ static void MX_CAN1_Init(void)
 	  Error_Handler();
   }
 
+  HAL_CAN_Start(&hcan1);
+
   /* USER CODE END CAN1_Init 2 */
 
 }
