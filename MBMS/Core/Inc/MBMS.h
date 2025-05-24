@@ -58,6 +58,7 @@ enum startupStates {
 
 
 enum carStates {
+	BOOT,
 	STARTUP,
 	FULLY_OPERATIONAL,
 	CHARGING,

@@ -24,7 +24,7 @@ MBMSSoftBatteryLimitWarning mbmsSoftBatteryLimitWarning = {0};
 SoftBatteryTrip softBatteryTrip = {0};
 
 uint32_t BCT_Counter = 0;
-uint8_t carState = STARTUP;
+uint8_t carState = BOOT;
 
 ContactorCommand contactorCommand = {0};
 BatteryInfo batteryInfo = {0};
@@ -85,6 +85,8 @@ void BatteryControl()
 
 	/* Updating BCT Counter */
 	UpdateCounter(&BCT_Counter);
+
+	osDelay(500);
 
 
 	// NEED TO CHECK CURRENT STUFF STILL.... need to do all the trip stuff lol, also check attributes of can msg for sumn idk
@@ -304,6 +306,14 @@ void SystemStateMachine() {
 	uint8_t plugged = 0;
 
 	switch (carState) {
+		case BOOT:
+			while(mbmsStatus.orionCANReceived != 1) {
+				osDelay(500);
+			}
+			if(mbmsStatus.orionCANReceived == 1) { //ik i dont have to check here but i just am
+				carState = STARTUP;
+			}
+
 		case STARTUP:
 
 			// will go to BPS_FAULT state if startup checks do not pass
@@ -498,10 +508,11 @@ void startupCheck(){
 	/* Waiting for contactor heartbeats */
 	uint8_t heartbeatDead = 0;
 	while ((previousHeartbeats[0] == 0) || (previousHeartbeats[1] == 0) || (previousHeartbeats[2] == 0) ||
-		   (previousHeartbeats[3] == 0) || (previousHeartbeats[4] == 0) || (heartbeatDead != 0))
+		   (previousHeartbeats[3] == 0) || (previousHeartbeats[4] == 0) || (heartbeatDead != 1)) // was != 0 oops!
 	{
 		// set heartbeatDead so we can break out of while loop lol
 		heartbeatDead = waitForFirstHeartbeats();
+		osDelay(500);
 	}
 	if (heartbeatDead == 1){
 		initiateBPSFault();
