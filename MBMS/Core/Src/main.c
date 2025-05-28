@@ -663,22 +663,33 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : nDCDC_Fault_Pin nMPS_Pin ESD_Pin CHARGE_SAFETY_SENSE_Pin
-                           DISCHARGE_ENABLE_SENSE_Pin CHARGE_ENABLE_SENSE_Pin */
-  GPIO_InitStruct.Pin = nDCDC_Fault_Pin|nMPS_Pin|ESD_Pin|CHARGE_SAFETY_SENSE_Pin
-                          |DISCHARGE_ENABLE_SENSE_Pin|CHARGE_ENABLE_SENSE_Pin;
+  /*Configure GPIO pins : nDCDC_Fault_Pin ESD_Pin CHARGE_SAFETY_SENSE_Pin DISCHARGE_ENABLE_SENSE_Pin
+                           CHARGE_ENABLE_SENSE_Pin */
+  GPIO_InitStruct.Pin = nDCDC_Fault_Pin|ESD_Pin|CHARGE_SAFETY_SENSE_Pin|DISCHARGE_ENABLE_SENSE_Pin
+                          |CHARGE_ENABLE_SENSE_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : BLU_LED_Pin GRN_LED_Pin RED_LED_Pin Strobe_En_Pin
-                           CAN1_MODE_Pin */
-  GPIO_InitStruct.Pin = BLU_LED_Pin|GRN_LED_Pin|RED_LED_Pin|Strobe_En_Pin
-                          |CAN1_MODE_Pin;
+  /*Configure GPIO pins : BLU_LED_Pin GRN_LED_Pin RED_LED_Pin CAN1_MODE_Pin */
+  GPIO_InitStruct.Pin = BLU_LED_Pin|GRN_LED_Pin|RED_LED_Pin|CAN1_MODE_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : Strobe_En_Pin */
+  GPIO_InitStruct.Pin = Strobe_En_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(Strobe_En_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : nMPS_Pin */
+  GPIO_InitStruct.Pin = nMPS_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  HAL_GPIO_Init(nMPS_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : ABATT_Disable_Pin A1_Pin _12V_PCHG_En_Pin _12V_CAN_En_Pin */
   GPIO_InitStruct.Pin = ABATT_Disable_Pin|A1_Pin|_12V_PCHG_En_Pin|_12V_CAN_En_Pin;
@@ -695,10 +706,10 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pins : G1_Pin A2_Pin G2_Pin A3_Pin
                            G3_Pin A4_Pin G4_Pin A5_Pin
-                           G5_Pin nCHG_LV_En_Pin EN1_Pin */
+                           G5_Pin EN1_Pin */
   GPIO_InitStruct.Pin = G1_Pin|A2_Pin|G2_Pin|A3_Pin
                           |G3_Pin|A4_Pin|G4_Pin|A5_Pin
-                          |G5_Pin|nCHG_LV_En_Pin|EN1_Pin;
+                          |G5_Pin|EN1_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -709,6 +720,13 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(LV_OC_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : nCHG_LV_En_Pin */
+  GPIO_InitStruct.Pin = nCHG_LV_En_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(nCHG_LV_En_GPIO_Port, &GPIO_InitStruct);
 
 /* USER CODE BEGIN MX_GPIO_Init_2 */
 /* USER CODE END MX_GPIO_Init_2 */

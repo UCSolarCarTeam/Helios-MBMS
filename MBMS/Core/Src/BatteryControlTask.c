@@ -180,7 +180,7 @@ void UpdatePowerSelectionStruct() {
 }
 
 void MBMSStatus_init() {
-	mbmsStatus.auxilaryBattVoltage = -1;
+	mbmsStatus.auxilaryBattVoltage = 0;
 	mbmsStatus.strobeBMSLight = 0;
 	mbmsStatus.nChargeEnable = 1;
 	mbmsStatus.nChargeSafety = 1;
@@ -391,6 +391,7 @@ void SystemStateMachine() {
 			break;
 
 		case BPS_FAULT:
+			HAL_GPIO_WritePin(RED_LED_GPIO_Port, RED_LED_Pin, GPIO_PIN_SET);
 			perms.faulted = 1;
 			osEventFlagsSet(shutoffFlagHandle, (HARD_BL_FLAG | SHUTOFF_FLAG));
 			// delay for shutdown to run.... although rn its a higher priority so..
@@ -406,6 +407,7 @@ void SystemStateMachine() {
 			break;
 
 		case SOFT_TRIP:
+			HAL_GPIO_WritePin(BLU_LED_GPIO_Port, BLU_LED_Pin, GPIO_PIN_SET);
 			perms.faulted = 1;
 			if (softBatteryTrip.cell_OV == 1){
 				perms.charge = 0;
