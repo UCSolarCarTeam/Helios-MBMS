@@ -9,6 +9,7 @@
 
 
 #include "../Inc/ShutoffTask.h"
+#include "StartupTask.h"
 #include "CANdefines.h"
 #include "cmsis_os.h"
 #include "main.h"
@@ -27,6 +28,9 @@ extern Permissions perms;
 // HIGHEST: HARD BATTERY LIMIT
 // THEN ITS MPS/EPCOS, SOFT BATT LIMIT
 // LOWEST: KEY
+
+extern osThreadId_t startupTaskHandle;
+extern osThreadAttr_t startupTask_attributes;
 
 void ShutoffTask(void* arg)
 {
@@ -103,6 +107,7 @@ void Shutoff()
 		else {
 			osDelay(1000);
 			// start thread for startup!!!
+			startupTaskHandle = osThreadNew(StartupTask, NULL, &startupTask_attributes);
 		}
 	}
 
