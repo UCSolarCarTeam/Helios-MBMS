@@ -30,6 +30,7 @@ extern uint32_t BCT_Counter;
 extern MBMSTrip mbmsTrip;
 extern ContactorCommand contactorCommand;
 extern Permissions perms;
+extern uint8_t carState;
 
 void StartupTask(void* arg)
 {
@@ -65,10 +66,14 @@ void Startup()
 		// do BPS fault
 		// instead should i just have an osDelay, for BCT to run and set the trip/fault..? bc we have to keep track of that in the struct
 
-		// SET TRIP HERE
-		osEventFlagsSet(shutoffFlagHandle, HARD_BL_FLAG);
-		osDelay(200);
-		osThreadTerminate(startupTaskHandle);
+		// SET TRIP HERE naw i dont like this im just gonna add a delay and BCT can figure it out tbh
+		//osEventFlagsSet(shutoffFlagHandle, HARD_BL_FLAG);
+		osDelay(1000);
+		// um idk lol lets hope it will be running BCT
+		if (carState == BPS_FAULT) {
+			osThreadTerminate(startupTaskHandle);
+		}
+
 	}
 
 	mbmsStatus.startupState = ESD_DISABLED;
