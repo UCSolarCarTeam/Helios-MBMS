@@ -169,8 +169,9 @@ void UpdatePowerSelectionStruct() {
 	powerSelectionStatus.nMainPowerSwitch = read_nMPS();
 	powerSelectionStatus.ExternalShutdown = read_ESD();
 	powerSelectionStatus.EN1 = read_EN1();
-	powerSelectionStatus.n3A_OC = read_n3A_OC();
 	powerSelectionStatus.nDCDC_Fault = read_nDCDC_Fault();
+	powerSelectionStatus.n3A_OC = read_n3A_OC();
+	powerSelectionStatus.nDCDC_On = read_nDCDC_On();
 	powerSelectionStatus.nCHG_Fault = read_nCHG_Fault();
 	powerSelectionStatus.nCHG_On = read_nCHG_On();
 	powerSelectionStatus.nCHG_LV_En = read_nCHG_LV_En();
