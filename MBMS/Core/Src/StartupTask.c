@@ -50,8 +50,9 @@ void Startup()
 
 	mbmsStatus.startupState = nMPS_ENABLED;
 
-	while (read_nMPS() == 1) {
 
+	while (read_nMPS() == 1) {
+			osDelay(1000);
 		// SET TRIP HERE
 		// wait for MPS to be on/enabled
 	}
@@ -66,6 +67,7 @@ void Startup()
 
 		// SET TRIP HERE
 		osEventFlagsSet(shutoffFlagHandle, HARD_BL_FLAG);
+		osDelay(200);
 		osThreadTerminate(startupTaskHandle);
 	}
 

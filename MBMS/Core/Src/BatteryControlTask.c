@@ -274,7 +274,7 @@ void UpdateOrionInfoStruct() {
 
 	}
 
-	else if (status == osErrorTimeout) // if timeout for orion (no message :0)
+	else // if timeout for orion (no message :0)
 	{
 		orionMessageCounter += 1;
 	}
@@ -308,12 +308,10 @@ void SystemStateMachine() {
 
 	switch (carState) {
 		case BOOT:
-			while(mbmsStatus.orionCANReceived != 1) {
-				osDelay(500);
-			}
 			if(mbmsStatus.orionCANReceived == 1) { //ik i dont have to check here but i just am
 				carState = STARTUP;
 			}
+			break;
 
 		case STARTUP:
 
