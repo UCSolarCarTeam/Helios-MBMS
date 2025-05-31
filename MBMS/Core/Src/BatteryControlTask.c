@@ -138,7 +138,7 @@ void UpdateContactorInfoStruct() {
 }
 
 void updateContactorInfo(uint8_t contactor, uint8_t prechargerClosed, uint8_t prechargerClosing, uint8_t prechargerError,
-		uint8_t contactorClosed, uint8_t contactorClosing, uint8_t contactorError, int16_t lineCurrent, int16_t chargeCurrent, uint8_t contactorOpeningError) {
+	uint8_t contactorClosed, uint8_t contactorClosing, uint8_t contactorError, int16_t lineCurrent, int16_t chargeCurrent, uint8_t contactorOpeningError) {
 	osStatus_t a = osMutexAcquire(ContactorInfoMutexHandle, UPDATING_MUTEX_TIMEOUT);
 	if(a == osOK) {
 		contactorInfo[contactor].prechargerClosed = prechargerClosed;
@@ -313,6 +313,12 @@ void UpdateCounter(uint32_t * counter) {
 
 }
 
+void enterMPSDisconnectedState() {
+	perms.faulted = 1; // stop contactors from closing...
+	osEventFlagsSet(shutoffFlagHandle, (nMPS_FLAG | SHUTOFF_FLAG));
+	osDelay(10);
+}
+
 void SystemStateMachine() {
 
 	// make var plugged for now to stand in for the CAN msg that charger is plugged in or not
@@ -332,6 +338,7 @@ void SystemStateMachine() {
 
 			// checks MPS
 			if(read_nMPS() == 1) {
+				enterMPSDisconnectedState();
 				carState = MPS_DISCONNECTED;
 				break;
 			}
@@ -411,9 +418,9 @@ void SystemStateMachine() {
 			break;
 
 		case MPS_DISCONNECTED:
-			perms.faulted = 1; // stop contactors from closing...
-			osEventFlagsSet(shutoffFlagHandle, (nMPS_FLAG | SHUTOFF_FLAG));
-			osDelay(1000);
+//			perms.faulted = 1; // stop contactors from closing...
+//			osEventFlagsSet(shutoffFlagHandle, (nMPS_FLAG | SHUTOFF_FLAG));
+//			osDelay(10);
 
 			break;
 
@@ -520,12 +527,11 @@ void startupCheck(){
 
 	/* Waiting for contactor heartbeats */
 	uint8_t heartbeatDead = 0;
-	while ((previousHeartbeats[0] == 0) || (previousHeartbeats[1] == 0) || (previousHeartbeats[2] == 0) ||
-		   (previousHeartbeats[3] == 0) || (previousHeartbeats[4] == 0) || (heartbeatDead != 1)) // was != 0 oops!
+	if (((previousHeartbeats[0] == 0) || (previousHeartbeats[1] == 0) || (previousHeartbeats[2] == 0) ||
+		   (previousHeartbeats[3] == 0) || (previousHeartbeats[4] == 0))) // was != 0 oops!
 	{
 		// set heartbeatDead so we can break out of while loop lol
 		heartbeatDead = waitForFirstHeartbeats();
-		osDelay(500);
 	}
 	if (heartbeatDead == 1){
 		initiateBPSFault();

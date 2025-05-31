@@ -15,7 +15,8 @@ void DebugInterfaceTask(void* arg)
 {
     while(1)
     {
-    	DebugInterface();
+    	osDelay(1000);
+    	//DebugInterface();
     }
 }
 

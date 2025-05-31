@@ -18,6 +18,8 @@ extern volatile ContactorInfo contactorInfo[6];
 extern MBMSStatus mbmsStatus;
 extern BatteryInfo batteryInfo;
 
+uint32_t messages_received = 0;
+
 void CANRxGatekeeperTask(void* arg)
 {
     while(1)
@@ -32,6 +34,7 @@ void CANRxGatekeeperTask(void* arg)
 
 void CANRxGatekeeper()
 {
+	osDelay(200);
 	CANMsg msg; // CANmsg is struct (defined in CAN.h)
 	osStatus_t status = osMessageQueueGet(RxCANMessageQueueHandle, &msg, 0, osWaitForever);
 	if (status != osOK){
@@ -41,8 +44,9 @@ void CANRxGatekeeper()
 	// otherwise if its okay then...
 	else if (status == osOK) {
 		uint32_t eID = msg.extendedID;
+		messages_received++;
 
-		if (eID == PACK_INFO_ID || eID == TEMP_INFO_ID || eID == MIN_MAX_VOLTAGES_ID) {
+		if (eID == PACK_INFO_ID || eID == TEMP_INFO_ID || eID == CELL_VOLTAGES_ID || eID == MIN_MAX_VOLTAGES_ID) {
 			// add to queue for battery control task
 			status = osMessageQueuePut(batteryControlMessageQueueHandle, &msg, 0, osWaitForever); // idk maybe shouldnt wait forever tho..
 			if(status != osOK){
@@ -50,8 +54,8 @@ void CANRxGatekeeper()
 				Error_Handler();
 			}
 		}
-
-		else if (eID && CONTACTORMASK == CONTACTOR_HEARTBEATS_IDS) { // if id is 0x20X or 0x21X
+		else if ((eID & CONTACTORMASK) == CONTACTOR_HEARTBEATS_IDS)
+		{ // if id is 0x20X or 0x21X
 			// add to queue for battery control task
 			status = osMessageQueuePut(contactorMessageQueueHandle, &msg, 0, osWaitForever); // idk maybe shouldnt wait forever tho..
 			if(status != osOK){

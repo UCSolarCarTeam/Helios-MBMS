@@ -303,6 +303,8 @@ int main(void)
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
+
+  batteryControlMessageQueueHandle = osMessageQueueNew(QUEUE_SIZE, sizeof(CANMsg), &batteryControlMessageQueue_attributes);
   TxCANMessageQueueHandle = osMessageQueueNew(QUEUE_SIZE, sizeof(CANMsg), &TxCANMessageQueue_attributes);
 
   RxCANMessageQueueHandle = osMessageQueueNew(QUEUE_SIZE, sizeof(CANMsg), &RxCANMessageQueue_attributes);
@@ -455,10 +457,13 @@ static void MX_CAN1_Init(void)
   packInfoFilter.FilterMode = CAN_FILTERMODE_IDLIST;  // ID list mode,,, make it match this exact ID
   packInfoFilter.FilterScale = CAN_FILTERSCALE_32BIT;
   packInfoFilter.FilterFIFOAssignment = CAN_FILTER_FIFO0;
-  packInfoFilter.FilterActivation = CAN_FILTER_ENABLE;
+
 
   packInfoFilter.FilterIdHigh = PACK_INFO_ID >> 13; //
   packInfoFilter.FilterIdLow = (PACK_INFO_ID & 0x1fff) << 3;  // shift left 3 bits because last 13 bits of EXID in low reg, and zero out last 3 bits of low reg (RTR, IDE, 0)
+
+  packInfoFilter.FilterActivation = CAN_FILTER_ENABLE;
+
   if (HAL_CAN_ConfigFilter(&hcan1, &packInfoFilter) != HAL_OK) {
       // handle error!
   }
@@ -471,8 +476,11 @@ static void MX_CAN1_Init(void)
     tempInfoFilter.FilterFIFOAssignment = CAN_FILTER_FIFO0;
     tempInfoFilter.FilterActivation = CAN_FILTER_ENABLE;
 
-  tempInfoFilter.FilterIdHigh = (TEMP_INFO_ID >> 13); // would be zero when u shift it 13 bits left lol
-  tempInfoFilter.FilterIdLow = (TEMP_INFO_ID & 0x1fff) << 3;
+    tempInfoFilter.FilterIdHigh = (TEMP_INFO_ID >> 13); // would be zero when u shift it 13 bits left lol
+    tempInfoFilter.FilterIdLow = (TEMP_INFO_ID & 0x1fff) << 3;
+
+    tempInfoFilter.FilterActivation = CAN_FILTER_ENABLE;
+
   if (HAL_CAN_ConfigFilter(&hcan1, &tempInfoFilter) != HAL_OK) {
       Error_Handler();
   }
@@ -483,11 +491,13 @@ static void MX_CAN1_Init(void)
   	cellVoltagesFilter.FilterMode = CAN_FILTERMODE_IDLIST;  // ID list mode,,, make it match this exact ID
   	cellVoltagesFilter.FilterScale = CAN_FILTERSCALE_32BIT;
   	cellVoltagesFilter.FilterFIFOAssignment = CAN_FILTER_FIFO0;
-  	cellVoltagesFilter.FilterActivation = CAN_FILTER_ENABLE;
+
 
 
   	cellVoltagesFilter.FilterIdHigh = CELL_VOLTAGES_ID >> 13;
   	cellVoltagesFilter.FilterIdLow = (CELL_VOLTAGES_ID & 0x1fff) << 3;
+
+  	cellVoltagesFilter.FilterActivation = CAN_FILTER_ENABLE;
 
 	if (HAL_CAN_ConfigFilter(&hcan1, &cellVoltagesFilter) != HAL_OK) {
 		Error_Handler();
@@ -499,11 +509,16 @@ static void MX_CAN1_Init(void)
 	maxMinVoltagesFilter.FilterMode = CAN_FILTERMODE_IDLIST;  // ID list mode,,, make it match this exact ID
 	maxMinVoltagesFilter.FilterScale = CAN_FILTERSCALE_32BIT;
 	maxMinVoltagesFilter.FilterFIFOAssignment = CAN_FILTER_FIFO0;
-	maxMinVoltagesFilter.FilterActivation = CAN_FILTER_ENABLE;
+
 
 
 	maxMinVoltagesFilter.FilterIdHigh = MIN_MAX_VOLTAGES_ID >> 13;
 	maxMinVoltagesFilter.FilterIdLow = (MIN_MAX_VOLTAGES_ID & 0x1fff) << 3;
+
+	maxMinVoltagesFilter.FilterMaskIdHigh = CONTACTORMASK >> 13;
+	maxMinVoltagesFilter.FilterMaskIdLow = (CONTACTORMASK & 0x1fff) << 3;
+
+	maxMinVoltagesFilter.FilterActivation = CAN_FILTER_ENABLE;
 
 	if (HAL_CAN_ConfigFilter(&hcan1, &maxMinVoltagesFilter) != HAL_OK) {
 	Error_Handler();
@@ -512,7 +527,7 @@ static void MX_CAN1_Init(void)
   // filtering IDs from the individual contactor boards
 
   CAN_FilterTypeDef contactorFilter;
-  contactorFilter.FilterBank = 3;  // filter bank 1
+  contactorFilter.FilterBank = 4;  // filter bank 1
   contactorFilter.FilterMode = CAN_FILTERMODE_IDMASK;  // mask mode !!! can accept range of IDs
   contactorFilter.FilterScale = CAN_FILTERSCALE_32BIT;
   contactorFilter.FilterFIFOAssignment = CAN_FILTER_FIFO0;
@@ -531,6 +546,9 @@ static void MX_CAN1_Init(void)
   }
 
   HAL_CAN_Start(&hcan1);
+
+  HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING | CAN_IT_RX_FIFO0_FULL | CAN_IT_RX_FIFO1_MSG_PENDING | CAN_IT_RX_FIFO1_FULL);
+  //HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING | CAN_IT_RX_FIFO1_MSG_PENDING);
 
   /* USER CODE END CAN1_Init 2 */
 

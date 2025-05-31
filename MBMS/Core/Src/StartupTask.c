@@ -79,7 +79,7 @@ void Startup()
 	mbmsStatus.startupState = ESD_DISABLED;
 
 
-	while(BCT_Counter < 1) {
+	while(BCT_Counter < 5) {
 		osDelay(1000);
 	}
 
