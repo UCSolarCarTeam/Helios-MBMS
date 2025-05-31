@@ -71,6 +71,7 @@ enum VoltageLimits {
 
 };
 
+/* in A */
 enum CurrentLimits {
 	HARD_MAX_COMMON_CONTACTOR_CURRENT = 5,
 	HARD_MAX_MOTORS_CONTACTOR_CURRENT = 5,

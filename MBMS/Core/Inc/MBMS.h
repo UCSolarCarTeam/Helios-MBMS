@@ -96,7 +96,12 @@ typedef struct {
     uint8_t highTemp;
     uint8_t lowTemp;
     uint8_t avgTemp;
-    // voltage info (each 2-bytes)
+    // Cell voltages
+    uint16_t lowCellVoltage;
+    uint8_t lowCellVoltageID;
+    uint16_t highCellVoltage;
+    uint8_t highCellVoltageID;
+    // min max voltage info (each 2-bytes)
     uint16_t maxCellVoltage;
     uint16_t minCellVoltage;
     uint16_t maxPackVoltage;

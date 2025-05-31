@@ -477,9 +477,25 @@ static void MX_CAN1_Init(void)
       Error_Handler();
   }
 
+  CAN_FilterTypeDef cellVoltagesFilter;
+
+  	cellVoltagesFilter.FilterBank = 2;  // filter bank 2
+  	cellVoltagesFilter.FilterMode = CAN_FILTERMODE_IDLIST;  // ID list mode,,, make it match this exact ID
+  	cellVoltagesFilter.FilterScale = CAN_FILTERSCALE_32BIT;
+  	cellVoltagesFilter.FilterFIFOAssignment = CAN_FILTER_FIFO0;
+  	cellVoltagesFilter.FilterActivation = CAN_FILTER_ENABLE;
+
+
+  	cellVoltagesFilter.FilterIdHigh = CELL_VOLTAGES_ID >> 13;
+  	cellVoltagesFilter.FilterIdLow = (CELL_VOLTAGES_ID & 0x1fff) << 3;
+
+	if (HAL_CAN_ConfigFilter(&hcan1, &cellVoltagesFilter) != HAL_OK) {
+		Error_Handler();
+	}
+
   CAN_FilterTypeDef maxMinVoltagesFilter;
 
-	maxMinVoltagesFilter.FilterBank = 2;  // filter bank 2
+	maxMinVoltagesFilter.FilterBank = 3;  // filter bank 3 WAS 2 may 31 changed
 	maxMinVoltagesFilter.FilterMode = CAN_FILTERMODE_IDLIST;  // ID list mode,,, make it match this exact ID
 	maxMinVoltagesFilter.FilterScale = CAN_FILTERSCALE_32BIT;
 	maxMinVoltagesFilter.FilterFIFOAssignment = CAN_FILTER_FIFO0;

@@ -259,6 +259,18 @@ void UpdateOrionInfoStruct() {
 				osMutexRelease(BatteryInfoMutexHandle);
 			}
 		}
+		else if (orionMsg.extendedID == CELL_VOLTAGES_ID) {
+			osStatus_t a = osMutexAcquire(BatteryInfoMutexHandle, 200);
+			if(a == osOK) {
+				batteryInfo.lowCellVoltage = data[0] + (data[1] << 8);
+				batteryInfo.lowCellVoltageID = data[2];
+				batteryInfo.highCellVoltage= data[3] + (data[4] << 8);
+				batteryInfo.highCellVoltageID = data[5];
+
+				osMutexRelease(BatteryInfoMutexHandle);
+			}
+
+		}
 
 		else if (orionMsg.extendedID == MIN_MAX_VOLTAGES_ID) {
 			osStatus_t a = osMutexAcquire(BatteryInfoMutexHandle, 200);
@@ -653,12 +665,12 @@ uint8_t startupBatteryCheck() {
 	osStatus_t acquire = osMutexAcquire(MBMSTripMutexHandle, 200);
 	if(acquire == osOK) {
 
-		if(batteryInfo.maxCellVoltage > HARD_MAX_CELL_VOLTAGE){
+		if(batteryInfo.highCellVoltage > HARD_MAX_CELL_VOLTAGE){
 			mbmsTrip.highCellVoltageTrip = 1;
 			safe = 0;
 		}
 
-		if(batteryInfo.minCellVoltage < HARD_MIN_CELL_VOLTAGE) {
+		if(batteryInfo.lowCellVoltage < HARD_MIN_CELL_VOLTAGE) {
 			mbmsTrip.lowCellVoltageTrip = 1;
 			safe = 0;
 		}
@@ -803,13 +815,13 @@ void CheckSoftBatteryLimit() {
 		osStatus_t a1 = osMutexAcquire(BatteryInfoMutexHandle, 200);
 		if (a1 == osOK){
 			/* Checking the min/max cell voltages */
-			if (batteryInfo.maxCellVoltage > SOFT_MAX_CELL_VOLTAGE) {
+			if (batteryInfo.highCellVoltage > SOFT_MAX_CELL_VOLTAGE) {
 				softBatteryTrip.cell_OV = 1;
 				carState = SOFT_TRIP;
 				mbmsSoftBatteryLimitWarning.highCellVoltageWarning = 1;
 
 			}
-			if (batteryInfo.minCellVoltage < SOFT_MIN_CELL_VOLTAGE) {
+			if (batteryInfo.lowCellVoltage < SOFT_MIN_CELL_VOLTAGE) {
 				softBatteryTrip.cell_UV = 1;
 				carState = SOFT_TRIP;
 				mbmsSoftBatteryLimitWarning.lowCellVoltageWarning = 1;
@@ -905,12 +917,12 @@ void UpdateTripStatus() {
 		if (a2 == osOK){
 
 			/* checking for high/low cell voltage trips */
-			if(batteryInfo.maxCellVoltage > HARD_MAX_CELL_VOLTAGE){
+			if(batteryInfo.highCellVoltage > HARD_MAX_CELL_VOLTAGE){
 				mbmsTrip.highCellVoltageTrip = 1;
 				BPS_Fault = 1;
 			}
 
-			if(batteryInfo.minCellVoltage < HARD_MIN_CELL_VOLTAGE) {
+			if(batteryInfo.lowCellVoltage < HARD_MIN_CELL_VOLTAGE) {
 				mbmsTrip.lowCellVoltageTrip = 1;
 				BPS_Fault = 1;
 			}
