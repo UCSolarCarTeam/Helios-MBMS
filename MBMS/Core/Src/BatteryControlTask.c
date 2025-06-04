@@ -24,6 +24,7 @@ MBMSSoftBatteryLimitWarning mbmsSoftBatteryLimitWarning = {0};
 SoftBatteryTrip softBatteryTrip = {0};
 
 uint32_t BCT_Counter = 0;
+uint32_t startup_Check_Counter = 0;
 uint8_t carState = BOOT;
 
 ContactorCommand contactorCommand = {0};
@@ -728,6 +729,8 @@ uint8_t startupBatteryCheck() {
 
 		osMutexRelease(MBMSTripMutexHandle);
 	}
+
+	startup_Check_Counter++; // lowkey i feel like is huld putr a mutex around this but maybe dis can be a later problems
 
 	return safe;
 

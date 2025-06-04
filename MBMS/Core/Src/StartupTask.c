@@ -16,6 +16,7 @@
 extern ContactorInfo contactorInfo[6];
 extern MBMSStatus mbmsStatus;
 extern uint32_t BCT_Counter;
+extern uint32_t startup_Check_Counter;
 
 // all structs important for more than one file, contactor
 
@@ -79,7 +80,7 @@ void Startup()
 	mbmsStatus.startupState = ESD_DISABLED;
 
 
-	while(BCT_Counter < 5) {
+	while(startup_Check_Counter < 5) {
 		osDelay(50);
 	}
 
