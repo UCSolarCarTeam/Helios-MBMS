@@ -34,6 +34,7 @@ MBMSStatus mbmsStatus; // made specific init function for this, may 21
 Permissions perms = {0};
 ContactorInfo contactorInfo[5]; // one for each contactor        add volatile to the extern thing too
 
+uint8_t orionMessagesReceived = 0x0;
 
 /*
  * Local Variables
@@ -58,10 +59,13 @@ static uint16_t previousHeartbeats[6] = {0}; //check this !!! syntax !
 
 void BatteryControlTask(void* arg)
 {
+	uint32_t taskTickLastStart = osKernelGetTickCount();
 
     while(1)
     {
     	BatteryControl();
+		taskTickLastStart += 10;
+		osDelayUntil(taskTickLastStart);
     }
 }
 
@@ -85,8 +89,6 @@ void BatteryControl()
 
 	/* Updating BCT Counter */
 	UpdateCounter(&BCT_Counter);
-
-	osDelay(10);
 
 
 }
@@ -225,11 +227,13 @@ void UpdateOrionInfoStruct() {
 			osStatus_t a = osMutexAcquire(BatteryInfoMutexHandle, 200);
 			if(a == osOK) {
 				// update batteryInfo instance for the pack info stuff
-				batteryInfo.packCurrent = data[0] + (data[1] << 8);
-				batteryInfo.packVoltage = data[2] + (data[3] << 8);
-				batteryInfo.packSOC = data[4];
-				batteryInfo.packAmphours = data[5] + (data[6] << 8);
-				batteryInfo.packDOD = data[7];
+				batteryInfo.packCurrent = (data[0] + (data[1] << 8)) / 10;
+				batteryInfo.packVoltage = (data[2] + (data[3] << 8)) / 10;
+				batteryInfo.packSOC =( data[4]) / 2;
+				batteryInfo.packAmphours = (data[5] + (data[6] << 8)) / 10;
+				batteryInfo.packDOD = (data[7]) /2;
+
+				orionMessagesReceived |= 0x1;
 				osMutexRelease(BatteryInfoMutexHandle);
 
 			}
@@ -254,22 +258,27 @@ void UpdateOrionInfoStruct() {
 				batteryInfo.highTemp = data[0];
 				batteryInfo.lowTemp = data[2];
 				batteryInfo.avgTemp = data[4];
+
+				orionMessagesReceived |= 0x2;
 				osMutexRelease(BatteryInfoMutexHandle);
 			}
 		}
 		else if (orionMsg.extendedID == CELL_VOLTAGES_ID) {
 			osStatus_t a = osMutexAcquire(BatteryInfoMutexHandle, 200);
 			if(a == osOK) {
-				batteryInfo.lowCellVoltage = data[0] + (data[1] << 8);
+				batteryInfo.lowCellVoltage = (float)(data[0] + (data[1] << 8)) / 10000;
 				batteryInfo.lowCellVoltageID = data[2];
-				batteryInfo.highCellVoltage= data[3] + (data[4] << 8);
+				batteryInfo.highCellVoltage= (float) (data[3] + (data[4] << 8)) /10000;
 				batteryInfo.highCellVoltageID = data[5];
 
+				orionMessagesReceived |= 0x4;
 				osMutexRelease(BatteryInfoMutexHandle);
 			}
 
 		}
 
+		// the below is not even used tbh but if u were to use it, check the units and do the proper conversions!
+		// and do orion messages received stuff if u use this
 		else if (orionMsg.extendedID == MIN_MAX_VOLTAGES_ID) {
 			osStatus_t a = osMutexAcquire(BatteryInfoMutexHandle, 200);
 			if(a == osOK) {
@@ -288,7 +297,7 @@ void UpdateOrionInfoStruct() {
 	{
 		orionMessageCounter += 1;
 	}
-	if(orionMessageCounter >= 3){
+	if(orionMessageCounter >= 20){
 		osStatus_t a = osMutexAcquire(MBMSStatusMutexHandle, 200);
 		if (a == osOK) {
 			mbmsStatus.orionCANReceived = 0; // no orion message recieved !!!
@@ -363,7 +372,7 @@ void SystemStateMachine() {
 
 	switch (carState) {
 		case BOOT:
-			if(mbmsStatus.orionCANReceived == 1) { //ik i dont have to check here but i just am
+			if(orionMessagesReceived == 0x7) { //ik i dont have to check here but i just am
 				carState = STARTUP;
 			}
 			break;
@@ -398,12 +407,12 @@ void SystemStateMachine() {
 				HAL_GPIO_WritePin(_12V_CAN_En_GPIO_Port, _12V_CAN_En_Pin, GPIO_PIN_RESET); // disable 12V CAN
 			}
 
-			if((contactorInfo[LOWV].contactorClosed == OPEN_CONTACTOR) && (contactorInfo[MOTOR].contactorClosed == OPEN_CONTACTOR)) {
+			if( plugged && (contactorInfo[LOWV].contactorClosed == OPEN_CONTACTOR) && (contactorInfo[MOTOR].contactorClosed == OPEN_CONTACTOR)) {
 				HAL_GPIO_WritePin(nCHG_LV_En_GPIO_Port, nCHG_LV_En_Pin, GPIO_PIN_RESET); // enable charging
 				perms.charge = 1;
 			}
 
-			if(contactorInfo[CHARGE].contactorClosed == CLOSE_CONTACTOR) {
+			if (plugged && (contactorInfo[CHARGE].contactorClosed == CLOSE_CONTACTOR)) {
 				carState = CHARGING;
 			}
 

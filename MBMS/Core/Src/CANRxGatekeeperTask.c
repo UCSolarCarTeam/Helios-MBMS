@@ -18,6 +18,7 @@ extern volatile ContactorInfo contactorInfo[6];
 extern MBMSStatus mbmsStatus;
 extern BatteryInfo batteryInfo;
 
+uint32_t It_messages_received = 0;
 uint32_t messages_received = 0;
 
 void CANRxGatekeeperTask(void* arg)
@@ -45,7 +46,7 @@ void CANRxGatekeeper()
 		uint32_t eID = msg.extendedID;
 		messages_received++;
 
-		if (eID == PACK_INFO_ID || eID == TEMP_INFO_ID || eID == CELL_VOLTAGES_ID || eID == MIN_MAX_VOLTAGES_ID) {
+		if ((eID == PACK_INFO_ID) ||( eID == TEMP_INFO_ID) || (eID == CELL_VOLTAGES_ID) || (eID == MIN_MAX_VOLTAGES_ID)) {
 			// add to queue for battery control task
 			status = osMessageQueuePut(batteryControlMessageQueueHandle, &msg, 0, osWaitForever); // idk maybe shouldnt wait forever tho..
 			if(status != osOK){
@@ -83,8 +84,11 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan){
 		msg.data[i] = data[i];
 	}
 
+	It_messages_received++;
+
 	osStatus_t status = osMessageQueuePut(RxCANMessageQueueHandle, &msg, 0, 0); // timeout should be 0
 	if(status != osOK){
+		//Error_Handler();
 		// need to handle error ,,
 	}
 }

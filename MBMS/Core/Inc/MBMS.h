@@ -87,19 +87,19 @@ typedef struct {
 
 typedef struct {
 	// pack info
-    int16_t packCurrent; // current can be -ve, 2-bytes
-    uint16_t packVoltage; // 2-bytes
-    uint8_t packSOC; // state of charge, 1-byte
-    uint16_t packAmphours; // 2-bytes
-    uint8_t packDOD; // Depth of Discharge, 1-byte
+    float packCurrent; // current can be -ve, 2-bytes
+    float packVoltage; // 2-bytes
+    float packSOC; // state of charge, 1-byte
+    float packAmphours; // 2-bytes
+    float packDOD; // Depth of Discharge, 1-byte
     // temperature info (each 1-byte)
     uint8_t highTemp;
     uint8_t lowTemp;
     uint8_t avgTemp;
     // Cell voltages
-    uint16_t lowCellVoltage;
+    float lowCellVoltage;
     uint8_t lowCellVoltageID;
-    uint16_t highCellVoltage;
+    float highCellVoltage;
     uint8_t highCellVoltageID;
     // min max voltage info (each 2-bytes)
     uint16_t maxCellVoltage;

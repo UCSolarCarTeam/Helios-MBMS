@@ -454,10 +454,12 @@ static void MX_CAN1_Init(void)
   CAN_FilterTypeDef packInfoFilter;
 
   packInfoFilter.FilterBank = 0;  // filter bank 0
-  packInfoFilter.FilterMode = CAN_FILTERMODE_IDLIST;  // ID list mode,,, make it match this exact ID
+  packInfoFilter.FilterMode = CAN_FILTERMODE_IDMASK;  // ID list mode,,, make it match this exact ID
   packInfoFilter.FilterScale = CAN_FILTERSCALE_32BIT;
   packInfoFilter.FilterFIFOAssignment = CAN_FILTER_FIFO0;
 
+  packInfoFilter.FilterMaskIdHigh = ORIONMASK >> 13;
+  packInfoFilter.FilterMaskIdLow = (ORIONMASK & 0x1fff) << 3;
 
   packInfoFilter.FilterIdHigh = PACK_INFO_ID >> 13; //
   packInfoFilter.FilterIdLow = (PACK_INFO_ID & 0x1fff) << 3;  // shift left 3 bits because last 13 bits of EXID in low reg, and zero out last 3 bits of low reg (RTR, IDE, 0)
@@ -471,28 +473,32 @@ static void MX_CAN1_Init(void)
   CAN_FilterTypeDef tempInfoFilter;
 
     tempInfoFilter.FilterBank = 1;  // filter bank 1
-    tempInfoFilter.FilterMode = CAN_FILTERMODE_IDLIST;  // ID list mode,,, make it match this exact ID
+    tempInfoFilter.FilterMode = CAN_FILTERMODE_IDMASK;  // ID list mode,,, make it match this exact ID
     tempInfoFilter.FilterScale = CAN_FILTERSCALE_32BIT;
     tempInfoFilter.FilterFIFOAssignment = CAN_FILTER_FIFO0;
     tempInfoFilter.FilterActivation = CAN_FILTER_ENABLE;
+
+    tempInfoFilter.FilterMaskIdHigh = ORIONMASK >> 13;
+    tempInfoFilter.FilterMaskIdLow = (ORIONMASK & 0x1fff) << 3;
 
     tempInfoFilter.FilterIdHigh = (TEMP_INFO_ID >> 13); // would be zero when u shift it 13 bits left lol
     tempInfoFilter.FilterIdLow = (TEMP_INFO_ID & 0x1fff) << 3;
 
     tempInfoFilter.FilterActivation = CAN_FILTER_ENABLE;
 
-  if (HAL_CAN_ConfigFilter(&hcan1, &tempInfoFilter) != HAL_OK) {
+    if (HAL_CAN_ConfigFilter(&hcan1, &tempInfoFilter) != HAL_OK) {
       Error_Handler();
-  }
+    }
 
   CAN_FilterTypeDef cellVoltagesFilter;
 
   	cellVoltagesFilter.FilterBank = 2;  // filter bank 2
-  	cellVoltagesFilter.FilterMode = CAN_FILTERMODE_IDLIST;  // ID list mode,,, make it match this exact ID
+  	cellVoltagesFilter.FilterMode = CAN_FILTERMODE_IDMASK;  // ID list mode,,, make it match this exact ID
   	cellVoltagesFilter.FilterScale = CAN_FILTERSCALE_32BIT;
   	cellVoltagesFilter.FilterFIFOAssignment = CAN_FILTER_FIFO0;
 
-
+  	cellVoltagesFilter.FilterMaskIdHigh = ORIONMASK >> 13;
+  	cellVoltagesFilter.FilterMaskIdLow = (ORIONMASK & 0x1fff) << 3;
 
   	cellVoltagesFilter.FilterIdHigh = CELL_VOLTAGES_ID >> 13;
   	cellVoltagesFilter.FilterIdLow = (CELL_VOLTAGES_ID & 0x1fff) << 3;
@@ -506,20 +512,21 @@ static void MX_CAN1_Init(void)
   CAN_FilterTypeDef maxMinVoltagesFilter;
 
 	maxMinVoltagesFilter.FilterBank = 3;  // filter bank 3 WAS 2 may 31 changed
-	maxMinVoltagesFilter.FilterMode = CAN_FILTERMODE_IDLIST;  // ID list mode,,, make it match this exact ID
+	maxMinVoltagesFilter.FilterMode = CAN_FILTERMODE_IDMASK;  // ID list mode,,, make it match this exact ID
 	maxMinVoltagesFilter.FilterScale = CAN_FILTERSCALE_32BIT;
 	maxMinVoltagesFilter.FilterFIFOAssignment = CAN_FILTER_FIFO0;
 
-
+	maxMinVoltagesFilter.FilterMaskIdHigh = ORIONMASK >> 13;
+	maxMinVoltagesFilter.FilterMaskIdLow = (ORIONMASK & 0x1fff) << 3;
 
 	maxMinVoltagesFilter.FilterIdHigh = MIN_MAX_VOLTAGES_ID >> 13;
 	maxMinVoltagesFilter.FilterIdLow = (MIN_MAX_VOLTAGES_ID & 0x1fff) << 3;
 
 	maxMinVoltagesFilter.FilterActivation = CAN_FILTER_ENABLE;
 
-	if (HAL_CAN_ConfigFilter(&hcan1, &maxMinVoltagesFilter) != HAL_OK) {
-	Error_Handler();
-	}
+	//if (HAL_CAN_ConfigFilter(&hcan1, &maxMinVoltagesFilter) != HAL_OK) {
+	//Error_Handler();
+	//}
 
   // filtering IDs from the individual contactor boards
 

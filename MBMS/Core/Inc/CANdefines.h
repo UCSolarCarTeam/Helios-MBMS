@@ -12,20 +12,27 @@
 #include "cmsis_os.h"
 
 #define CONTACTORMASK  0x1fffffe0 // just changed it so it accepts 0x21X and 0x20X
+#define ORIONMASK  0x1fffffff // just changed it so it accepts 0x21X and 0x20X
 #define CONTACTORIDS 0x210 // was 0x700,, then was 0x200.. just changed to 0x210 feb 6
 #define CONTACTOR_HEARTBEATS_IDS 0x200
 #define CONTACTOR_MASKED_IDS 0x200 //lower byte is dont care
+#define ORION_MASKED_IDS  0x300 // just changed it so it accepts 0x21X and 0x20X
 
-
+#define CONTACTOR_HEARTBEAT_ID 0x200
+#define CONTACTOR_ID 0x210
+#define PACK_INFO_ID 0x302
+#define TEMP_INFO_ID 0x304
+#define CELL_VOLTAGES_ID 0x305
+#define MIN_MAX_VOLTAGES_ID 0x30A
 /* CAN message IDS that the MBMS receives */
-enum ReceivedID {
-	CONTACTOR_HEARTBEAT_ID = 0x200,
-	CONTACTOR_ID = 0x210,
-	PACK_INFO_ID = 0x302,
-	TEMP_INFO_ID = 0x304,
-	CELL_VOLTAGES_ID = 0x305,
-	MIN_MAX_VOLTAGES_ID = 0x30A
-};
+//enum ReceivedID {
+//	CONTACTOR_HEARTBEAT_ID = 0x200,
+//	CONTACTOR_ID = 0x210,
+//	PACK_INFO_ID = 0x302,
+//	TEMP_INFO_ID = 0x304,
+//	CELL_VOLTAGES_ID = 0x305,
+//	MIN_MAX_VOLTAGES_ID = 0x30A
+//};
 
 /* CAN message IDS that the MBMS receives */
 enum SentID {
