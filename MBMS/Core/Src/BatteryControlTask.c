@@ -32,7 +32,7 @@ PowerSelectionStatus powerSelectionStatus = {0};
 MBMSStatus mbmsStatus; // made specific init function for this, may 21
 
 Permissions perms = {0};
-ContactorInfo contactorInfo[6]; // one for each contactor        add volatile to the extern thing too
+ContactorInfo contactorInfo[5]; // one for each contactor        add volatile to the extern thing too
 
 
 /*
@@ -88,8 +88,6 @@ void BatteryControl()
 
 	osDelay(500);
 
-
-	// NEED TO CHECK CURRENT STUFF STILL.... need to do all the trip stuff lol, also check attributes of can msg for sumn idk
 
 }
 
@@ -313,10 +311,49 @@ void UpdateCounter(uint32_t * counter) {
 
 }
 
-void enterMPSDisconnectedState() {
+void enter_MPS_DISCONNECTED() {
+	carState = MPS_DISCONNECTED;
 	perms.faulted = 1; // stop contactors from closing...
 	osEventFlagsSet(shutoffFlagHandle, (nMPS_FLAG | SHUTOFF_FLAG));
-	osDelay(10);
+	osDelay(1000);
+
+}
+
+
+/*
+ * This function runs when a BPS Fault should occur
+ * It turns on the strobe light, and changes the mbms status
+ * Switches car state to BPS_Fault !!!
+ */
+void enter_BPS_FAULT() {
+	// strpbe enable
+	HAL_GPIO_WritePin(Strobe_En_GPIO_Port, Strobe_En_Pin, 1);
+
+	HAL_GPIO_WritePin(RED_LED_GPIO_Port, RED_LED_Pin, GPIO_PIN_SET);
+	perms.faulted = 1;
+
+	carState = BPS_FAULT;
+
+	osStatus_t a = osMutexAcquire(MBMSStatusMutexHandle, 200);
+	if(a == osOK) {
+		// update mbms status
+		mbmsStatus.strobeBMSLight = 1;
+		osMutexRelease(MBMSStatusMutexHandle);
+
+	}
+
+	osEventFlagsSet(shutoffFlagHandle, (HARD_BL_FLAG | SHUTOFF_FLAG));
+	// delay for shutdown to run.... although rn its a higher priority so..
+	osDelay(500);
+	// idk if soft battery limit has any purpose in shutoff procedure anymore, since when i talked
+	// to jenny today, she said soft battery limit should just be a warning thru CAN and thats it.... may 10
+
+}
+
+void enter_SOFT_TRIP() {
+	carState = SOFT_TRIP;
+	HAL_GPIO_WritePin(BLU_LED_GPIO_Port, BLU_LED_Pin, GPIO_PIN_SET);
+	perms.faulted = 1;
 }
 
 void SystemStateMachine() {
@@ -338,8 +375,7 @@ void SystemStateMachine() {
 
 			// checks MPS
 			if(read_nMPS() == 1) {
-				enterMPSDisconnectedState();
-				carState = MPS_DISCONNECTED;
+				enter_MPS_DISCONNECTED();
 				break;
 			}
 
@@ -352,7 +388,7 @@ void SystemStateMachine() {
 		case FULLY_OPERATIONAL:
 
 			if(read_nMPS() == 1) {
-				carState = MPS_DISCONNECTED;
+				enter_MPS_DISCONNECTED();
 				break;
 			}
 
@@ -383,7 +419,7 @@ void SystemStateMachine() {
 			checkKeyShutdown();
 
 			if(read_nMPS() == 1) {
-				carState = MPS_DISCONNECTED;
+				enter_MPS_DISCONNECTED();
 				break;
 			}
 
@@ -409,24 +445,13 @@ void SystemStateMachine() {
 			break;
 
 		case BPS_FAULT:
-			HAL_GPIO_WritePin(RED_LED_GPIO_Port, RED_LED_Pin, GPIO_PIN_SET);
-			perms.faulted = 1;
-			osEventFlagsSet(shutoffFlagHandle, (HARD_BL_FLAG | SHUTOFF_FLAG));
-			// delay for shutdown to run.... although rn its a higher priority so..
-			osDelay(1000);
-
 			break;
 
 		case MPS_DISCONNECTED:
-//			perms.faulted = 1; // stop contactors from closing...
-//			osEventFlagsSet(shutoffFlagHandle, (nMPS_FLAG | SHUTOFF_FLAG));
-//			osDelay(10);
-
 			break;
 
 		case SOFT_TRIP:
-			HAL_GPIO_WritePin(BLU_LED_GPIO_Port, BLU_LED_Pin, GPIO_PIN_SET);
-			perms.faulted = 1;
+
 			if (softBatteryTrip.cell_OV == 1){
 				perms.charge = 0;
 				perms.array = 0;
@@ -436,7 +461,7 @@ void SystemStateMachine() {
 				perms.motor = 0;
 			}
 			if(read_nMPS() == 1) {
-				carState = MPS_DISCONNECTED;
+				enter_MPS_DISCONNECTED();
 				break;
 			}
 			/* Running checks */
@@ -534,18 +559,18 @@ void startupCheck(){
 		heartbeatDead = waitForFirstHeartbeats();
 	}
 	if (heartbeatDead == 1){
-		initiateBPSFault();
+		enter_BPS_FAULT();
 	}
 
 	/* Check to ensure no contactors are closed */
 	if ((checkContactorsOpen() == 0) || checkPrechargersOpen() == 0){
-		initiateBPSFault();
+		enter_BPS_FAULT();
 	}
 
 	/* Battery check (orion) */
 	uint8_t passedBatteryCheck = startupBatteryCheck(); // this func actually only checks hard limits for now...
 	if (!passedBatteryCheck) {
-		initiateBPSFault();
+		enter_BPS_FAULT();
 	}
 
 }
@@ -716,30 +741,6 @@ void checkKeyShutdown() {
 
 
 /*
- * This function runs when a BPS Fault should occur
- * It turns on the strobe light, and changes the mbms status
- * Switches car state to BPS_Fault !!!
- */
-void initiateBPSFault() {
-	// strpbe enable
-	HAL_GPIO_WritePin(Strobe_En_GPIO_Port, Strobe_En_Pin, 1);
-
-	// ADDED SOMETHING HERE:
-	carState = BPS_FAULT;
-	osStatus_t a = osMutexAcquire(MBMSStatusMutexHandle, 200);
-	if(a == osOK) {
-		// update mbms status
-		mbmsStatus.strobeBMSLight = 1;
-		osMutexRelease(MBMSStatusMutexHandle);
-
-	}
-	// idk if soft battery limit has any purpose in shutoff procedure anymore, since when i talked
-	// to jenny today, she said soft battery limit should just be a warning thru CAN and thats it.... may 10
-
-}
-
-
-/*
  * This function checks that all the contactor heartbeats are still being received
  * If they are not, a contactor has possibly died and a trip should occur which should initiate
  * a BPS Fault !
@@ -803,7 +804,7 @@ void CheckContactorHeartbeats() {
 	}
 
 	if(BPSFault) {
-		initiateBPSFault();
+		enter_BPS_FAULT();
 	}
 }
 
@@ -814,6 +815,9 @@ void CheckContactorHeartbeats() {
  * Don't need to do anything for these soft limits, just send the warning!
  */
 void CheckSoftBatteryLimit() {
+
+	uint8_t trip = 0;
+
 	/// ummmmm be careful deadlock mauybe check everything once ur done all the mutexes
 	osStatus_t acquire = osMutexAcquire(MBMSSoftLimitWarningMutexHandle, 200);
 	if(acquire == osOK) {
@@ -823,13 +827,13 @@ void CheckSoftBatteryLimit() {
 			/* Checking the min/max cell voltages */
 			if (batteryInfo.highCellVoltage > SOFT_MAX_CELL_VOLTAGE) {
 				softBatteryTrip.cell_OV = 1;
-				carState = SOFT_TRIP;
+				trip = 1;
 				mbmsSoftBatteryLimitWarning.highCellVoltageWarning = 1;
 
 			}
 			if (batteryInfo.lowCellVoltage < SOFT_MIN_CELL_VOLTAGE) {
 				softBatteryTrip.cell_UV = 1;
-				carState = SOFT_TRIP;
+				trip = 1;
 				mbmsSoftBatteryLimitWarning.lowCellVoltageWarning = 1;
 			}
 
@@ -867,6 +871,10 @@ void CheckSoftBatteryLimit() {
 		}
 
 		osMutexRelease(MBMSSoftLimitWarningMutexHandle);
+	}
+
+	if (trip) {
+		enter_SOFT_TRIP();
 	}
 
 }
@@ -1020,7 +1028,7 @@ void UpdateTripStatus() {
 		osMutexRelease(MBMSTripMutexHandle);
 
 		if(BPS_Fault) {
-			initiateBPSFault();
+			enter_BPS_FAULT();
 		}
 
 	}
