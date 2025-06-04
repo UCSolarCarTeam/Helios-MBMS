@@ -515,9 +515,6 @@ static void MX_CAN1_Init(void)
 	maxMinVoltagesFilter.FilterIdHigh = MIN_MAX_VOLTAGES_ID >> 13;
 	maxMinVoltagesFilter.FilterIdLow = (MIN_MAX_VOLTAGES_ID & 0x1fff) << 3;
 
-	maxMinVoltagesFilter.FilterMaskIdHigh = CONTACTORMASK >> 13;
-	maxMinVoltagesFilter.FilterMaskIdLow = (CONTACTORMASK & 0x1fff) << 3;
-
 	maxMinVoltagesFilter.FilterActivation = CAN_FILTER_ENABLE;
 
 	if (HAL_CAN_ConfigFilter(&hcan1, &maxMinVoltagesFilter) != HAL_OK) {

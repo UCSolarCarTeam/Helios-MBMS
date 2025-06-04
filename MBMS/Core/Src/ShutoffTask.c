@@ -99,13 +99,13 @@ void Shutoff()
 
 		if((flags & HARD_BL_FLAG) == HARD_BL_FLAG) {
 			while(1){
-				osDelay(1000);
+				osDelay(100);
 				// wait for driver to turn off car using key
 			}
 		}
 
 		else {
-			osDelay(1000);
+			osDelay(200);
 			// start thread for startup!!!
 			startupTaskHandle = osThreadNew(StartupTask, NULL, &startupTask_attributes);
 		}

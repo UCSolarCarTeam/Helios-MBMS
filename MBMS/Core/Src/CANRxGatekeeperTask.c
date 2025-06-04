@@ -34,7 +34,6 @@ void CANRxGatekeeperTask(void* arg)
 
 void CANRxGatekeeper()
 {
-	osDelay(200);
 	CANMsg msg; // CANmsg is struct (defined in CAN.h)
 	osStatus_t status = osMessageQueueGet(RxCANMessageQueueHandle, &msg, 0, osWaitForever);
 	if (status != osOK){
@@ -54,7 +53,7 @@ void CANRxGatekeeper()
 				Error_Handler();
 			}
 		}
-		else if ((eID & CONTACTORMASK) == CONTACTOR_HEARTBEATS_IDS)
+		else if ((eID & CONTACTORMASK) == CONTACTOR_MASKED_IDS )
 		{ // if id is 0x20X or 0x21X
 			// add to queue for battery control task
 			status = osMessageQueuePut(contactorMessageQueueHandle, &msg, 0, osWaitForever); // idk maybe shouldnt wait forever tho..

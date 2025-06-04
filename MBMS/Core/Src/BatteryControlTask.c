@@ -86,7 +86,7 @@ void BatteryControl()
 	/* Updating BCT Counter */
 	UpdateCounter(&BCT_Counter);
 
-	osDelay(500);
+	osDelay(10);
 
 
 }
@@ -204,7 +204,7 @@ void perms_init() {
 void UpdateOrionInfoStruct() {
 
 	CANMsg orionMsg;
-	osDelay(1000); // why there a delay here .... maybe from when i was testing...
+	//osDelay(1000); // why there a delay here .... maybe from when i was testing...
 	static uint8_t orionMessageCounter = 0;
 
 	osStatus status = osMessageQueueGet(batteryControlMessageQueueHandle, &orionMsg, NULL, ORION_MSG_WAIT_TIMEOUT);
@@ -315,7 +315,7 @@ void enter_MPS_DISCONNECTED() {
 	carState = MPS_DISCONNECTED;
 	perms.faulted = 1; // stop contactors from closing...
 	osEventFlagsSet(shutoffFlagHandle, (nMPS_FLAG | SHUTOFF_FLAG));
-	osDelay(1000);
+	//osDelay(10);
 
 }
 
@@ -344,7 +344,7 @@ void enter_BPS_FAULT() {
 
 	osEventFlagsSet(shutoffFlagHandle, (HARD_BL_FLAG | SHUTOFF_FLAG));
 	// delay for shutdown to run.... although rn its a higher priority so..
-	osDelay(500);
+	//osDelay(10);
 	// idk if soft battery limit has any purpose in shutoff procedure anymore, since when i talked
 	// to jenny today, she said soft battery limit should just be a warning thru CAN and thats it.... may 10
 

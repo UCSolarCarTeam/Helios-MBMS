@@ -53,7 +53,7 @@ void Startup()
 
 
 	while (read_nMPS() == 1) {
-			osDelay(1000);
+			osDelay(200);
 		// SET TRIP HERE
 		// wait for MPS to be on/enabled
 	}
@@ -68,7 +68,7 @@ void Startup()
 
 		// SET TRIP HERE naw i dont like this im just gonna add a delay and BCT can figure it out tbh
 		//osEventFlagsSet(shutoffFlagHandle, HARD_BL_FLAG);
-		osDelay(1000);
+		osDelay(200);
 		// um idk lol lets hope it will be running BCT
 		if (carState == BPS_FAULT) {
 			osThreadTerminate(startupTaskHandle);
@@ -80,7 +80,7 @@ void Startup()
 
 
 	while(BCT_Counter < 5) {
-		osDelay(1000);
+		osDelay(50);
 	}
 
 	mbmsStatus.startupState = CHECKS_PASSED;
@@ -130,23 +130,11 @@ void Startup()
 
 	mbmsStatus.startupState = MOTORS_PERMS;
 
-	//add a delay for 10 seconds
-	// to give time for batt control to check things r ok, close contactors or not, decide if there needs to be a trip or not etc.
-	osDelay(MOTOR_WAIT_TIME * 1000);
-
-
 	// set flag to give permission to precharge/close array contactor
 	// wait until array contactor done (same as above, make sure everything okay still, doesnt NEED it to bed closed...)
 	perms.array = 1;
 
 	mbmsStatus.startupState = ARRAY_PERMS;
-	// give time to battery control task to make sure battery state is still safe
-	osDelay(ARRAY_WAIT_TIME * 1000);
-	// if battery is fully charged, don't do the array!!!!
-	// motor charge and array, just give permissions, dont need to wait for contactors
-	// because if battery is fully discharged, then motors shouldnt go
-	// if car is fully charged, dont need array
-
 
 	// MAYBE MAKE SURE BCT HAS RUN A COUPLE TIMES FIRST BEFORE SAYING COMPLETED >>> idk
 
