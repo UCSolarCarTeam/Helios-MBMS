@@ -20,6 +20,11 @@ extern BatteryInfo batteryInfo;
 
 uint32_t It_messages_received = 0;
 uint32_t messages_received = 0;
+uint32_t common_heartbeat_count = 0;
+uint32_t motor_heartbeat_count = 0;
+uint32_t array_heartbeat_count = 0;
+uint32_t lv_heartbeat_count = 0;
+uint32_t charge_heartbeat_count = 0;
 
 void CANRxGatekeeperTask(void* arg)
 {
@@ -83,10 +88,73 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan){
 	for (int i = 0; i < msg.DLC; i++) { // set CANmsg data
 		msg.data[i] = data[i];
 	}
+	switch(msg.extendedID) {
+		case 0x200:
+			common_heartbeat_count++;
+			break;
+		case 0x201:
+			motor_heartbeat_count++;
+			break;
+		case 0x202:
+			array_heartbeat_count++;
+			break;
+		case 0x203:
+			lv_heartbeat_count++;
+			break;
+		case 0x204:
+			charge_heartbeat_count++;
+			break;
+	}
 
 	It_messages_received++;
 
 	osStatus_t status = osMessageQueuePut(RxCANMessageQueueHandle, &msg, 0, 0); // timeout should be 0
+	if(status != osOK){
+		//Error_Handler();
+		// need to handle error ,,
+	}
+}
+
+void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan){
+	// Receive header and data
+	CAN_RxHeaderTypeDef canRxHeader;
+	uint8_t  			data[8];
+
+	// get CAN message from the FIFO 0 queue and store its header and data, return from interrupt if it fails
+	if (HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO1, &canRxHeader, data) != HAL_OK)
+	{
+		return;
+	}
+
+	CANMsg msg;
+	msg.extendedID = canRxHeader.ExtId; // set CANmsg extended ID
+	msg.DLC = canRxHeader.DLC; // set CANmsg DLC
+	for (int i = 0; i < msg.DLC; i++) { // set CANmsg data
+		msg.data[i] = data[i];
+	}
+
+	switch(msg.extendedID) {
+		case 0x200:
+			common_heartbeat_count++;
+			break;
+		case 0x201:
+			motor_heartbeat_count++;
+			break;
+		case 0x202:
+			array_heartbeat_count++;
+			break;
+		case 0x203:
+			lv_heartbeat_count++;
+			break;
+		case 0x204:
+			charge_heartbeat_count++;
+			break;
+	}
+	It_messages_received++;
+
+	//osStatus_t status = osMessageQueuePut(RxCANMessageQueueHandle, &msg, 0, 0); // timeout should be 0
+	osStatus_t status = osMessageQueuePut(contactorMessageQueueHandle, &msg, 0, 0);
+
 	if(status != osOK){
 		//Error_Handler();
 		// need to handle error ,,

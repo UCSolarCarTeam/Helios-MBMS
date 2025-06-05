@@ -509,7 +509,7 @@ static void MX_CAN1_Init(void)
 		Error_Handler();
 	}
 
-  CAN_FilterTypeDef maxMinVoltagesFilter;
+   CAN_FilterTypeDef maxMinVoltagesFilter;
 
 	maxMinVoltagesFilter.FilterBank = 3;  // filter bank 3 WAS 2 may 31 changed
 	maxMinVoltagesFilter.FilterMode = CAN_FILTERMODE_IDMASK;  // ID list mode,,, make it match this exact ID
@@ -530,24 +530,103 @@ static void MX_CAN1_Init(void)
 
   // filtering IDs from the individual contactor boards
 
+	/*
+	 * HELLO NATHAN
+	 * here are the contactor filters, if u wanna see what they were before maybe u can look
+	 * at a previous commit or something,,, but this is just what i left off at trying out diff
+	 * filters :( like having a specific filter speciifc to each id ....
+	 */
   CAN_FilterTypeDef contactorFilter;
   contactorFilter.FilterBank = 4;  // filter bank 1
   contactorFilter.FilterMode = CAN_FILTERMODE_IDMASK;  // mask mode !!! can accept range of IDs
   contactorFilter.FilterScale = CAN_FILTERSCALE_32BIT;
-  contactorFilter.FilterFIFOAssignment = CAN_FILTER_FIFO0;
+  contactorFilter.FilterFIFOAssignment = CAN_FILTER_FIFO1;
   // 0 is dont care, 1 is compare them !!!!
   //uint32_t mask = 0x1fffffe0; // want it to let thru EXIDs 0x0000020X = 0x20X to 0x21X :)
-  contactorFilter.FilterMaskIdHigh = CONTACTORMASK >> 13;
-  contactorFilter.FilterMaskIdLow = (CONTACTORMASK & 0x1fff) << 3;
+
+//  contactorFilter.FilterMaskIdHigh = (CONTACTORMASK & 0x1fff0000) >> 13;
+//  contactorFilter.FilterMaskIdLow = (CONTACTORMASK & 0x1fff) << 3;
+
+  contactorFilter.FilterMaskIdHigh = (0x1ffffff0) >> 13;
+  contactorFilter.FilterMaskIdLow = (0x1ffffff0) << 3;
 
   contactorFilter.FilterActivation = CAN_FILTER_ENABLE;
 
 
-  contactorFilter.FilterIdHigh = CONTACTORIDS >> 13; // shift right by 13 bits to get rid of
-  contactorFilter.FilterIdLow = (CONTACTORIDS & 0x1fff) << 3; // zero out the first 16-bits, so only rightmost 13 bits left, shift left by 3 to make room for IDE, RTR, 0
+  contactorFilter.FilterIdHigh = 0x200 >> 13; // shift right by 13 bits to get rid of
+  contactorFilter.FilterIdLow = (0x200) << 3; // zero out the first 16-bits, so only rightmost 13 bits left, shift left by 3 to make room for IDE, RTR, 0
   if (HAL_CAN_ConfigFilter(&hcan1, &contactorFilter) != HAL_OK) {
 	  Error_Handler();
   }
+
+  CAN_FilterTypeDef contactorFilter2;
+  contactorFilter2.FilterBank = 5;  // filter bank 1
+  contactorFilter2.FilterMode = CAN_FILTERMODE_IDMASK;  // mask mode !!! can accept range of IDs
+  contactorFilter2.FilterScale = CAN_FILTERSCALE_32BIT;
+  contactorFilter2.FilterFIFOAssignment = CAN_FILTER_FIFO1;
+  // 0 is dont care, 1 is compare them !!!!
+  //uint32_t mask = 0x1fffffe0; // want it to let thru EXIDs 0x0000020X = 0x20X to 0x21X :)
+
+//  contactorFilter.FilterMaskIdHigh = (CONTACTORMASK & 0x1fff0000) >> 13;
+//  contactorFilter.FilterMaskIdLow = (CONTACTORMASK & 0x1fff) << 3;
+
+  contactorFilter2.FilterMaskIdHigh = (0x1fffffff) >> 13;
+  contactorFilter2.FilterMaskIdLow = (0x1fffffff) << 3;
+
+  contactorFilter2.FilterActivation = CAN_FILTER_ENABLE;
+
+
+  contactorFilter2.FilterIdHigh = 0x203 >> 13; // shift right by 13 bits to get rid of
+  contactorFilter2.FilterIdLow = (0x203) << 3; // zero out the first 16-bits, so only rightmost 13 bits left, shift left by 3 to make room for IDE, RTR, 0
+  if (HAL_CAN_ConfigFilter(&hcan1, &contactorFilter2) != HAL_OK) {
+	  Error_Handler();
+  }
+
+  CAN_FilterTypeDef contactorFilter3;
+  contactorFilter3.FilterBank = 6;  // filter bank 1
+  contactorFilter3.FilterMode = CAN_FILTERMODE_IDMASK;  // mask mode !!! can accept range of IDs
+  contactorFilter3.FilterScale = CAN_FILTERSCALE_32BIT;
+  contactorFilter3.FilterFIFOAssignment = CAN_FILTER_FIFO0;
+  // 0 is dont care, 1 is compare them !!!!
+  //uint32_t mask = 0x1fffffe0; // want it to let thru EXIDs 0x0000020X = 0x20X to 0x21X :)
+
+//  contactorFilter.FilterMaskIdHigh = (CONTACTORMASK & 0x1fff0000) >> 13;
+//  contactorFilter.FilterMaskIdLow = (CONTACTORMASK & 0x1fff) << 3;
+
+  contactorFilter3.FilterMaskIdHigh = (0x1fffffff) >> 13;
+  contactorFilter3.FilterMaskIdLow = (0x1fffffff) << 3;
+
+  contactorFilter3.FilterActivation = CAN_FILTER_ENABLE;
+
+
+  contactorFilter3.FilterIdHigh = 0x202 >> 13; // shift right by 13 bits to get rid of
+  contactorFilter3.FilterIdLow = (0x202) << 3; // zero out the first 16-bits, so only rightmost 13 bits left, shift left by 3 to make room for IDE, RTR, 0
+  if (HAL_CAN_ConfigFilter(&hcan1, &contactorFilter3) != HAL_OK) {
+	  Error_Handler();
+  }
+
+//  CAN_FilterTypeDef contactorFilter4;
+//  contactorFilter4.FilterBank = 7;  // filter bank 1
+//  contactorFilter4.FilterMode = CAN_FILTERMODE_IDMASK;  // mask mode !!! can accept range of IDs
+//  contactorFilter4.FilterScale = CAN_FILTERSCALE_32BIT;
+//  contactorFilter4.FilterFIFOAssignment = CAN_FILTER_FIFO1;
+//  // 0 is dont care, 1 is compare them !!!!
+//  //uint32_t mask = 0x1fffffe0; // want it to let thru EXIDs 0x0000020X = 0x20X to 0x21X :)
+//
+////  contactorFilter.FilterMaskIdHigh = (CONTACTORMASK & 0x1fff0000) >> 13;
+////  contactorFilter.FilterMaskIdLow = (CONTACTORMASK & 0x1fff) << 3;
+//
+//  contactorFilter4.FilterMaskIdHigh = (0x1fffffff) >> 13;
+//  contactorFilter4.FilterMaskIdLow = (0x1fffffff) << 3;
+//
+//  contactorFilter4.FilterActivation = CAN_FILTER_ENABLE;
+//
+//
+//  contactorFilter4.FilterIdHigh = 0x204 >> 13; // shift right by 13 bits to get rid of
+//  contactorFilter4.FilterIdLow = (0x204) << 3; // zero out the first 16-bits, so only rightmost 13 bits left, shift left by 3 to make room for IDE, RTR, 0
+//  if (HAL_CAN_ConfigFilter(&hcan1, &contactorFilter4) != HAL_OK) {
+//	  Error_Handler();
+//  }
 
   HAL_CAN_Start(&hcan1);
 

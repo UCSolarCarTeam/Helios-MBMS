@@ -774,7 +774,9 @@ void CheckContactorHeartbeats() {
 
 
 		if(previousHeartbeats[i] >= contactorInfo[i].heartbeat){
-			if(((osKernelGetTickCount() - heartbeatLastUpdatedTime[i]) * FREERTOS_TICK_PERIOD) > CONTACTOR_HEARTBEAT_TIMEOUT) {
+			uint32_t difference_ticks = osKernelGetTickCount() - heartbeatLastUpdatedTime[i];
+			float difference_seconds = (float) difference_ticks * FREERTOS_TICK_PERIOD;
+			if((difference_seconds) > CONTACTOR_HEARTBEAT_TIMEOUT) {
 
 				osStatus_t acquire = osMutexAcquire(MBMSTripMutexHandle, UPDATING_MUTEX_TIMEOUT);
 				if(acquire == osOK) {
@@ -993,7 +995,7 @@ void UpdateTripStatus() {
 				)
 			{
 				mbmsTrip.contactorDisconnectedUnexpectedlyTrip = 1;
-				BPS_Fault = 1;
+				//BPS_Fault = 1;
 			}
 
 			/* Contactor connected unexpectedly trip */
