@@ -14,6 +14,7 @@
 #include "StartupTask.h"
 #include "ShutoffTask.h"
 #include "ReadPowerGPIO.h"
+#include "CANMessageSenderTask.h"
 #include "MBMS.h"
 
 /*
@@ -25,6 +26,8 @@ SoftBatteryTrip softBatteryTrip = {0};
 
 uint32_t BCT_Counter = 0;
 uint32_t startup_Check_Counter = 0;
+
+
 uint8_t carState = BOOT;
 
 ContactorCommand contactorCommand = {0};
@@ -36,6 +39,8 @@ Permissions perms = {0};
 ContactorInfo contactorInfo[5]; // one for each contactor        add volatile to the extern thing too
 
 uint8_t orionMessagesReceived = 0x0;
+
+extern uint32_t lastSentTime[6];
 
 /*
  * Local Variables
@@ -994,8 +999,16 @@ void UpdateTripStatus() {
 					|| ((contactorCommand.charge == CLOSE_CONTACTOR) && (contactorInfo[CHARGE].lineCurrent < NO_CURRENT_THRESHOLD))
 				)
 			{
+<<<<<<< Updated upstream
 				mbmsTrip.contactorDisconnectedUnexpectedlyTrip = 1;
 				//BPS_Fault = 1;
+=======
+				//if ((osKernelGetTickCount() - (float)lastSentTime[CONTACTOR_COMMAND])  * FREERTOS_TICK_PERIOD >= CONTACTOR_RESPONSE_TIMEOUT) {
+
+					mbmsTrip.contactorDisconnectedUnexpectedlyTrip = 1;
+					BPS_Fault = 1;
+				//}
+>>>>>>> Stashed changes
 			}
 
 			/* Contactor connected unexpectedly trip */

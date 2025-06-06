@@ -22,7 +22,9 @@ extern PowerSelectionStatus powerSelectionStatus;
 extern ContactorInfo contactorInfo[6];
 extern MBMSSoftBatteryLimitWarning mbmsSoftBatteryLimitWarning;
 
+// in ticks !
 uint32_t lastSentTime[6] = {0};
+
 float messageFrequency[6] = { HEARTBEAT_FREQ, CONTACTOR_COMMAND_FREQ,
 								MBMS_STATUS_FREQ, POWER_SELECTION_STATUS_FREQ,
 								MBMS_TRIP_FREQ, MBMS_SOFT_BATTERY_LIMIT_WARNING_FREQ};

@@ -59,7 +59,8 @@ void UpdateCounter(uint32_t * counter);
 
 #define NO_CURRENT_THRESHOLD 3 // (AMPS). So if less than this, consider no current, if more than this, consider there is current
 
-#define MAX_PACK_VOLTAGE 75 // (Volts)
+// in seconds
+#define CONTACTOR_RESPONSE_TIMEOUT 3
 
 #define HARD_MAX_CELL_VOLTAGE 4.5F
 #define SOFT_MAX_CELL_VOLTAGE 4.2F
