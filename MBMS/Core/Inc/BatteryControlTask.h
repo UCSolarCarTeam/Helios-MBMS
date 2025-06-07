@@ -51,7 +51,7 @@ void UpdateContactors();
 void UpdateCounter(uint32_t * counter);
 
 
-#define ORION_MSG_WAIT_TIMEOUT 10 //ms
+#define ORION_MSG_WAIT_TIMEOUT 1000 //ms
 #define CONTACTOR_HEARTBEAT_TIMEOUT 2 // seconds !!
 
 #define SOC_SAFE_FOR_CHARGE 90 // maybe can do if SOC is less than 90, safe to charge

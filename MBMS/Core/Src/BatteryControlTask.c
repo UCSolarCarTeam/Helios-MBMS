@@ -426,7 +426,7 @@ void SystemStateMachine() {
 			}
 
 			/* Running checks */
-			CheckContactorHeartbeats();
+			//CheckContactorHeartbeats();
 			CheckSoftBatteryLimit();
 			UpdateTripStatus();
 

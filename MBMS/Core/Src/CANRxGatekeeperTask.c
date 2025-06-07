@@ -44,8 +44,8 @@ void CANRxGatekeeperTask(void* arg)
     {
 
     	CANRxGatekeeper();
-//		taskTickLastStart += 5;
-//		osDelayUntil(taskTickLastStart);
+		taskTickLastStart += 10;
+		osDelayUntil(taskTickLastStart);
     }
 }
 
@@ -77,6 +77,15 @@ void CANRxGatekeeper()
 				// also handle error here but idk do what :(
 				Error_Handler();
 			}
+		}
+		else if ((eID & 0xfffffff0) == 0x200) {
+			uint16_t newHeartbeat = msg.data[0] + (msg.data[1] << 8);
+			osStatus_t a = osMutexAcquire(ContactorInfoMutexHandle, 5);
+			if (a == osOK) {
+				contactorInfo[eID - CONTACTOR_HEARTBEATS_IDS].heartbeat = newHeartbeat;
+				osMutexRelease(ContactorInfoMutexHandle);
+			}
+
 		}
 		else if ((eID & CONTACTORMASK) == CONTACTOR_MASKED_IDS )
 		{ // if id is 0x20X or 0x21X
@@ -227,7 +236,7 @@ void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan){
 	It_messages_received++;
 
 	//osStatus_t status = osMessageQueuePut(RxCANMessageQueueHandle, &msg, 0, 0); // timeout should be 0
-	osStatus_t status = osMessageQueuePut(contactorMessageQueueHandle, &msg, 0, 0);
+	osStatus_t status = osMessageQueuePut(RxCANMessageQueueHandle, &msg, 0, 0);
 
 	if(status != osOK){
 		//Error_Handler();
