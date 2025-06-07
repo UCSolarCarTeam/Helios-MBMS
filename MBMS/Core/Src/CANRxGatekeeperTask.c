@@ -44,8 +44,8 @@ void CANRxGatekeeperTask(void* arg)
     {
 
     	CANRxGatekeeper();
-		taskTickLastStart += 5;
-		osDelayUntil(taskTickLastStart);
+//		taskTickLastStart += 5;
+//		osDelayUntil(taskTickLastStart);
     }
 }
 
