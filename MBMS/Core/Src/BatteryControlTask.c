@@ -114,7 +114,9 @@ void BatteryControl()
 
 uint32_t toggle_led(uint8_t LED, uint8_t period_ms, uint32_t start_tick) {
 
-	if (((start_tick - osKernelGetTickCount()) * FREERTOS_TICK_PERIOD) >= period_ms) {
+	uint32_t tick_diff = start_tick - osKernelGetTickCount();
+	uint32_t tick_diff_ms = tick_diff * FREERTOS_TICK_PERIOD;
+	if ((tick_diff * FREERTOS_TICK_PERIOD) >= period_ms) {
 		switch(LED) {
 			case BLU:
 				HAL_GPIO_TogglePin(BLU_LED_GPIO_Port, BLU_LED_Pin);
@@ -128,9 +130,10 @@ uint32_t toggle_led(uint8_t LED, uint8_t period_ms, uint32_t start_tick) {
 				HAL_GPIO_TogglePin(RED_LED_GPIO_Port, RED_LED_Pin);
 				break;
 		}
+		return osKernelGetTickCount();
 	}
 
-	return osKernelGetTickCount();
+	return start_tick;
 }
 
 
@@ -160,15 +163,15 @@ void UpdateContactorInfoStruct() {
 				data[i] = contactorMsg.data[i];
 			}
 
-			uint8_t prechargerClosed = data[0] & 0x01; // extract bit 0
-			uint8_t prechargerClosing = data[0] & 0x02; // extract bit 1
-			uint8_t prechargerError = data[0] & 0x04; // extract bit 2
-			uint8_t contactorClosed = data[0] & 0x08; // extract bit 3
-			uint8_t contactorClosing = data[0] & 0x10; // extract bit 4
-			uint8_t contactorError = data[0] & 0x20; // extract bit 5
+			uint8_t prechargerClosed = (data[0] & 0x01) ? CLOSE_CONTACTOR: OPEN_CONTACTOR; // extract bit 0
+			uint8_t prechargerClosing = (data[0] & 0x02) ? CLOSE_CONTACTOR: OPEN_CONTACTOR; // extract bit 1
+			uint8_t prechargerError = (data[0] & 0x04) ? CLOSE_CONTACTOR: OPEN_CONTACTOR; // extract bit 2
+			uint8_t contactorClosed = (data[0] & 0x08) ? CLOSE_CONTACTOR: OPEN_CONTACTOR; // extract bit 3
+			uint8_t contactorClosing = (data[0] & 0x10) ? CLOSE_CONTACTOR: OPEN_CONTACTOR; // extract bit 4
+			uint8_t contactorError = (data[0] & 0x20) ? CLOSE_CONTACTOR: OPEN_CONTACTOR; // extract bit 5
 			int16_t lineCurrent = ((data[0] & 0xc0) >> 6) + ((data[1] & 0xff) << 2) + ((data[2] & 0x03) << 10); // extract bits 6 to 17
 			int16_t chargeCurrent = ((data[2] & 0xfc) >> 2) + ((data[3] & 0x3f) << 6); // extract bits 18 to 29
-			uint8_t contactorOpeningError = data[3] & 0x80; //extract bit 30
+			uint8_t contactorOpeningError = (data[3] & 0x80) ? CLOSE_CONTACTOR: OPEN_CONTACTOR; //extract bit 30
 			updateContactorInfo((contactorMsg.extendedID - CONTACTORIDS), prechargerClosed, prechargerClosing, prechargerError,
 					contactorClosed, contactorClosing, contactorError, lineCurrent, chargeCurrent, contactorOpeningError);
 
@@ -455,9 +458,10 @@ void SystemStateMachine() {
 
 		case FULLY_OPERATIONAL:
 
-			static uint32_t start_tick = 0;
-
-			start_tick = toggle_led(GRN, 500, start_tick);
+//			static uint32_t start_tick_fully_op = 0;
+//			start_tick_fully_op = osKernelGetTickCount();
+//
+//			start_tick_fully_op = toggle_led(GRN, 500, start_tick_fully_op);
 
 			if(read_nMPS() == 1) {
 				enter_MPS_DISCONNECTED();
