@@ -55,6 +55,10 @@ void CANRxGatekeeperTask(void* arg)
 
 void CANRxGatekeeper()
 {
+
+	if ( (0x304 & CONTACTORMASK) == (0x200 & CONTACTORMASK)) {
+		uint8_t x = 0;
+	}
 	CANMsg msg; // CANmsg is struct (defined in CAN.h)
 	osStatus_t status = osMessageQueueGet(RxCANMessageQueueHandle, &msg, 0, osWaitForever);
 	if (status != osOK){

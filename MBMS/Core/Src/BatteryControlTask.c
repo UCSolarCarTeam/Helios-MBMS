@@ -71,7 +71,7 @@ void BatteryControlTask(void* arg)
     {
     	BatteryControl();
 		taskTickLastStart += 10;
-		osDelayUntil(taskTickLastStart);
+		//osDelayUntil(taskTickLastStart);
     }
 }
 
@@ -380,6 +380,9 @@ void SystemStateMachine() {
 		case BOOT:
 			if(orionMessagesReceived == 0x7) { //ik i dont have to check here but i just am
 				carState = STARTUP;
+			}
+			if ( (0x304 & CONTACTORMASK) == (0x200 & CONTACTORMASK)) {
+				uint8_t x = 0;
 			}
 			break;
 
