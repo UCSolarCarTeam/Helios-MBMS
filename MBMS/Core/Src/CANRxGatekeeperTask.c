@@ -39,6 +39,12 @@ uint32_t cell_msg_count = 0;
 
 uint32_t heartbeat_update_count;
 
+uint32_t orion_msg_added = 0;
+
+uint32_t RxCanIntQueueFull = 0;
+uint32_t batteryControlQueueFull = 0;
+uint32_t contactorQueueFull = 0;
+
 void CANRxGatekeeperTask(void* arg)
 {
 	uint32_t taskTickLastStart = osKernelGetTickCount();
@@ -74,34 +80,24 @@ void CANRxGatekeeper()
 
 		if ((eID == PACK_INFO_ID) ||( eID == TEMP_INFO_ID) || (eID == CELL_VOLTAGES_ID) || (eID == MIN_MAX_VOLTAGES_ID)) {
 			// add to queue for battery control task
-			status = osMessageQueuePut(batteryControlMessageQueueHandle, &msg, 0, osWaitForever); // idk maybe shouldnt wait forever tho..
+			status = osMessageQueuePut(batteryControlMessageQueueHandle, &msg, 0, 0); // idk maybe shouldnt wait forever tho..
 			if(status != osOK){
 				// also handle error here but idk do what :(
 				Error_Handler();
+				//batteryControlQueueFull++;
 			}
-		}
-		else if ((eID & 0xfffffff0) == 0x200) {
-			status = osMessageQueuePut(contactorHeartbeatMessageQueueHandle, &msg, 0, osWaitForever); // idk maybe shouldnt wait forever tho..
-			if(status != osOK){
-				// also handle error here but idk do what :(
-				Error_Handler();
+			else {
+				orion_msg_added++;
 			}
-//			uint16_t newHeartbeat = msg.data[0] + (msg.data[1] << 8);
-//			osStatus_t a = osMutexAcquire(ContactorInfoMutexHandle, 5);
-//			if (a == osOK) {
-//				contactorInfo[eID - CONTACTOR_HEARTBEATS_IDS].heartbeat = newHeartbeat;
-//				heartbeat_update_count++;
-//				osMutexRelease(ContactorInfoMutexHandle);
-//			}
-
 		}
 		else if ((eID & CONTACTORMASK) == CONTACTOR_MASKED_IDS )
 		{ // if id is 0x20X or 0x21X
 			// add to queue for battery control task
-			status = osMessageQueuePut(contactorMessageQueueHandle, &msg, 0, osWaitForever); // idk maybe shouldnt wait forever tho..
+			status = osMessageQueuePut(contactorMessageQueueHandle, &msg, 0, 0); // idk maybe shouldnt wait forever tho..
 			if(status != osOK){
 				// also handle error here but idk do what :(
 				Error_Handler();
+				//contactorQueueFull++;
 			}
 		}
 	}
@@ -166,6 +162,8 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan){
 		case 0x305:
 			cell_msg_count++;
 			break;
+		default:
+			return;
 
 	}
 
@@ -173,81 +171,8 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan){
 
 	osStatus_t status = osMessageQueuePut(RxCANMessageQueueHandle, &msg, 0, 0); // timeout should be 0
 	if(status != osOK){
-		//Error_Handler();
-		// need to handle error ,,
-	}
-}
-
-void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan){
-	// Receive header and data
-	CAN_RxHeaderTypeDef canRxHeader;
-	uint8_t  			data[8];
-
-	// get CAN message from the FIFO 0 queue and store its header and data, return from interrupt if it fails
-	if (HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO1, &canRxHeader, data) != HAL_OK)
-	{
-		return;
-	}
-
-	CANMsg msg;
-	msg.extendedID = canRxHeader.ExtId; // set CANmsg extended ID
-	msg.DLC = canRxHeader.DLC; // set CANmsg DLC
-	for (int i = 0; i < msg.DLC; i++) { // set CANmsg data
-		msg.data[i] = data[i];
-	}
-
-	switch(msg.extendedID) {
-		case 0x200:
-			common_heartbeat_count++;
-			break;
-		case 0x201:
-			motor_heartbeat_count++;
-			break;
-		case 0x202:
-			array_heartbeat_count++;
-			break;
-		case 0x203:
-			lv_heartbeat_count++;
-			break;
-		case 0x204:
-			charge_heartbeat_count++;
-			break;
-
-		case 0x210:
-			common_msg_count++;
-			break;
-		case 0x211:
-			motor_msg_count++;
-			break;
-		case 0x212:
-			array_msg_count++;
-			break;
-		case 0x213:
-			lv_msg_count++;
-			break;
-		case 0x214:
-			charge_msg_count++;
-			break;
-
-		case 0x302:
-			pack_msg_count++;
-			break;
-		case 0x304:
-			temp_msg_count++;
-			break;
-		case 0x305:
-			cell_msg_count++;
-			break;
-
-	}
-
-	It_messages_received++;
-
-	//osStatus_t status = osMessageQueuePut(RxCANMessageQueueHandle, &msg, 0, 0); // timeout should be 0
-	osStatus_t status = osMessageQueuePut(RxCANMessageQueueHandle, &msg, 0, 0);
-
-	if(status != osOK){
-		//Error_Handler();
+		Error_Handler();
+		//RxCanIntQueueFull++;
 		// need to handle error ,,
 	}
 }

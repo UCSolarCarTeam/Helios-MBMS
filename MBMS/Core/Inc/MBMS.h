@@ -11,7 +11,7 @@
 #define UPDATING_MUTEX_TIMEOUT 5
 #define READING_MUTEX_TIMEOUT 5
 
-
+// i think this is in ms..... when u multiply this by the tick count !!!
 #define FREERTOS_TICK_PERIOD 1.0/configTICK_RATE_HZ //USE THIS INSTEAD OF SECONFS PER TICK
 
 #define SHUTOFF_FLAG 0x01 // just making the flag an arbitrary number (should be uint32_t,,, this is = 1 in decimal)

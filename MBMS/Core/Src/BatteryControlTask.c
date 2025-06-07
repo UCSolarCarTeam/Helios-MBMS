@@ -57,8 +57,13 @@ static uint8_t heartbeatLastUpdatedTime[6] = {0};
 static uint16_t previousHeartbeats[6] = {0}; //check this !!! syntax !
 
 
+uint32_t orion_msg_from_queue = 0;
 
+uint32_t BCT_start_tick = 0;
+uint32_t BCT_end_tick = 0;
+uint32_t BCT_difference_tick = 0;
 
+uint32_t BCT_difference_seconds = 0;
 
 
 
@@ -72,7 +77,12 @@ void BatteryControlTask(void* arg)
 
     while(1)
     {
+    	BCT_start_tick = osKernelGetTickCount();
     	BatteryControl();
+    	BCT_end_tick = osKernelGetTickCount();
+    	BCT_difference_tick = BCT_end_tick - BCT_start_tick;
+    	BCT_difference_seconds = taskTickLastStart;
+
 		taskTickLastStart += 10;
 		osDelayUntil(taskTickLastStart);
     }
@@ -86,7 +96,6 @@ void BatteryControl()
 
 	/* Updating structs */
 	UpdateContactorInfoStruct();
-	updateHeartbeats();
 	UpdatePowerSelectionStruct();
 	UpdateOrionInfoStruct();
 
@@ -103,27 +112,6 @@ void BatteryControl()
 
 }
 
-/* FUNCTIONS FOR UPDATING STRUCTS */
-void updateHeartbeats() {
-	CANMsg contactorMsg;
-	osStatus status = osMessageQueueGet(contactorHeartbeatMessageQueueHandle, &contactorMsg, NULL, 10);
-
-	if (status == osOK) {
-
-		// if the message is about the contactor heartbeats
-
-		uint16_t newHeartbeat = contactorMsg.data[0] + (contactorMsg.data[1] << 8);
-		osStatus_t a = osMutexAcquire(ContactorInfoMutexHandle, 55);
-		if (a == osOK) {
-			contactorInfo[contactorMsg.extendedID - CONTACTOR_HEARTBEATS_IDS].heartbeat = newHeartbeat;
-			heartbeat_update_count++;
-			osMutexRelease(ContactorInfoMutexHandle);
-		}
-	}
-
-}
-
-
 void UpdateContactorInfoStruct() {
 	//static uint8_t counter = 0;
 
@@ -133,18 +121,18 @@ void UpdateContactorInfoStruct() {
 	if (status == osOK) {
 
 		// if the message is about the contactor heartbeats
-//		if((contactorMsg.extendedID & 0xff0) == CONTACTOR_HEARTBEATS_IDS){
-//			uint16_t newHeartbeat = contactorMsg.data[0] + (contactorMsg.data[1] << 8);
-//			osStatus_t a = osMutexAcquire(ContactorInfoMutexHandle, 55);
-//			if (a == osOK) {
-//				contactorInfo[contactorMsg.extendedID - CONTACTOR_HEARTBEATS_IDS].heartbeat = newHeartbeat;
-//				heartbeat_update_count++;
-//				osMutexRelease(ContactorInfoMutexHandle);
-//			}
-//		}
+		if((contactorMsg.extendedID & 0xff0) == CONTACTOR_HEARTBEATS_IDS){
+			uint16_t newHeartbeat = contactorMsg.data[0] + (contactorMsg.data[1] << 8);
+			osStatus_t a = osMutexAcquire(ContactorInfoMutexHandle, 55);
+			if (a == osOK) {
+				contactorInfo[contactorMsg.extendedID - CONTACTOR_HEARTBEATS_IDS].heartbeat = newHeartbeat;
+				heartbeat_update_count++;
+				osMutexRelease(ContactorInfoMutexHandle);
+			}
+		}
 
 		// if the message is about the contactor info
-//		else{
+		else{
 			uint8_t data[contactorMsg.DLC];
 			for (int i = 0; i < contactorMsg.DLC; i ++) {
 				data[i] = contactorMsg.data[i];
@@ -162,7 +150,7 @@ void UpdateContactorInfoStruct() {
 			updateContactorInfo((contactorMsg.extendedID - CONTACTORIDS), prechargerClosed, prechargerClosing, prechargerError,
 					contactorClosed, contactorClosing, contactorError, lineCurrent, chargeCurrent, contactorOpeningError);
 
-//		}
+		}
 	}
 
 }
@@ -239,9 +227,11 @@ void UpdateOrionInfoStruct() {
 	//osDelay(1000); // why there a delay here .... maybe from when i was testing...
 	static uint8_t orionMessageCounter = 0;
 
-	osStatus status = osMessageQueueGet(batteryControlMessageQueueHandle, &orionMsg, NULL, ORION_MSG_WAIT_TIMEOUT);
+	osStatus status = osMessageQueueGet(batteryControlMessageQueueHandle, &orionMsg, NULL, 0);
 
 	if (status == osOK) {
+
+		orion_msg_from_queue++;
 
 		// reset counter to zero now that you've received message
 		orionMessageCounter = 0;
@@ -309,17 +299,17 @@ void UpdateOrionInfoStruct() {
 
 		// the below is not even used tbh but if u were to use it, check the units and do the proper conversions!
 		// and do orion messages received stuff if u use this
-		else if (orionMsg.extendedID == MIN_MAX_VOLTAGES_ID) {
-			osStatus_t a = osMutexAcquire(BatteryInfoMutexHandle, 5);
-			if(a == osOK) {
-				batteryInfo.maxCellVoltage = data[0] + (data[1] << 8);
-				batteryInfo.minCellVoltage = data[2] + (data[3] << 8);
-				batteryInfo.maxPackVoltage = data[4] + (data[5] << 8);
-				batteryInfo.minPackVoltage = data[6] + (data[7] << 8);
-				osMutexRelease(BatteryInfoMutexHandle);
-			}
-
-		}
+//		else if (orionMsg.extendedID == MIN_MAX_VOLTAGES_ID) {
+//			osStatus_t a = osMutexAcquire(BatteryInfoMutexHandle, 5);
+//			if(a == osOK) {
+//				batteryInfo.maxCellVoltage = data[0] + (data[1] << 8);
+//				batteryInfo.minCellVoltage = data[2] + (data[3] << 8);
+//				batteryInfo.maxPackVoltage = data[4] + (data[5] << 8);
+//				batteryInfo.minPackVoltage = data[6] + (data[7] << 8);
+//				osMutexRelease(BatteryInfoMutexHandle);
+//			}
+//
+//		}
 
 	}
 
@@ -411,7 +401,6 @@ void SystemStateMachine() {
 			break;
 
 		case STARTUP:
-			updateHeartbeats();
 
 			// will go to BPS_FAULT state if startup checks do not pass
 			startupCheck();
@@ -450,14 +439,9 @@ void SystemStateMachine() {
 				carState = CHARGING;
 			}
 
-			updateHeartbeats();
-
 			/* Running checks */
 			if (heartbeat_check_count <= heartbeat_update_count) {
 				CheckContactorHeartbeats();
-			}
-			else {
-				updateHeartbeats();
 			}
 
 			CheckSoftBatteryLimit();
@@ -610,9 +594,6 @@ void startupCheck(){
 		// set heartbeatDead so we can break out of while loop lol
 		if( heartbeat_check_count <= heartbeat_update_count) {
 			heartbeatDead = waitForFirstHeartbeats();
-		}
-		else {
-			updateHeartbeats();
 		}
 
 	}
@@ -823,55 +804,51 @@ void CheckContactorHeartbeats() {
 	static uint8_t BPSFault = 0;
 	for(int i = 0; i < 5; i++) {
 
+		heartbeat_check_count++;
 
-		osStatus_t a = osMutexAcquire(ContactorInfoMutexHandle, READING_MUTEX_TIMEOUT);
-		if (a == osOK) {
-			heartbeat_check_count++;
-
-
-			if(previousHeartbeats[i] >= 65535) { // check this logic lol
-				previousHeartbeats[i] = 0;
-			}
+		if(previousHeartbeats[i] >= 65535) { // check this logic lol
+			previousHeartbeats[i] = 0;
+		}
 
 
-			if(previousHeartbeats[i] >= contactorInfo[i].heartbeat){
-				uint32_t difference_ticks = osKernelGetTickCount() - heartbeatLastUpdatedTime[i];
-				float difference_seconds = (float) difference_ticks * FREERTOS_TICK_PERIOD;
-				if((difference_seconds) > CONTACTOR_HEARTBEAT_TIMEOUT) {
+		if(previousHeartbeats[i] >= contactorInfo[i].heartbeat){
+			uint32_t difference_ticks = osKernelGetTickCount() - heartbeatLastUpdatedTime[i];
+			float difference_ms = (float) difference_ticks * FREERTOS_TICK_PERIOD;
+			if((difference_ms) > CONTACTOR_HEARTBEAT_TIMEOUT) {
 
-					osStatus_t acquire = osMutexAcquire(MBMSTripMutexHandle, UPDATING_MUTEX_TIMEOUT);
-					if(acquire == osOK) {
-						// set heartbeat dead trip
-						switch (i) {
-							case 0:
-								mbmsTrip.commonHeartbeatDeadTrip = 1;
-								break;
-							case 1:
-								mbmsTrip.motorHeartbeatDeadTrip = 1;
-								break;
-							case 2:
-								mbmsTrip.arrayHeartbeatDeadTrip = 1;
-								break;
-							case 3:
-								mbmsTrip.LVHeartbeatDeadTrip = 1;
-								break;
-							case 4:
-								mbmsTrip.chargeHeartbeatDeadTrip = 1;
-								break;
-						}
-						osMutexRelease(MBMSTripMutexHandle);
-						BPSFault = 1;
-
+				osStatus_t acquire = osMutexAcquire(MBMSTripMutexHandle, UPDATING_MUTEX_TIMEOUT);
+				if(acquire == osOK) {
+					// set heartbeat dead trip
+					switch (i) {
+						case 0:
+							mbmsTrip.commonHeartbeatDeadTrip = 1;
+							break;
+						case 1:
+							mbmsTrip.motorHeartbeatDeadTrip = 1;
+							break;
+						case 2:
+							mbmsTrip.arrayHeartbeatDeadTrip = 1;
+							break;
+						case 3:
+							mbmsTrip.LVHeartbeatDeadTrip = 1;
+							break;
+						case 4:
+							mbmsTrip.chargeHeartbeatDeadTrip = 1;
+							break;
 					}
+					osMutexRelease(MBMSTripMutexHandle);
+					BPSFault = 1;
+
 				}
 			}
-			else {
-				heartbeatLastUpdatedTime[i] = osKernelGetTickCount();
+		}
+		else {
+			heartbeatLastUpdatedTime[i] = osKernelGetTickCount();
+			osStatus_t a = osMutexAcquire(ContactorInfoMutexHandle, READING_MUTEX_TIMEOUT);
+			if (a == osOK) {
 				previousHeartbeats[i] = (contactorInfo[i].heartbeat);
+				osMutexRelease(ContactorInfoMutexHandle);
 			}
-
-			osMutexRelease(ContactorInfoMutexHandle);
-
 		}
 
 	}

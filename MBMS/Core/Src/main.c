@@ -486,60 +486,8 @@ static void MX_CAN1_Init(void)
   }
   packInfoFilter.SlaveStartFilterBank = 14; // maybe try commenting this out
 
-//  CAN_FilterTypeDef tempInfoFilter;
-//
-//    tempInfoFilter.FilterBank = 1;  // filter bank 1
-//    tempInfoFilter.FilterMode = CAN_FILTERMODE_IDMASK;  // ID list mode,,, make it match this exact ID
-//    tempInfoFilter.FilterScale = CAN_FILTERSCALE_32BIT;
-//    tempInfoFilter.FilterFIFOAssignment = CAN_FILTER_FIFO0;
-//    tempInfoFilter.FilterActivation = CAN_FILTER_ENABLE;
-//
-//    tempInfoFilter.FilterMaskIdHigh = (ORIONMASK >> 16) & 0xffff;
-//    tempInfoFilter.FilterMaskIdLow = (ORIONMASK  & 0xffff);
-//
-//    uint32_t temp_filter_id = (TEMP_INFO_ID << 3) | (1 << 2);
-//
-//    tempInfoFilter.FilterIdHigh = ((temp_filter_id >> 16) & 0xffff); // would be zero when u shift it 13 bits left lol
-//    tempInfoFilter.FilterIdLow = temp_filter_id & 0xffff;
-//
-//    tempInfoFilter.FilterActivation = CAN_FILTER_ENABLE;
-//
-//    if (HAL_CAN_ConfigFilter(&hcan1, &tempInfoFilter) != HAL_OK) {
-//      Error_Handler();
-//    }
-//    tempInfoFilter.SlaveStartFilterBank = 14; // maybe try commenting this out
-//
-
-
-	/*
-   CAN_FilterTypeDef maxMinVoltagesFilter;
-
-	maxMinVoltagesFilter.FilterBank = 3;  // filter bank 3 WAS 2 may 31 changed
-	maxMinVoltagesFilter.FilterMode = CAN_FILTERMODE_IDMASK;  // ID list mode,,, make it match this exact ID
-	maxMinVoltagesFilter.FilterScale = CAN_FILTERSCALE_32BIT;
-	maxMinVoltagesFilter.FilterFIFOAssignment = CAN_FILTER_FIFO0;
-
-	maxMinVoltagesFilter.FilterMaskIdHigh = ORIONMASK >> 13;
-	maxMinVoltagesFilter.FilterMaskIdLow = (ORIONMASK & 0x1fff) << 3;
-
-	maxMinVoltagesFilter.FilterIdHigh = MIN_MAX_VOLTAGES_ID >> 13;
-	maxMinVoltagesFilter.FilterIdLow = (MIN_MAX_VOLTAGES_ID & 0x1fff) << 3;
-
-	maxMinVoltagesFilter.FilterActivation = CAN_FILTER_ENABLE;
-
-	//if (HAL_CAN_ConfigFilter(&hcan1, &maxMinVoltagesFilter) != HAL_OK) {
-	//Error_Handler();
-	//}
-*/
-
   // filtering IDs from the individual contactor boards
 
-	/*
-	 * HELLO NATHAN
-	 * here are the contactor filters, if u wanna see what they were before maybe u can look
-	 * at a previous commit or something,,, but this is just what i left off at trying out diff
-	 * filters :( like having a specific filter speciifc to each id ....
-	 */
   CAN_FilterTypeDef contactorFilter;
   contactorFilter.FilterBank = 3;  // filter bank 1
   contactorFilter.FilterMode = CAN_FILTERMODE_IDMASK;  // mask mode !!! can accept range of IDs
@@ -565,34 +513,10 @@ static void MX_CAN1_Init(void)
 
   contactorFilter.SlaveStartFilterBank = 14; // maybe try commenting this out
 
-
-//  CAN_FilterTypeDef cellVoltagesFilter;
-//
-//  	cellVoltagesFilter.FilterBank = 5;  // filter bank 2
-//  	cellVoltagesFilter.FilterMode = CAN_FILTERMODE_IDMASK;  // ID list mode,,, make it match this exact ID
-//  	cellVoltagesFilter.FilterScale = CAN_FILTERSCALE_32BIT;
-//  	cellVoltagesFilter.FilterFIFOAssignment = CAN_FILTER_FIFO0;
-//
-//  	cellVoltagesFilter.FilterMaskIdHigh = (ORIONMASK >> 16) & 0xffff;
-//  	cellVoltagesFilter.FilterMaskIdLow = (ORIONMASK & 0xffff);
-//
-//  	uint32_t cell_filter_id = (CELL_VOLTAGES_ID << 3) | (1 << 2);
-//
-//  	cellVoltagesFilter.FilterIdHigh = (cell_filter_id >> 16) & 0xffff;
-//  	cellVoltagesFilter.FilterIdLow = cell_filter_id & 0xffff;
-//
-//  	cellVoltagesFilter.FilterActivation = CAN_FILTER_ENABLE;
-//
-//	if (HAL_CAN_ConfigFilter(&hcan1, &cellVoltagesFilter) != HAL_OK) {
-//		Error_Handler();
-//	}
-//	cellVoltagesFilter.SlaveStartFilterBank = 14; // maybe try commenting this out
-
   HAL_CAN_Start(&hcan1);
 
   HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING | CAN_IT_RX_FIFO0_FULL | CAN_IT_RX_FIFO1_MSG_PENDING | CAN_IT_RX_FIFO1_FULL);
-  //HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING | CAN_IT_RX_FIFO1_MSG_PENDING);
-
+  
   /* USER CODE END CAN1_Init 2 */
 
 }
@@ -865,6 +789,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
+	/* turn on error LED */
   /* User can add his own implementation to report the HAL error return state */
   __disable_irq();
   while (1)
