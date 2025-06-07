@@ -12,7 +12,7 @@
 #include "cmsis_os.h"
 //0x1fffffe0
 #define CONTACTORMASK 0x1fffffe0// just changed it so it accepts 0x21X and 0x20X
-#define ORIONMASK  0x0// just changed it so it accepts 0x21X and 0x20X
+#define ORIONMASK  0xfffffffc// just changed it so it accepts 0x21X and 0x20X
 #define CONTACTORIDS 0x210 // was 0x700,, then was 0x200.. just changed to 0x210 feb 6
 #define CONTACTOR_HEARTBEATS_IDS 0x200
 #define CONTACTOR_MASKED_IDS 0x200 //lower byte is dont care

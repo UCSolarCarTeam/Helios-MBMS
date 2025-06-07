@@ -458,8 +458,9 @@ static void MX_CAN1_Init(void)
   packInfoFilter.FilterScale = CAN_FILTERSCALE_32BIT;
   packInfoFilter.FilterFIFOAssignment = CAN_FILTER_FIFO0;
 
-  packInfoFilter.FilterMaskIdHigh = 0xffff;
-  packInfoFilter.FilterMaskIdLow = 0xfffc;
+  packInfoFilter.FilterMaskIdHigh = (ORIONMASK >> 16) & 0xffff;
+  packInfoFilter.FilterMaskIdLow = ORIONMASK & 0xffff;
+
 
   uint32_t pack_filter_id = (PACK_INFO_ID << 3) | (1 << 2);
 
@@ -471,39 +472,43 @@ static void MX_CAN1_Init(void)
   if (HAL_CAN_ConfigFilter(&hcan1, &packInfoFilter) != HAL_OK) {
       // handle error!
   }
-//
-//  CAN_FilterTypeDef tempInfoFilter;
-//
-//    tempInfoFilter.FilterBank = 1;  // filter bank 1
-//    tempInfoFilter.FilterMode = CAN_FILTERMODE_IDLIST;  // ID list mode,,, make it match this exact ID
-//    tempInfoFilter.FilterScale = CAN_FILTERSCALE_32BIT;
-//    tempInfoFilter.FilterFIFOAssignment = CAN_FILTER_FIFO0;
-//    tempInfoFilter.FilterActivation = CAN_FILTER_ENABLE;
-//
-////    tempInfoFilter.FilterMaskIdHigh = ORIONMASK >> 13;
-////    tempInfoFilter.FilterMaskIdLow = (ORIONMASK  << 3);
-//
-//    tempInfoFilter.FilterIdHigh = ((TEMP_INFO_ID  & 0x000007ff) << 5) | ((TEMP_INFO_ID  & 0x1f000000) >> 24); // would be zero when u shift it 13 bits left lol
-//    tempInfoFilter.FilterIdLow = (TEMP_INFO_ID   & 0x00fff800) >> 8;
-//
-//    tempInfoFilter.FilterActivation = CAN_FILTER_ENABLE;
-//
-//    if (HAL_CAN_ConfigFilter(&hcan1, &tempInfoFilter) != HAL_OK) {
-//      Error_Handler();
-//    }
+
+  CAN_FilterTypeDef tempInfoFilter;
+
+    tempInfoFilter.FilterBank = 1;  // filter bank 1
+    tempInfoFilter.FilterMode = CAN_FILTERMODE_IDMASK;  // ID list mode,,, make it match this exact ID
+    tempInfoFilter.FilterScale = CAN_FILTERSCALE_32BIT;
+    tempInfoFilter.FilterFIFOAssignment = CAN_FILTER_FIFO0;
+    tempInfoFilter.FilterActivation = CAN_FILTER_ENABLE;
+
+    tempInfoFilter.FilterMaskIdHigh = (ORIONMASK >> 16) & 0xffff;
+    tempInfoFilter.FilterMaskIdLow = (ORIONMASK  & 0xffff);
+
+    uint32_t temp_filter_id = (TEMP_INFO_ID << 3) | (1 << 2);
+
+    tempInfoFilter.FilterIdHigh = ((temp_filter_id >> 16) & 0xffff); // would be zero when u shift it 13 bits left lol
+    tempInfoFilter.FilterIdLow = temp_filter_id & 0xffff;
+
+    tempInfoFilter.FilterActivation = CAN_FILTER_ENABLE;
+
+    if (HAL_CAN_ConfigFilter(&hcan1, &tempInfoFilter) != HAL_OK) {
+      Error_Handler();
+    }
 
 //  CAN_FilterTypeDef cellVoltagesFilter;
 //
 //  	cellVoltagesFilter.FilterBank = 2;  // filter bank 2
-//  	cellVoltagesFilter.FilterMode = CAN_FILTERMODE_IDLIST;  // ID list mode,,, make it match this exact ID
+//  	cellVoltagesFilter.FilterMode = CAN_FILTERMODE_IDMASK;  // ID list mode,,, make it match this exact ID
 //  	cellVoltagesFilter.FilterScale = CAN_FILTERSCALE_32BIT;
 //  	cellVoltagesFilter.FilterFIFOAssignment = CAN_FILTER_FIFO1;
 //
-////  	cellVoltagesFilter.FilterMaskIdHigh = ORIONMASK >> 13;
-////  	cellVoltagesFilter.FilterMaskIdLow = (ORIONMASK << 3);
+//  	cellVoltagesFilter.FilterMaskIdHigh = (ORIONMASK >> 16) & 0xffff;
+//  	cellVoltagesFilter.FilterMaskIdLow = (ORIONMASK & 0xffff);
 //
-//  	cellVoltagesFilter.FilterIdHigh = ((CELL_VOLTAGES_ID  & 0x000007ff) << 5) | ((CELL_VOLTAGES_ID & 0x1f000000) >> 24);
-//  	cellVoltagesFilter.FilterIdLow = (CELL_VOLTAGES_ID  & 0x00fff800) >> 8;
+//  	uint32_t cell_filter_id = (CELL_VOLTAGES_ID << 3) | (1 << 2);
+//
+//  	cellVoltagesFilter.FilterIdHigh = (cell_filter_id >> 16) & 0xffff;
+//  	cellVoltagesFilter.FilterIdLow = cell_filter_id & 0xffff;
 //
 //  	cellVoltagesFilter.FilterActivation = CAN_FILTER_ENABLE;
 //
@@ -541,23 +546,23 @@ static void MX_CAN1_Init(void)
 	 * filters :( like having a specific filter speciifc to each id ....
 	 */
   CAN_FilterTypeDef contactorFilter;
-  contactorFilter.FilterBank = 1;  // filter bank 1
+  contactorFilter.FilterBank = 2;  // filter bank 1
   contactorFilter.FilterMode = CAN_FILTERMODE_IDMASK;  // mask mode !!! can accept range of IDs
   contactorFilter.FilterScale = CAN_FILTERSCALE_32BIT;
   contactorFilter.FilterFIFOAssignment = CAN_FILTER_FIFO0;
   // 0 is dont care, 1 is compare them !!!!
   //uint32_t mask = 0x1fffffe0; // want it to let thru EXIDs 0x0000020X = 0x20X to 0x21X :)
 
-  uint32_t filter_id = (0x200 << 3) | (1 << 2);
-  uint32_t filter_mask = (0xffffffe0 << 3) | (1 << 2);
+  uint32_t contactor_filter_id = (0x200 << 3) | (1 << 2);
+  uint32_t contactor_filter_mask = (CONTACTORMASK << 3) | (1 << 2);
 
-  contactorFilter.FilterMaskIdHigh = ((filter_mask >> 16) & 0xffff);
-  contactorFilter.FilterMaskIdLow = (filter_mask & 0xffff);
+  contactorFilter.FilterMaskIdHigh = ((contactor_filter_mask >> 16) & 0xffff);
+  contactorFilter.FilterMaskIdLow = (contactor_filter_mask & 0xffff);
 
   contactorFilter.FilterActivation = CAN_FILTER_ENABLE;
 
-  contactorFilter.FilterIdHigh = ((filter_id >> 16) & 0xffff); // shift right by 13 bits to get rid of
-  contactorFilter.FilterIdLow = (filter_id & 0xffff); // zero out the first 16-bits, so only rightmost 13 bits left, shift left by 3 to make room for IDE, RTR, 0
+  contactorFilter.FilterIdHigh = ((contactor_filter_id >> 16) & 0xffff); // shift right by 13 bits to get rid of
+  contactorFilter.FilterIdLow = (contactor_filter_id & 0xffff); // zero out the first 16-bits, so only rightmost 13 bits left, shift left by 3 to make room for IDE, RTR, 0
 
   if (HAL_CAN_ConfigFilter(&hcan1, &contactorFilter) != HAL_OK) {
 	  Error_Handler();
