@@ -49,6 +49,11 @@ void Startup()
 	perms_init();
 	MBMSStatus_init();
 
+	HAL_GPIO_WritePin(GRN_LED_GPIO_Port, GRN_LED_Pin, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(BLU_LED_GPIO_Port, BLU_LED_Pin, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(RED_LED_GPIO_Port, RED_LED_Pin, GPIO_PIN_SET);
+
+
 
 	mbmsStatus.startupState = nMPS_ENABLED;
 
@@ -89,9 +94,9 @@ void Startup()
 	// dont worry, discharge and charge enable are checked for their respective contactors in BCT
 	perms.common = 1;
 	// commented out for testing only
-//	while ((contactorInfo[COMMON].contactorClosed != CLOSE_CONTACTOR)) {
-//
-//	}
+	while ((contactorInfo[COMMON].contactorClosed != CLOSE_CONTACTOR)) {
+
+	}
 	if (contactorInfo[COMMON].contactorError) {
 		// TO DO: handle error
 		Error_Handler();
@@ -102,9 +107,9 @@ void Startup()
 	perms.lv = 1;
 
 	// commented out for testing only
-//	while ((contactorInfo[LOWV].contactorClosed != CLOSE_CONTACTOR)) {
-//		// wait for LV contactor to close
-//	}
+	while ((contactorInfo[LOWV].contactorClosed != CLOSE_CONTACTOR)) {
+		// wait for LV contactor to close
+	}
 
 	if (contactorInfo[LOWV].contactorError) {
 		// TO DO: handle error

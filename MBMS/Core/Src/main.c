@@ -448,7 +448,6 @@ static void MX_CAN1_Init(void)
   hcan1.Init.AutoRetransmission = DISABLE;
   hcan1.Init.ReceiveFifoLocked = DISABLE;
   hcan1.Init.TransmitFifoPriority = DISABLE;
-
   if (HAL_CAN_Init(&hcan1) != HAL_OK)
   {
     Error_Handler();
@@ -516,7 +515,7 @@ static void MX_CAN1_Init(void)
   HAL_CAN_Start(&hcan1);
 
   HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING | CAN_IT_RX_FIFO0_FULL | CAN_IT_RX_FIFO1_MSG_PENDING | CAN_IT_RX_FIFO1_FULL);
-  
+
   /* USER CODE END CAN1_Init 2 */
 
 }
@@ -645,8 +644,10 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOD_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, BLU_LED_Pin|GRN_LED_Pin|RED_LED_Pin|Strobe_En_Pin
-                          |CAN1_MODE_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, BLU_LED_Pin|GRN_LED_Pin|RED_LED_Pin, GPIO_PIN_SET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOA, Strobe_En_Pin|CAN1_MODE_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, ABATT_Disable_Pin|A1_Pin|_12V_PCHG_En_Pin|_12V_CAN_En_Pin, GPIO_PIN_RESET);
@@ -752,8 +753,6 @@ void StartDefaultTask(void *argument)
   /* Infinite loop */
   for(;;)
   {
-	  HAL_GPIO_TogglePin(G1_GPIO_Port, G1_Pin); // pin PE7
-	  HAL_GPIO_TogglePin(A3_GPIO_Port, A3_Pin); // pin PE7
 	  // Delay in milliseconds
 //	  HAL_Delay(100);
 	  osDelay(1000);

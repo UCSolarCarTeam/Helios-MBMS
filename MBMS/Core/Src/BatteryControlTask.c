@@ -342,12 +342,13 @@ void UpdateCounter(uint32_t * counter) {
 
 void enter_MPS_DISCONNECTED() {
 	carState = MPS_DISCONNECTED;
+	HAL_GPIO_WritePin(GRN_LED_GPIO_Port, GRN_LED_Pin, GPIO_PIN_SET);
+
 	perms.faulted = 1; // stop contactors from closing...
 	osEventFlagsSet(shutoffFlagHandle, (nMPS_FLAG | SHUTOFF_FLAG));
 	//osDelay(10);
 
 }
-
 
 /*
  * This function runs when a BPS Fault should occur
@@ -358,7 +359,9 @@ void enter_BPS_FAULT() {
 	// strpbe enable
 	HAL_GPIO_WritePin(Strobe_En_GPIO_Port, Strobe_En_Pin, 1);
 
-	HAL_GPIO_WritePin(RED_LED_GPIO_Port, RED_LED_Pin, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(RED_LED_GPIO_Port, RED_LED_Pin, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(GRN_LED_GPIO_Port, GRN_LED_Pin, GPIO_PIN_SET);
+
 	perms.faulted = 1;
 
 	carState = BPS_FAULT;
@@ -381,8 +384,19 @@ void enter_BPS_FAULT() {
 
 void enter_SOFT_TRIP() {
 	carState = SOFT_TRIP;
-	HAL_GPIO_WritePin(BLU_LED_GPIO_Port, BLU_LED_Pin, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(GRN_LED_GPIO_Port, GRN_LED_Pin, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(BLU_LED_GPIO_Port, BLU_LED_Pin, GPIO_PIN_RESET);
 	perms.faulted = 1;
+}
+
+void enter_CHARGING() {
+	carState = CHARGING;
+	HAL_GPIO_WritePin(GRN_LED_GPIO_Port, GRN_LED_Pin, GPIO_PIN_SET);
+}
+
+void enter_FULLY_OPERATIONAL() {
+	carState = FULLY_OPERATIONAL;
+	HAL_GPIO_WritePin(GRN_LED_GPIO_Port, GRN_LED_Pin, GPIO_PIN_RESET);
 }
 
 void SystemStateMachine() {
@@ -412,7 +426,7 @@ void SystemStateMachine() {
 			}
 
 			if (mbmsStatus.startupState == COMPLETED){
-				carState = FULLY_OPERATIONAL;
+				enter_FULLY_OPERATIONAL();
 			}
 
 			break;
@@ -436,7 +450,7 @@ void SystemStateMachine() {
 			}
 
 			if (plugged && (contactorInfo[CHARGE].contactorClosed == CLOSE_CONTACTOR)) {
-				carState = CHARGING;
+				enter_CHARGING();
 			}
 
 			/* Running checks */
