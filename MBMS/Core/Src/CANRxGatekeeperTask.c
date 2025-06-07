@@ -20,17 +20,32 @@ extern BatteryInfo batteryInfo;
 
 uint32_t It_messages_received = 0;
 uint32_t messages_received = 0;
+
 uint32_t common_heartbeat_count = 0;
 uint32_t motor_heartbeat_count = 0;
 uint32_t array_heartbeat_count = 0;
 uint32_t lv_heartbeat_count = 0;
 uint32_t charge_heartbeat_count = 0;
 
+uint32_t common_msg_count = 0;
+uint32_t motor_msg_count = 0;
+uint32_t array_msg_count = 0;
+uint32_t lv_msg_count = 0;
+uint32_t charge_msg_count = 0;
+
+uint32_t pack_msg_count = 0;
+uint32_t temp_msg_count = 0;
+uint32_t cell_msg_count = 0;
+
 void CANRxGatekeeperTask(void* arg)
 {
+	uint32_t taskTickLastStart = osKernelGetTickCount();
     while(1)
     {
+
     	CANRxGatekeeper();
+		taskTickLastStart += 5;
+		osDelayUntil(taskTickLastStart);
     }
 }
 
@@ -104,6 +119,33 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan){
 		case 0x204:
 			charge_heartbeat_count++;
 			break;
+
+		case 0x210:
+			common_msg_count++;
+			break;
+		case 0x211:
+			motor_msg_count++;
+			break;
+		case 0x212:
+			array_msg_count++;
+			break;
+		case 0x213:
+			lv_msg_count++;
+			break;
+		case 0x214:
+			charge_msg_count++;
+			break;
+
+		case 0x302:
+			pack_msg_count++;
+			break;
+		case 0x304:
+			temp_msg_count++;
+			break;
+		case 0x305:
+			cell_msg_count++;
+			break;
+
 	}
 
 	It_messages_received++;
@@ -149,7 +191,35 @@ void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan){
 		case 0x204:
 			charge_heartbeat_count++;
 			break;
+
+		case 0x210:
+			common_msg_count++;
+			break;
+		case 0x211:
+			motor_msg_count++;
+			break;
+		case 0x212:
+			array_msg_count++;
+			break;
+		case 0x213:
+			lv_msg_count++;
+			break;
+		case 0x214:
+			charge_msg_count++;
+			break;
+
+		case 0x302:
+			pack_msg_count++;
+			break;
+		case 0x304:
+			temp_msg_count++;
+			break;
+		case 0x305:
+			cell_msg_count++;
+			break;
+
 	}
+
 	It_messages_received++;
 
 	//osStatus_t status = osMessageQueuePut(RxCANMessageQueueHandle, &msg, 0, 0); // timeout should be 0

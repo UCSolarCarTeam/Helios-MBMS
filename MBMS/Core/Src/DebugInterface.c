@@ -19,7 +19,7 @@ void DebugInterfaceTask(void* arg)
     	//DebugInterface();
     }
 }
-
+/*
 void DebugInterface()
 {
 
@@ -286,6 +286,7 @@ void DebugInterface()
 
 
 }
+*/
 
 
 

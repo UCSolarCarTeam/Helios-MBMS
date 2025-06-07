@@ -112,7 +112,7 @@ void UpdateContactorInfoStruct() {
 		// if the message is about the contactor heartbeats
 		if((contactorMsg.extendedID & 0xff0) == CONTACTOR_HEARTBEATS_IDS){
 			uint16_t newHeartbeat = contactorMsg.data[0] + (contactorMsg.data[1] << 8);
-			osStatus_t a = osMutexAcquire(ContactorInfoMutexHandle, 200);
+			osStatus_t a = osMutexAcquire(ContactorInfoMutexHandle, 5);
 			if (a == osOK) {
 				contactorInfo[contactorMsg.extendedID - CONTACTOR_HEARTBEATS_IDS].heartbeat = newHeartbeat;
 				osMutexRelease(ContactorInfoMutexHandle);
@@ -230,7 +230,7 @@ void UpdateOrionInfoStruct() {
 		}
 
 		if (orionMsg.extendedID == PACK_INFO_ID) {
-			osStatus_t a = osMutexAcquire(BatteryInfoMutexHandle, 200);
+			osStatus_t a = osMutexAcquire(BatteryInfoMutexHandle, 5);
 			if(a == osOK) {
 				// update batteryInfo instance for the pack info stuff
 				batteryInfo.packCurrent = (data[0] + (data[1] << 8)) / 10;
@@ -259,7 +259,7 @@ void UpdateOrionInfoStruct() {
 
 		}
 		else if (orionMsg.extendedID == TEMP_INFO_ID) {
-			osStatus_t a = osMutexAcquire(BatteryInfoMutexHandle, 200);
+			osStatus_t a = osMutexAcquire(BatteryInfoMutexHandle, 5);
 			if(a == osOK) {
 				batteryInfo.highTemp = data[0];
 				batteryInfo.lowTemp = data[2];
@@ -270,7 +270,7 @@ void UpdateOrionInfoStruct() {
 			}
 		}
 		else if (orionMsg.extendedID == CELL_VOLTAGES_ID) {
-			osStatus_t a = osMutexAcquire(BatteryInfoMutexHandle, 200);
+			osStatus_t a = osMutexAcquire(BatteryInfoMutexHandle, 5);
 			if(a == osOK) {
 				batteryInfo.lowCellVoltage = (float)(data[0] + (data[1] << 8)) / 10000;
 				batteryInfo.lowCellVoltageID = data[2];
@@ -286,7 +286,7 @@ void UpdateOrionInfoStruct() {
 		// the below is not even used tbh but if u were to use it, check the units and do the proper conversions!
 		// and do orion messages received stuff if u use this
 		else if (orionMsg.extendedID == MIN_MAX_VOLTAGES_ID) {
-			osStatus_t a = osMutexAcquire(BatteryInfoMutexHandle, 200);
+			osStatus_t a = osMutexAcquire(BatteryInfoMutexHandle, 5);
 			if(a == osOK) {
 				batteryInfo.maxCellVoltage = data[0] + (data[1] << 8);
 				batteryInfo.minCellVoltage = data[2] + (data[3] << 8);
@@ -304,7 +304,7 @@ void UpdateOrionInfoStruct() {
 		orionMessageCounter += 1;
 	}
 	if(orionMessageCounter >= 20){
-		osStatus_t a = osMutexAcquire(MBMSStatusMutexHandle, 200);
+		osStatus_t a = osMutexAcquire(MBMSStatusMutexHandle, 5);
 		if (a == osOK) {
 			mbmsStatus.orionCANReceived = 0; // no orion message recieved !!!
 			osMutexRelease(MBMSStatusMutexHandle);
@@ -349,7 +349,7 @@ void enter_BPS_FAULT() {
 
 	carState = BPS_FAULT;
 
-	osStatus_t a = osMutexAcquire(MBMSStatusMutexHandle, 200);
+	osStatus_t a = osMutexAcquire(MBMSStatusMutexHandle, 5);
 	if(a == osOK) {
 		// update mbms status
 		mbmsStatus.strobeBMSLight = 1;
@@ -598,7 +598,7 @@ uint8_t waitForFirstHeartbeats() {
 
 	for(int i = 0; i < 5; i++) {
 		if(heartbeatFailCounter[i] > 3) {
-			osStatus_t a = osMutexAcquire(MBMSTripMutexHandle, 200);
+			osStatus_t a = osMutexAcquire(MBMSTripMutexHandle, 5);
 			if(a == osOK) {
 				switch (i) {
 					case 0:
@@ -660,7 +660,7 @@ uint8_t waitForFirstHeartbeats() {
 // PROBLEM: this does not have a specific trip for it yet... it just goes to BPS fault...
 uint8_t checkContactorsOpen() {
 	uint8_t allOpen = 1;
-	osStatus_t acquire = osMutexAcquire(ContactorInfoMutexHandle, 200);
+	osStatus_t acquire = osMutexAcquire(ContactorInfoMutexHandle, 5);
 	if (acquire == osOK) {
 
 		for (int i = 0; i < 5; i++) {
@@ -684,7 +684,7 @@ uint8_t checkContactorsOpen() {
 uint8_t checkPrechargersOpen() {
 
 	uint8_t allOpen = 1;
-	osStatus_t acquire = osMutexAcquire(ContactorInfoMutexHandle, 200);
+	osStatus_t acquire = osMutexAcquire(ContactorInfoMutexHandle, 5);
 	if (acquire == osOK) {
 
 		for (int i = 1; i < 5; i++) { //COMMON HAS NO PRECHARGER which is why i = 1
@@ -708,7 +708,7 @@ uint8_t startupBatteryCheck() {
 
 	uint8_t safe = 1;
 	// check this mutex stuff ngl...
-	osStatus_t acquire = osMutexAcquire(MBMSTripMutexHandle, 200);
+	osStatus_t acquire = osMutexAcquire(MBMSTripMutexHandle, 5);
 	if(acquire == osOK) {
 
 		if(batteryInfo.highCellVoltage > HARD_MAX_CELL_VOLTAGE){
@@ -838,10 +838,10 @@ void CheckSoftBatteryLimit() {
 	uint8_t trip = 0;
 
 	/// ummmmm be careful deadlock mauybe check everything once ur done all the mutexes
-	osStatus_t acquire = osMutexAcquire(MBMSSoftLimitWarningMutexHandle, 200);
+	osStatus_t acquire = osMutexAcquire(MBMSSoftLimitWarningMutexHandle, 5);
 	if(acquire == osOK) {
 
-		osStatus_t a1 = osMutexAcquire(BatteryInfoMutexHandle, 200);
+		osStatus_t a1 = osMutexAcquire(BatteryInfoMutexHandle, 5);
 		if (a1 == osOK){
 			/* Checking the min/max cell voltages */
 			if (batteryInfo.highCellVoltage > SOFT_MAX_CELL_VOLTAGE) {
@@ -868,7 +868,7 @@ void CheckSoftBatteryLimit() {
 
 		}
 
-		osStatus_t a2 = osMutexAcquire(ContactorInfoMutexHandle, 200);
+		osStatus_t a2 = osMutexAcquire(ContactorInfoMutexHandle, 5);
 		if (a2 == osOK) {
 			/* Checking contactors' high current */
 			if (batteryInfo.packCurrent > SOFT_MAX_COMMON_CONTACTOR_CURRENT){
@@ -901,10 +901,10 @@ void CheckSoftBatteryLimit() {
 void UpdateTripStatus() {
 
 	static uint8_t BPS_Fault = 0;
-	osStatus_t acquire = osMutexAcquire(MBMSTripMutexHandle, 200);
+	osStatus_t acquire = osMutexAcquire(MBMSTripMutexHandle, 5);
 	if (acquire == osOK){
 
-		osStatus_t a1 = osMutexAcquire(ContactorInfoMutexHandle, 200);
+		osStatus_t a1 = osMutexAcquire(ContactorInfoMutexHandle, 5);
 		if (a1 == osOK){
 
 			if (batteryInfo.packCurrent > HARD_MAX_COMMON_CONTACTOR_CURRENT){
@@ -946,7 +946,7 @@ void UpdateTripStatus() {
 
 		}
 
-		osStatus_t a2 = osMutexAcquire(BatteryInfoMutexHandle, 200);
+		osStatus_t a2 = osMutexAcquire(BatteryInfoMutexHandle, 5);
 		if (a2 == osOK){
 
 			/* checking for high/low cell voltage trips */
@@ -975,7 +975,7 @@ void UpdateTripStatus() {
 
 		}
 
-		osStatus_t a3 = osMutexAcquire(MBMSStatusMutexHandle, 200);
+		osStatus_t a3 = osMutexAcquire(MBMSStatusMutexHandle, 5);
 		if (a3 == osOK) {
 			// if orion can message wasn't received recently, set trip
 			if (!(mbmsStatus.orionCANReceived)) {
@@ -987,7 +987,7 @@ void UpdateTripStatus() {
 
 		}
 
-		osStatus_t a4 = osMutexAcquire(ContactorCommandMutexHandle, 200);
+		osStatus_t a4 = osMutexAcquire(ContactorCommandMutexHandle, 5);
 		if(a4 == osOK) {
 
 			/* Contactor disconnected unexpectedely */
@@ -999,16 +999,9 @@ void UpdateTripStatus() {
 					|| ((contactorCommand.charge == CLOSE_CONTACTOR) && (contactorInfo[CHARGE].lineCurrent < NO_CURRENT_THRESHOLD))
 				)
 			{
-<<<<<<< Updated upstream
 				mbmsTrip.contactorDisconnectedUnexpectedlyTrip = 1;
 				//BPS_Fault = 1;
-=======
-				//if ((osKernelGetTickCount() - (float)lastSentTime[CONTACTOR_COMMAND])  * FREERTOS_TICK_PERIOD >= CONTACTOR_RESPONSE_TIMEOUT) {
 
-					mbmsTrip.contactorDisconnectedUnexpectedlyTrip = 1;
-					BPS_Fault = 1;
-				//}
->>>>>>> Stashed changes
 			}
 
 			/* Contactor connected unexpectedly trip */

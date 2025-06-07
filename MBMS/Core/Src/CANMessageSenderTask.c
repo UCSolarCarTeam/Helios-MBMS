@@ -31,11 +31,15 @@ float messageFrequency[6] = { HEARTBEAT_FREQ, CONTACTOR_COMMAND_FREQ,
 
 
 void CANMessageSenderTask(void* arg)
+
 {
+	uint32_t taskTickLastStart = osKernelGetTickCount();
 	lastSentTime_init();
     while(1)
     {
     	CANMessageSender();
+		taskTickLastStart += 10;
+		osDelayUntil(taskTickLastStart);
     }
 }
 
