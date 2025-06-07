@@ -37,6 +37,8 @@ uint32_t pack_msg_count = 0;
 uint32_t temp_msg_count = 0;
 uint32_t cell_msg_count = 0;
 
+uint32_t heartbeat_update_count;
+
 void CANRxGatekeeperTask(void* arg)
 {
 	uint32_t taskTickLastStart = osKernelGetTickCount();
@@ -44,8 +46,8 @@ void CANRxGatekeeperTask(void* arg)
     {
 
     	CANRxGatekeeper();
-		taskTickLastStart += 10;
-		osDelayUntil(taskTickLastStart);
+//		taskTickLastStart += 10;
+//		osDelayUntil(taskTickLastStart);
     }
 }
 
@@ -79,12 +81,18 @@ void CANRxGatekeeper()
 			}
 		}
 		else if ((eID & 0xfffffff0) == 0x200) {
-			uint16_t newHeartbeat = msg.data[0] + (msg.data[1] << 8);
-			osStatus_t a = osMutexAcquire(ContactorInfoMutexHandle, 5);
-			if (a == osOK) {
-				contactorInfo[eID - CONTACTOR_HEARTBEATS_IDS].heartbeat = newHeartbeat;
-				osMutexRelease(ContactorInfoMutexHandle);
+			status = osMessageQueuePut(contactorHeartbeatMessageQueueHandle, &msg, 0, osWaitForever); // idk maybe shouldnt wait forever tho..
+			if(status != osOK){
+				// also handle error here but idk do what :(
+				Error_Handler();
 			}
+//			uint16_t newHeartbeat = msg.data[0] + (msg.data[1] << 8);
+//			osStatus_t a = osMutexAcquire(ContactorInfoMutexHandle, 5);
+//			if (a == osOK) {
+//				contactorInfo[eID - CONTACTOR_HEARTBEATS_IDS].heartbeat = newHeartbeat;
+//				heartbeat_update_count++;
+//				osMutexRelease(ContactorInfoMutexHandle);
+//			}
 
 		}
 		else if ((eID & CONTACTORMASK) == CONTACTOR_MASKED_IDS )

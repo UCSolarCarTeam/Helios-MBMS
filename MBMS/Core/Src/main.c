@@ -107,6 +107,12 @@ const osMessageQueueAttr_t contactorMessageQueue_attributes = {
 		.attr_bits = 0, // idk i just set it to zero for now but idk help
 };
 
+osMessageQueueId_t contactorHeartbeatMessageQueueHandle;
+const osMessageQueueAttr_t contactorHeartbeatMessageQueue_attributes = {
+		.name = "contactorHeartbeatMessageQueue",
+		.attr_bits = 0, // idk i just set it to zero for now but idk help
+};
+
 // flag that BatteryControlTask will set, ShutdownTask will wait for
 osEventFlagsId_t shutoffFlagHandle;
 const osEventFlagsAttr_t shutoffFlag_attributes = {
@@ -310,6 +316,7 @@ int main(void)
   RxCANMessageQueueHandle = osMessageQueueNew(QUEUE_SIZE, sizeof(CANMsg), &RxCANMessageQueue_attributes);
 
   contactorMessageQueueHandle = osMessageQueueNew(QUEUE_SIZE, sizeof(CANMsg), &contactorMessageQueue_attributes);
+  contactorHeartbeatMessageQueueHandle = osMessageQueueNew(QUEUE_SIZE, sizeof(CANMsg), &contactorHeartbeatMessageQueue_attributes);
   // IS THIS CORRECT??? THE NUMBER IN QUEUE AND SIZE
 
   /* USER CODE END RTOS_QUEUES */

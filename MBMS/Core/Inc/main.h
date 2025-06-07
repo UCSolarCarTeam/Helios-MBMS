@@ -42,6 +42,7 @@ extern osMessageQueueId_t TxCANMessageQueueHandle;
 extern osMessageQueueId_t RxCANMessageQueueHandle;
 extern osMessageQueueId_t batteryControlMessageQueueHandle;
 extern osMessageQueueId_t contactorMessageQueueHandle;
+extern osMessageQueueId_t contactorHeartbeatMessageQueueHandle;
 
 extern osThreadId_t batteryControlTaskHandle;
 extern osEventFlagsId_t shutoffFlagHandle;

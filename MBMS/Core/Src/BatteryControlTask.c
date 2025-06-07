@@ -40,6 +40,9 @@ ContactorInfo contactorInfo[5]; // one for each contactor        add volatile to
 
 uint8_t orionMessagesReceived = 0x0;
 
+uint32_t heartbeat_check_count = 0;
+extern uint32_t heartbeat_update_count;
+
 extern uint32_t lastSentTime[6];
 
 /*
@@ -71,7 +74,7 @@ void BatteryControlTask(void* arg)
     {
     	BatteryControl();
 		taskTickLastStart += 10;
-		//osDelayUntil(taskTickLastStart);
+		osDelayUntil(taskTickLastStart);
     }
 }
 
@@ -83,6 +86,7 @@ void BatteryControl()
 
 	/* Updating structs */
 	UpdateContactorInfoStruct();
+	updateHeartbeats();
 	UpdatePowerSelectionStruct();
 	UpdateOrionInfoStruct();
 
@@ -100,6 +104,25 @@ void BatteryControl()
 }
 
 /* FUNCTIONS FOR UPDATING STRUCTS */
+void updateHeartbeats() {
+	CANMsg contactorMsg;
+	osStatus status = osMessageQueueGet(contactorHeartbeatMessageQueueHandle, &contactorMsg, NULL, 10);
+
+	if (status == osOK) {
+
+		// if the message is about the contactor heartbeats
+
+		uint16_t newHeartbeat = contactorMsg.data[0] + (contactorMsg.data[1] << 8);
+		osStatus_t a = osMutexAcquire(ContactorInfoMutexHandle, 55);
+		if (a == osOK) {
+			contactorInfo[contactorMsg.extendedID - CONTACTOR_HEARTBEATS_IDS].heartbeat = newHeartbeat;
+			heartbeat_update_count++;
+			osMutexRelease(ContactorInfoMutexHandle);
+		}
+	}
+
+}
+
 
 void UpdateContactorInfoStruct() {
 	//static uint8_t counter = 0;
@@ -110,17 +133,18 @@ void UpdateContactorInfoStruct() {
 	if (status == osOK) {
 
 		// if the message is about the contactor heartbeats
-		if((contactorMsg.extendedID & 0xff0) == CONTACTOR_HEARTBEATS_IDS){
-			uint16_t newHeartbeat = contactorMsg.data[0] + (contactorMsg.data[1] << 8);
-			osStatus_t a = osMutexAcquire(ContactorInfoMutexHandle, 5);
-			if (a == osOK) {
-				contactorInfo[contactorMsg.extendedID - CONTACTOR_HEARTBEATS_IDS].heartbeat = newHeartbeat;
-				osMutexRelease(ContactorInfoMutexHandle);
-			}
-		}
+//		if((contactorMsg.extendedID & 0xff0) == CONTACTOR_HEARTBEATS_IDS){
+//			uint16_t newHeartbeat = contactorMsg.data[0] + (contactorMsg.data[1] << 8);
+//			osStatus_t a = osMutexAcquire(ContactorInfoMutexHandle, 55);
+//			if (a == osOK) {
+//				contactorInfo[contactorMsg.extendedID - CONTACTOR_HEARTBEATS_IDS].heartbeat = newHeartbeat;
+//				heartbeat_update_count++;
+//				osMutexRelease(ContactorInfoMutexHandle);
+//			}
+//		}
 
 		// if the message is about the contactor info
-		else{
+//		else{
 			uint8_t data[contactorMsg.DLC];
 			for (int i = 0; i < contactorMsg.DLC; i ++) {
 				data[i] = contactorMsg.data[i];
@@ -138,7 +162,7 @@ void UpdateContactorInfoStruct() {
 			updateContactorInfo((contactorMsg.extendedID - CONTACTORIDS), prechargerClosed, prechargerClosing, prechargerError,
 					contactorClosed, contactorClosing, contactorError, lineCurrent, chargeCurrent, contactorOpeningError);
 
-		}
+//		}
 	}
 
 }
@@ -387,6 +411,7 @@ void SystemStateMachine() {
 			break;
 
 		case STARTUP:
+			updateHeartbeats();
 
 			// will go to BPS_FAULT state if startup checks do not pass
 			startupCheck();
@@ -425,8 +450,16 @@ void SystemStateMachine() {
 				carState = CHARGING;
 			}
 
+			updateHeartbeats();
+
 			/* Running checks */
-			//CheckContactorHeartbeats();
+			if (heartbeat_check_count <= heartbeat_update_count) {
+				CheckContactorHeartbeats();
+			}
+			else {
+				updateHeartbeats();
+			}
+
 			CheckSoftBatteryLimit();
 			UpdateTripStatus();
 
@@ -568,13 +601,20 @@ void UpdateContactors() {
  */
 void startupCheck(){
 
+
 	/* Waiting for contactor heartbeats */
 	uint8_t heartbeatDead = 0;
 	if (((previousHeartbeats[0] == 0) || (previousHeartbeats[1] == 0) || (previousHeartbeats[2] == 0) ||
 		   (previousHeartbeats[3] == 0) || (previousHeartbeats[4] == 0))) // was != 0 oops!
 	{
 		// set heartbeatDead so we can break out of while loop lol
-		heartbeatDead = waitForFirstHeartbeats();
+		if( heartbeat_check_count <= heartbeat_update_count) {
+			heartbeatDead = waitForFirstHeartbeats();
+		}
+		else {
+			updateHeartbeats();
+		}
+
 	}
 	if (heartbeatDead == 1){
 		enter_BPS_FAULT();
@@ -595,11 +635,14 @@ void startupCheck(){
 
 
 uint8_t waitForFirstHeartbeats() {
+
 	static uint8_t heartbeatFailCounter[5] = {0};
 	uint8_t dead = 0;
 
 
 	for(int i = 0; i < 5; i++) {
+		heartbeat_check_count++;
+
 		if(heartbeatFailCounter[i] > 3) {
 			osStatus_t a = osMutexAcquire(MBMSTripMutexHandle, 5);
 			if(a == osOK) {
@@ -643,7 +686,7 @@ uint8_t waitForFirstHeartbeats() {
 			else {
 				heartbeatLastUpdatedTime[i] = osKernelGetTickCount();
 
-				previousHeartbeats[i] = contactorInfo[i].heartbeat;
+				previousHeartbeats[i] = (contactorInfo[i].heartbeat) - 1;
 				heartbeatFailCounter[i] = 0;
 			}
 			osMutexRelease(ContactorInfoMutexHandle);
@@ -774,52 +817,60 @@ void CheckContactorHeartbeats() {
 	 * be accurate of what the problem is, or if there is a problem. For example if a contactor dies, other
 	 * contactor would still be sending messages.
 	 */
+
+
+
 	static uint8_t BPSFault = 0;
 	for(int i = 0; i < 5; i++) {
-		if(previousHeartbeats[i] >= 65535) { // check this logic lol
-			previousHeartbeats[i] = 0;
-		}
 
 
-		if(previousHeartbeats[i] >= contactorInfo[i].heartbeat){
-			uint32_t difference_ticks = osKernelGetTickCount() - heartbeatLastUpdatedTime[i];
-			float difference_seconds = (float) difference_ticks * FREERTOS_TICK_PERIOD;
-			if((difference_seconds) > CONTACTOR_HEARTBEAT_TIMEOUT) {
+		osStatus_t a = osMutexAcquire(ContactorInfoMutexHandle, READING_MUTEX_TIMEOUT);
+		if (a == osOK) {
+			heartbeat_check_count++;
 
-				osStatus_t acquire = osMutexAcquire(MBMSTripMutexHandle, UPDATING_MUTEX_TIMEOUT);
-				if(acquire == osOK) {
-					// set heartbeat dead trip
-					switch (i) {
-						case 0:
-							mbmsTrip.commonHeartbeatDeadTrip = 1;
-							break;
-						case 1:
-							mbmsTrip.motorHeartbeatDeadTrip = 1;
-							break;
-						case 2:
-							mbmsTrip.arrayHeartbeatDeadTrip = 1;
-							break;
-						case 3:
-							mbmsTrip.LVHeartbeatDeadTrip = 1;
-							break;
-						case 4:
-							mbmsTrip.chargeHeartbeatDeadTrip = 1;
-							break;
+
+			if(previousHeartbeats[i] >= 65535) { // check this logic lol
+				previousHeartbeats[i] = 0;
+			}
+
+
+			if(previousHeartbeats[i] >= contactorInfo[i].heartbeat){
+				uint32_t difference_ticks = osKernelGetTickCount() - heartbeatLastUpdatedTime[i];
+				float difference_seconds = (float) difference_ticks * FREERTOS_TICK_PERIOD;
+				if((difference_seconds) > CONTACTOR_HEARTBEAT_TIMEOUT) {
+
+					osStatus_t acquire = osMutexAcquire(MBMSTripMutexHandle, UPDATING_MUTEX_TIMEOUT);
+					if(acquire == osOK) {
+						// set heartbeat dead trip
+						switch (i) {
+							case 0:
+								mbmsTrip.commonHeartbeatDeadTrip = 1;
+								break;
+							case 1:
+								mbmsTrip.motorHeartbeatDeadTrip = 1;
+								break;
+							case 2:
+								mbmsTrip.arrayHeartbeatDeadTrip = 1;
+								break;
+							case 3:
+								mbmsTrip.LVHeartbeatDeadTrip = 1;
+								break;
+							case 4:
+								mbmsTrip.chargeHeartbeatDeadTrip = 1;
+								break;
+						}
+						osMutexRelease(MBMSTripMutexHandle);
+						BPSFault = 1;
+
 					}
-					osMutexRelease(MBMSTripMutexHandle);
-					BPSFault = 1;
-
 				}
 			}
-		}
-		else {
-			heartbeatLastUpdatedTime[i] = osKernelGetTickCount();
-			osStatus_t a = osMutexAcquire(ContactorInfoMutexHandle, READING_MUTEX_TIMEOUT);
-			if (a == osOK) {
-				previousHeartbeats[i] = contactorInfo[i].heartbeat;
-				osMutexRelease(ContactorInfoMutexHandle);
-
+			else {
+				heartbeatLastUpdatedTime[i] = osKernelGetTickCount();
+				previousHeartbeats[i] = (contactorInfo[i].heartbeat);
 			}
+
+			osMutexRelease(ContactorInfoMutexHandle);
 
 		}
 
