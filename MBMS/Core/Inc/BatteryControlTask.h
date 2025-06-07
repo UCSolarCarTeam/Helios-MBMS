@@ -8,6 +8,11 @@
 #ifndef INC_TASK_H_FILES_BATTERYCONTROLTASK_H_
 #define INC_TASK_H_FILES_BATTERYCONTROLTASK_H_
 
+#define BLU 0
+#define GRN 1
+#define RED 2
+
+
 #include <stdint.h>
 #include "main.h"
 

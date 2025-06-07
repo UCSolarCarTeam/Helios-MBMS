@@ -112,6 +112,28 @@ void BatteryControl()
 
 }
 
+uint32_t toggle_led(uint8_t LED, uint8_t period_ms, uint32_t start_tick) {
+
+	if (((start_tick - osKernelGetTickCount()) * FREERTOS_TICK_PERIOD) >= period_ms) {
+		switch(LED) {
+			case BLU:
+				HAL_GPIO_TogglePin(BLU_LED_GPIO_Port, BLU_LED_Pin);
+				break;
+
+			case GRN:
+				HAL_GPIO_TogglePin(GRN_LED_GPIO_Port, GRN_LED_Pin);
+				break;
+
+			case RED:
+				HAL_GPIO_TogglePin(RED_LED_GPIO_Port, RED_LED_Pin);
+				break;
+		}
+	}
+
+	return osKernelGetTickCount();
+}
+
+
 void UpdateContactorInfoStruct() {
 	//static uint8_t counter = 0;
 
@@ -432,6 +454,10 @@ void SystemStateMachine() {
 			break;
 
 		case FULLY_OPERATIONAL:
+
+			static uint32_t start_tick = 0;
+
+			start_tick = toggle_led(GRN, 500, start_tick);
 
 			if(read_nMPS() == 1) {
 				enter_MPS_DISCONNECTED();

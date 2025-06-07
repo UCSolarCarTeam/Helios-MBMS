@@ -102,10 +102,10 @@ typedef struct {
     float highCellVoltage;
     uint8_t highCellVoltageID;
     // min max voltage info (each 2-bytes)
-    uint16_t maxCellVoltage;
-    uint16_t minCellVoltage;
-    uint16_t maxPackVoltage;
-    uint16_t minPackVoltage;
+//    uint16_t maxCellVoltage;
+//    uint16_t minCellVoltage;
+//    uint16_t maxPackVoltage;
+//    uint16_t minPackVoltage;
 } BatteryInfo;
 
 
