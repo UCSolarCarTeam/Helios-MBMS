@@ -451,24 +451,26 @@ static void MX_CAN1_Init(void)
 
   // filtering IDs from orion
 
-//  CAN_FilterTypeDef packInfoFilter;
-//
-//  packInfoFilter.FilterBank = 0;  // filter bank 0
-//  packInfoFilter.FilterMode = CAN_FILTERMODE_IDLIST;  // ID list mode,,, make it match this exact ID
-//  packInfoFilter.FilterScale = CAN_FILTERSCALE_32BIT;
-//  packInfoFilter.FilterFIFOAssignment = CAN_FILTER_FIFO0;
-//
-////  packInfoFilter.FilterMaskIdHigh = ORIONMASK >> 13;
-////  packInfoFilter.FilterMaskIdLow = (ORIONMASK  << 3);
-//
-//  packInfoFilter.FilterIdHigh = ((PACK_INFO_ID  & 0x000007ff) << 5) | ((PACK_INFO_ID  & 0x1f000000) >> 24); //
-//  packInfoFilter.FilterIdLow = (PACK_INFO_ID   & 0x00fff800) >> 8;  // shift left 3 bits because last 13 bits of EXID in low reg, and zero out last 3 bits of low reg (RTR, IDE, 0)
-//
-//  packInfoFilter.FilterActivation = CAN_FILTER_ENABLE;
-//
-//  if (HAL_CAN_ConfigFilter(&hcan1, &packInfoFilter) != HAL_OK) {
-//      // handle error!
-//  }
+  CAN_FilterTypeDef packInfoFilter;
+
+  packInfoFilter.FilterBank = 0;  // filter bank 0
+  packInfoFilter.FilterMode = CAN_FILTERMODE_IDMASK;  // ID list mode,,, make it match this exact ID
+  packInfoFilter.FilterScale = CAN_FILTERSCALE_32BIT;
+  packInfoFilter.FilterFIFOAssignment = CAN_FILTER_FIFO0;
+
+  packInfoFilter.FilterMaskIdHigh = 0xffff;
+  packInfoFilter.FilterMaskIdLow = 0xfffc;
+
+  uint32_t pack_filter_id = (PACK_INFO_ID << 3) | (1 << 2);
+
+  packInfoFilter.FilterIdHigh = ((pack_filter_id >> 16) & 0xffff); //
+  packInfoFilter.FilterIdLow = pack_filter_id & 0xffff;  // shift left 3 bits because last 13 bits of EXID in low reg, and zero out last 3 bits of low reg (RTR, IDE, 0)
+
+  packInfoFilter.FilterActivation = CAN_FILTER_ENABLE;
+
+  if (HAL_CAN_ConfigFilter(&hcan1, &packInfoFilter) != HAL_OK) {
+      // handle error!
+  }
 //
 //  CAN_FilterTypeDef tempInfoFilter;
 //
@@ -539,7 +541,7 @@ static void MX_CAN1_Init(void)
 	 * filters :( like having a specific filter speciifc to each id ....
 	 */
   CAN_FilterTypeDef contactorFilter;
-  contactorFilter.FilterBank = 4;  // filter bank 1
+  contactorFilter.FilterBank = 1;  // filter bank 1
   contactorFilter.FilterMode = CAN_FILTERMODE_IDMASK;  // mask mode !!! can accept range of IDs
   contactorFilter.FilterScale = CAN_FILTERSCALE_32BIT;
   contactorFilter.FilterFIFOAssignment = CAN_FILTER_FIFO0;
@@ -560,6 +562,8 @@ static void MX_CAN1_Init(void)
   if (HAL_CAN_ConfigFilter(&hcan1, &contactorFilter) != HAL_OK) {
 	  Error_Handler();
   }
+
+  contactorFilter.SlaveStartFilterBank = 14;
 
 //  CAN_FilterTypeDef contactorFilter2;
 //  contactorFilter2.FilterBank = 5;  // filter bank 1
