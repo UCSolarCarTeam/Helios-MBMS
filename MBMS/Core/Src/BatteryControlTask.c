@@ -169,8 +169,8 @@ void UpdateContactorInfoStruct() {
 			uint8_t contactorClosed = (data[0] & 0x08) ? CLOSE_CONTACTOR: OPEN_CONTACTOR; // extract bit 3
 			uint8_t contactorClosing = (data[0] & 0x10) ? CLOSE_CONTACTOR: OPEN_CONTACTOR; // extract bit 4
 			uint8_t contactorError = (data[0] & 0x20) ? CLOSE_CONTACTOR: OPEN_CONTACTOR; // extract bit 5
-			int16_t lineCurrent = ((data[0] & 0xc0) >> 6) + ((data[1] & 0xff) << 2) + ((data[2] & 0x03) << 10); // extract bits 6 to 17
-			int16_t chargeCurrent = ((data[2] & 0xfc) >> 2) + ((data[3] & 0x3f) << 6); // extract bits 18 to 29
+			int16_t lineCurrent = ((data[0] & 0xc0) >> 6) | ((data[1] & 0xff) << 2) | ((data[2] & 0x03) << 10); // extract bits 6 to 17
+			int16_t chargeCurrent = ((data[2] & 0xfc) >> 2) | ((data[3] & 0x3f) << 6); // extract bits 18 to 29
 			uint8_t contactorOpeningError = (data[3] & 0x80) ? CLOSE_CONTACTOR: OPEN_CONTACTOR; //extract bit 30
 			updateContactorInfo((contactorMsg.extendedID - CONTACTORIDS), prechargerClosed, prechargerClosing, prechargerError,
 					contactorClosed, contactorClosing, contactorError, lineCurrent, chargeCurrent, contactorOpeningError);
@@ -289,10 +289,18 @@ void UpdateOrionInfoStruct() {
 			// PROBLEM: look over this.. also change names
 			// updating allow charge/discharge on mbmsStatus, based on SOC
 			if (read_Charge_Enable() == 1) {
-				mbmsStatus.nDischargeEnable = 0;
+				mbmsStatus.nChargeEnable = 0;
+//				mbmsStatus.nDischargeEnable = 0;
+			}
+			else {
+				mbmsStatus.nChargeEnable = 1;
 			}
 			if (read_Discharge_Enable() == 1) {
-				mbmsStatus.nChargeEnable = 0;
+				mbmsStatus.nDischargeEnable = 0;
+//				mbmsStatus.nChargeEnable = 0;
+			}
+			else {
+				mbmsStatus.nDischargeEnable = 1;
 			}
 
 
