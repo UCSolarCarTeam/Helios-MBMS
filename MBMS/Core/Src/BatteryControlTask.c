@@ -718,10 +718,9 @@ uint8_t waitForFirstHeartbeats() {
 			}
 			else {
 				heartbeatLastUpdatedTime[i] = osKernelGetTickCount();
-
-				previousHeartbeats[i] = (contactorInfo[i].heartbeat) - 1;
 				heartbeatFailCounter[i] = 0;
 			}
+			previousHeartbeats[i] = (contactorInfo[i].heartbeat);
 			osMutexRelease(ContactorInfoMutexHandle);
 
 		}
@@ -896,11 +895,12 @@ void CheckContactorHeartbeats() {
 		}
 		else {
 			heartbeatLastUpdatedTime[i] = osKernelGetTickCount();
-			osStatus_t a = osMutexAcquire(ContactorInfoMutexHandle, READING_MUTEX_TIMEOUT);
-			if (a == osOK) {
-				previousHeartbeats[i] = (contactorInfo[i].heartbeat);
-				osMutexRelease(ContactorInfoMutexHandle);
-			}
+		}
+
+		osStatus_t a = osMutexAcquire(ContactorInfoMutexHandle, READING_MUTEX_TIMEOUT);
+		if (a == osOK) {
+			previousHeartbeats[i] = (contactorInfo[i].heartbeat);
+			osMutexRelease(ContactorInfoMutexHandle);
 		}
 
 	}
