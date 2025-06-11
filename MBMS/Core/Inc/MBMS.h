@@ -94,7 +94,7 @@ typedef struct {
     float packDOD; // Depth of Discharge, 1-byte
     // temperature info (each 1-byte)
     uint8_t highTemp;
-    uint8_t lowTemp;
+    int8_t lowTemp;
     uint8_t avgTemp;
     // Cell voltages
     float lowCellVoltage;
