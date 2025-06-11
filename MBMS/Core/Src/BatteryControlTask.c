@@ -921,10 +921,10 @@ void CheckSoftBatteryLimit() {
 	uint8_t trip = 0;
 
 	/// ummmmm be careful deadlock mauybe check everything once ur done all the mutexes
-	osStatus_t acquire = osMutexAcquire(MBMSSoftLimitWarningMutexHandle, 5);
+	osStatus_t acquire = osMutexAcquire(MBMSSoftLimitWarningMutexHandle, UPDATING_MUTEX_TIMEOUT);
 	if(acquire == osOK) {
 
-		osStatus_t a1 = osMutexAcquire(BatteryInfoMutexHandle, 5);
+		osStatus_t a1 = osMutexAcquire(BatteryInfoMutexHandle, UPDATING_MUTEX_TIMEOUT);
 		if (a1 == osOK){
 			/* Checking the min/max cell voltages */
 			if (batteryInfo.highCellVoltage > SOFT_MAX_CELL_VOLTAGE) {
@@ -951,7 +951,7 @@ void CheckSoftBatteryLimit() {
 
 		}
 
-		osStatus_t a2 = osMutexAcquire(ContactorInfoMutexHandle, 5);
+		osStatus_t a2 = osMutexAcquire(ContactorInfoMutexHandle, READING_MUTEX_TIMEOUT);
 		if (a2 == osOK) {
 			/* Checking contactors' high current */
 			if (batteryInfo.packCurrent > SOFT_MAX_COMMON_CONTACTOR_CURRENT){
@@ -984,7 +984,7 @@ void CheckSoftBatteryLimit() {
 void UpdateTripStatus() {
 
 	static uint8_t BPS_Fault = 0;
-	osStatus_t acquire = osMutexAcquire(MBMSTripMutexHandle, 5);
+	osStatus_t acquire = osMutexAcquire(MBMSTripMutexHandle, UPDATING_MUTEX_TIMEOUT);
 	if (acquire == osOK){
 
 		osStatus_t a1 = osMutexAcquire(ContactorInfoMutexHandle, 5);
