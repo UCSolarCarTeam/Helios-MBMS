@@ -48,8 +48,10 @@ void Shutoff()
 	while (1) {
 
 
+		//osEventFlagsClear(shutoffFlagHandle, 0xffffffff);
 		// wait for shutoff flag
 		flags = osEventFlagsWait(shutoffFlagHandle, SHUTOFF_FLAG, osFlagsWaitAny | osFlagsNoClear, osWaitForever);
+		//flags = osEventFlagsWait(shutoffFlagHandle, SHUTOFF_FLAG, osFlagsNoClear, osWaitForever);
 
 		if ((flags & HARD_BL_FLAG) == HARD_BL_FLAG) {
 			HAL_GPIO_WritePin(Strobe_En_GPIO_Port, Strobe_En_Pin, GPIO_PIN_SET);
@@ -107,7 +109,15 @@ void Shutoff()
 		else {
 			osDelay(200);
 			// start thread for startup!!!
-			startupTaskHandle = osThreadNew(StartupTask, NULL, &startupTask_attributes);
+			if(read_nMPS() == 0) {
+				enter_BOOT();
+				osEventFlagsDelete(shutoffFlagHandle);
+				shutoffFlagHandle = osEventFlagsNew(&shutoffFlag_attributes);
+				osEventFlagsClear(shutoffFlagHandle, 0xffffffff);
+
+				startupTaskHandle = osThreadNew(StartupTask, NULL, &startupTask_attributes);
+			}
+
 		}
 	}
 

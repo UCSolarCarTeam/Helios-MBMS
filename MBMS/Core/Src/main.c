@@ -347,7 +347,7 @@ int main(void)
 
   /* USER CODE BEGIN RTOS_EVENTS */
   // IS THIS WHERE I SHOULD CREATE AN EVENT FLAG ????
-//  shutoffFlagHandle = osEventFlagsNew(&shutoffFlag_attributes);
+  shutoffFlagHandle = osEventFlagsNew(&shutoffFlag_attributes);
 
   contactorPermissionsFlagHandle = osEventFlagsNew(&contactorPermissionsFlag_attributes);
 

@@ -51,6 +51,8 @@ extern osThreadId_t startupTaskHandle;
 extern osThreadId_t CANMessageSenderTaskHandle;
 extern osThreadId_t debugInterfaceTaskHandle;
 
+extern const osEventFlagsAttr_t shutoffFlag_attributes;
+
 extern osMutexId_t MBMSStatusMutexHandle;
 extern osMutexId_t MBMSTripMutexHandle;
 extern osMutexId_t MBMSSoftLimitWarningMutexHandle;

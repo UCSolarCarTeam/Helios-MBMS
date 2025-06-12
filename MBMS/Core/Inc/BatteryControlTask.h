@@ -16,23 +16,6 @@
 #include <stdint.h>
 #include "main.h"
 
-#define READ_nMPS()               HAL_GPIO_ReadPin(nMPS_GPIO_Port, nMPS_Pin)               // PC4
-#define READ_ESD()                HAL_GPIO_ReadPin(ESD_GPIO_Port, ESD_Pin)                 // PC5
-#define READ_EN1()                HAL_GPIO_ReadPin(EN1_GPIO_Port, EN1_Pin)                 // PE1
-#define READ_nDCDC_FAULT()        HAL_GPIO_ReadPin(nDCDC_Fault_GPIO_Port, nDCDC_Fault_Pin) // PC13
-#define READ_n3A_OC()             HAL_GPIO_ReadPin(n3A_OC_GPIO_Port, n3A_OC_Pin)
-#define READ_nDCDC_ON()           HAL_GPIO_ReadPin(nDCDC_On_GPIO_Port, nDCDC_On_Pin)
-#define READ_nCHG_FAULT()         HAL_GPIO_ReadPin(nCHG_Fault_GPIO_Port, nCHG_Fault_Pin)
-#define READ_nCHG_ON()            HAL_GPIO_ReadPin(nCHG_On_GPIO_Port, nCHG_On_Pin)
-#define READ_nCHG_LV_EN()         HAL_GPIO_ReadPin(nCHG_LV_En_GPIO_Port, nCHG_LV_En_Pin)
-#define READ_ABATT_DISABLE()      HAL_GPIO_ReadPin(ABATT_Disable_GPIO_Port, ABATT_Disable_Pin)
-#define READ_KEY()                HAL_GPIO_ReadPin(Key_GPIO_Port, Key_Pin)                 // PB1
-#define READ_CHARGE_ENABLE()      HAL_GPIO_ReadPin(CHARGE_ENABLE_SENSE_GPIO_Port, CHARGE_ENABLE_SENSE_Pin)
-#define READ_DISCHARGE_ENABLE()   HAL_GPIO_ReadPin(DISCHARGE_ENABLE_SENSE_GPIO_Port, DISCHARGE_ENABLE_SENSE_Pin)
-#define READ_LV_OC()              HAL_GPIO_ReadPin(LV_OC_GPIO_Port, LV_OC_Pin)
-
-
-
 
 
 void BatteryControlTask(void* arg);
@@ -55,6 +38,9 @@ uint8_t startupBatteryCheck();
 uint8_t checkPrechargersOpen();
 uint8_t checkContactorsOpen();
 
+void clear_Trips();
+void clear_Warnings();
+
 
 
 /* "public" functions */
@@ -70,6 +56,9 @@ void SystemStateMachine();
 void UpdateContactors();
 
 void UpdateCounter(uint32_t * counter);
+
+void enter_BOOT();
+
 
 
 #define ORION_MSG_WAIT_TIMEOUT 1000 //ms
@@ -97,7 +86,7 @@ void UpdateCounter(uint32_t * counter);
 #define HARD_MAX_ARRAY_CONTACTOR_CURRENT 300
 #define HARD_MAX_LV_CONTACTOR_CURRENT 300
 #define HARD_MAX_CHARGE_CONTACTOR_CURRENT  300
-#define SOFT_MAX_COMMON_CONTACTOR_CURRENT 2
+#define SOFT_MAX_COMMON_CONTACTOR_CURRENT 290
 #define SOFT_MAX_MOTORS_CONTACTOR_CURRENT 290
 #define SOFT_MAX_ARRAY_CONTACTOR_CURRENT 290
 #define SOFT_MAX_LV_CONTACTOR_CURRENT 290

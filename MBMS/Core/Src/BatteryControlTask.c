@@ -16,6 +16,7 @@
 #include "ReadPowerGPIO.h"
 #include "CANMessageSenderTask.h"
 #include "MBMS.h"
+#include "main.h"
 
 /*
  * External variables
@@ -350,7 +351,7 @@ void UpdateOrionInfoStruct() {
 	{
 		orionMessageCounter += 1;
 	}
-	if(orionMessageCounter >= 20){
+	if(orionMessageCounter >= 21){
 		osStatus_t a = osMutexAcquire(MBMSStatusMutexHandle, 5);
 		if (a == osOK) {
 			mbmsStatus.orionCANReceived = 0; // no orion message recieved !!!
@@ -373,7 +374,61 @@ void UpdateCounter(uint32_t * counter) {
 
 }
 
+void clear_Trips() {
+	mbmsTrip.ESDEnabledTrip = 0;
+	mbmsTrip.LVHeartbeatDeadTrip = 0;
+	mbmsTrip.LVHighCurrentTrip = 0;
+	mbmsTrip.MPSDisabledTrip = 0;
+	mbmsTrip.arrayHeartbeatDeadTrip = 0;
+	mbmsTrip.arrayHighCurrentTrip = 0;
+	mbmsTrip.chargeHeartbeatDeadTrip = 0;
+	mbmsTrip.chargeHighCurrentTrip = 0;
+	mbmsTrip.commonHeartbeatDeadTrip = 0;
+	mbmsTrip.commonHighCurrentTrip = 0;
+	mbmsTrip.contactorConnectedUnexpectedlyTrip = 0;
+	mbmsTrip.contactorDisconnectedUnexpectedlyTrip = 0;
+	mbmsTrip.highBatteryTrip = 0;
+	mbmsTrip.highCellVoltageTrip = 0;
+	mbmsTrip.highTemperatureTrip = 0;
+	mbmsTrip.lowCellVoltageTrip = 0;
+	mbmsTrip.lowTemperatureTrip = 0;
+	mbmsTrip.motorHeartbeatDeadTrip = 0;
+	mbmsTrip.motorHighCurrentTrip = 0;
+	mbmsTrip.orionMessageTimeoutTrip = 0;
+	mbmsTrip.protectionTrip = 0;
+}
+
+void clear_Warnings() {
+	mbmsSoftBatteryLimitWarning.LVHighCurrentWarning = 0;
+	mbmsSoftBatteryLimitWarning.arrayHighCurrentWarning = 0;
+	mbmsSoftBatteryLimitWarning.chargeHighCurrentWarning = 0;
+	mbmsSoftBatteryLimitWarning.commonHighCurrentWarning = 0;
+	mbmsSoftBatteryLimitWarning.highBatteryWarning = 0;
+	mbmsSoftBatteryLimitWarning.highCellVoltageWarning = 0;
+	mbmsSoftBatteryLimitWarning.lowCellVoltageWarning = 0;
+	mbmsSoftBatteryLimitWarning.motorHighCurrentWarning = 0;
+
+}
+
+void enter_BOOT() {
+	orionMessagesReceived = 0;
+	startup_Check_Counter = 0;
+	BCT_Counter = 0;
+
+	for(int i = 0; i < 5; i++) {
+		previousHeartbeats[i] = 0;
+		heartbeatLastUpdatedTime[i] = 0;
+		contactorInfo[i].heartbeat = 0;
+	}
+
+	clear_Trips();
+	clear_Warnings();
+	carState = BOOT;
+
+}
+
 void enter_MPS_DISCONNECTED() {
+	mbmsTrip.MPSDisabledTrip = 1;
 	carState = MPS_DISCONNECTED;
 	HAL_GPIO_WritePin(GRN_LED_GPIO_Port, GRN_LED_Pin, GPIO_PIN_SET);
 
@@ -395,6 +450,11 @@ void enter_BPS_FAULT() {
 	HAL_GPIO_WritePin(RED_LED_GPIO_Port, RED_LED_Pin, GPIO_PIN_RESET);
 	HAL_GPIO_WritePin(GRN_LED_GPIO_Port, GRN_LED_Pin, GPIO_PIN_SET);
 
+//	perms.common = 0;
+//	perms.motor = 0;
+//	perms.array = 0;
+//	perms.lv = 0;
+//	perms.charge = 0;
 	perms.faulted = 1;
 
 	carState = BPS_FAULT;
@@ -553,7 +613,7 @@ void SystemStateMachine() {
 			}
 			/* Running checks */
 			CheckContactorHeartbeats();
-			CheckSoftBatteryLimit();
+			//CheckSoftBatteryLimit();
 			UpdateTripStatus();
 
 			break;
@@ -603,24 +663,24 @@ void UpdateContactors() {
     }
 
     // Open contactors as needed
-    if ((!perms.common) && (contactorInfo[COMMON].contactorClosed != OPEN_CONTACTOR)) {
+    if ((!perms.common)) { // tbh i lowkey do not even want to check contactor state, just perms but idk hehe
     	contactorCommand.motor = OPEN_CONTACTOR;
     }
-    if ((!perms.motor) && (contactorInfo[MOTOR].contactorClosed != OPEN_CONTACTOR)) {
+    if ((!perms.motor)) {
         contactorCommand.motor = OPEN_CONTACTOR;
     }
 
-    if ((!perms.array) && (contactorInfo[ARRAY].contactorClosed != OPEN_CONTACTOR)) {
+    if ((!perms.array)) {
         contactorCommand.array = OPEN_CONTACTOR;
 
     }
 
-    if ((!perms.lv) && (contactorInfo[LOWV].contactorClosed != OPEN_CONTACTOR)) {
+    if ((!perms.lv)) {
         contactorCommand.LV = OPEN_CONTACTOR;
 
     }
 
-    if ((!perms.charge) && (contactorInfo[CHARGE].contactorClosed != OPEN_CONTACTOR)) {
+    if ((!perms.charge)) {
         contactorCommand.charge = OPEN_CONTACTOR;
 
     }
@@ -720,7 +780,7 @@ uint8_t waitForFirstHeartbeats() {
 				heartbeatLastUpdatedTime[i] = osKernelGetTickCount();
 				heartbeatFailCounter[i] = 0;
 			}
-			previousHeartbeats[i] = (contactorInfo[i].heartbeat);
+				previousHeartbeats[i] = (contactorInfo[i].heartbeat);
 			osMutexRelease(ContactorInfoMutexHandle);
 
 		}
@@ -864,26 +924,26 @@ void CheckContactorHeartbeats() {
 
 		if(previousHeartbeats[i] >= contactorInfo[i].heartbeat){
 			uint32_t difference_ticks = osKernelGetTickCount() - heartbeatLastUpdatedTime[i];
-			float difference_ms = (float) difference_ticks * FREERTOS_TICK_PERIOD;
+			float difference_ms = (float) difference_ticks;
 			if((difference_ms) > CONTACTOR_HEARTBEAT_TIMEOUT) {
 
 				osStatus_t acquire = osMutexAcquire(MBMSTripMutexHandle, UPDATING_MUTEX_TIMEOUT);
 				if(acquire == osOK) {
 					// set heartbeat dead trip
 					switch (i) {
-						case 0:
+						case COMMON:
 							mbmsTrip.commonHeartbeatDeadTrip = 1;
 							break;
-						case 1:
+						case MOTOR:
 							mbmsTrip.motorHeartbeatDeadTrip = 1;
 							break;
-						case 2:
+						case ARRAY:
 							mbmsTrip.arrayHeartbeatDeadTrip = 1;
 							break;
-						case 3:
+						case LOWV:
 							mbmsTrip.LVHeartbeatDeadTrip = 1;
 							break;
-						case 4:
+						case CHARGE:
 							mbmsTrip.chargeHeartbeatDeadTrip = 1;
 							break;
 					}
