@@ -227,9 +227,9 @@ void UpdatePowerSelectionStruct() {
 void MBMSStatus_init() {
 	mbmsStatus.auxilaryBattVoltage = 0;
 	mbmsStatus.strobeBMSLight = 0;
-	mbmsStatus.nChargeEnable = 1;
+	mbmsStatus.chargeEnable = 0;
 	mbmsStatus.nChargeSafety = 1;
-	mbmsStatus.nDischargeEnable = 1;
+	mbmsStatus.dischargeEnable = 0;
 	mbmsStatus.orionCANReceived = 0;
 	mbmsStatus.dischargeShouldTrip = 0;
 	mbmsStatus.chargeShouldTrip = 0;
@@ -253,7 +253,7 @@ void UpdateOrionInfoStruct() {
 	//osDelay(1000); // why there a delay here .... maybe from when i was testing...
 	static uint8_t orionMessageCounter = 0;
 
-	osStatus status = osMessageQueueGet(batteryControlMessageQueueHandle, &orionMsg, NULL, 0);
+	osStatus status = osMessageQueueGet(batteryControlMessageQueueHandle, &orionMsg, NULL, ORION_MSG_WAIT_TIMEOUT); //timeout is in timer ticks...... so ms?
 
 	if (status == osOK) {
 
@@ -289,20 +289,24 @@ void UpdateOrionInfoStruct() {
 
 			// PROBLEM: look over this.. also change names
 			// updating allow charge/discharge on mbmsStatus, based on SOC
-			if (read_Charge_Enable() == 1) {
-				mbmsStatus.nChargeEnable = 0;
-//				mbmsStatus.nDischargeEnable = 0;
-			}
-			else {
-				mbmsStatus.nChargeEnable = 1;
-			}
-			if (read_Discharge_Enable() == 1) {
-				mbmsStatus.nDischargeEnable = 0;
+
+			mbmsStatus.chargeEnable = read_Charge_Enable();
+			mbmsStatus.dischargeEnable = read_Discharge_Enable();
+
+//			if (read_Charge_Enable() == 1) {
 //				mbmsStatus.nChargeEnable = 0;
-			}
-			else {
-				mbmsStatus.nDischargeEnable = 1;
-			}
+////				mbmsStatus.nDischargeEnable = 0;
+//			}
+//			else {
+//				mbmsStatus.nChargeEnable = 1;
+//			}
+//			if (read_Discharge_Enable() == 1) {
+//				mbmsStatus.nDischargeEnable = 0;
+////				mbmsStatus.nChargeEnable = 0;
+//			}
+//			else {
+//				mbmsStatus.nDischargeEnable = 1;
+//			}
 
 
 		}
@@ -351,7 +355,7 @@ void UpdateOrionInfoStruct() {
 	{
 		orionMessageCounter += 1;
 	}
-	if(orionMessageCounter >= 21){
+	if(orionMessageCounter >= 200){ // was 20/21 when timeout was 0
 		osStatus_t a = osMutexAcquire(MBMSStatusMutexHandle, 5);
 		if (a == osOK) {
 			mbmsStatus.orionCANReceived = 0; // no orion message recieved !!!
@@ -417,7 +421,7 @@ void enter_BOOT() {
 
 	for(int i = 0; i < 5; i++) {
 		previousHeartbeats[i] = 0;
-		heartbeatLastUpdatedTime[i] = 0;
+		heartbeatLastUpdatedTime[i] = osKernelGetTickCount() + 15;
 		contactorInfo[i].heartbeat = 0;
 	}
 
@@ -495,11 +499,13 @@ void enter_FULLY_OPERATIONAL() {
 void SystemStateMachine() {
 
 	// make var plugged for now to stand in for the CAN msg that charger is plugged in or not
-	uint8_t plugged = 0;
+	uint8_t plugged = read_Charge_Enable();
 
 	switch (carState) {
 		case BOOT:
-			if(orionMessagesReceived == 0x7) { //ik i dont have to check here but i just am
+			static uint32_t boot_counter = 0;
+			boot_counter++;
+			if((orionMessagesReceived == 0x7) && boot_counter >= 500) { //ik i dont have to check here but i just am
 				carState = STARTUP;
 			}
 			if ( (0x304 & CONTACTORMASK) == (0x200 & CONTACTORMASK)) {
@@ -644,19 +650,19 @@ void UpdateContactors() {
             contactorCommand.common = CLOSE_CONTACTOR;
 //            sendContactorCommand = 1; // had this here before but i think ill just consistently send lowkey..
         }
-        else if ((perms.lv) && (contactorInfo[LOWV].contactorClosed != CLOSE_CONTACTOR) && (mbmsStatus.nDischargeEnable == 0)) {
+        else if ((perms.lv) && (contactorInfo[LOWV].contactorClosed != CLOSE_CONTACTOR) && (mbmsStatus.dischargeEnable == 1)) {
             contactorCommand.LV = CLOSE_CONTACTOR;
 
         }
-        else if ((perms.motor) && (contactorInfo[MOTOR].contactorClosed != CLOSE_CONTACTOR) && (mbmsStatus.nDischargeEnable == 0)) {
+        else if ((perms.motor) && (contactorInfo[MOTOR].contactorClosed != CLOSE_CONTACTOR) && (mbmsStatus.dischargeEnable == 1)) {
             contactorCommand.motor = CLOSE_CONTACTOR;
 
         }
-        else if ((perms.array) && (contactorInfo[ARRAY].contactorClosed != CLOSE_CONTACTOR) && (mbmsStatus.nChargeEnable == 0)) {
+        else if ((perms.array) && (contactorInfo[ARRAY].contactorClosed != CLOSE_CONTACTOR) && (mbmsStatus.chargeEnable == 1)) {
             contactorCommand.array = CLOSE_CONTACTOR;
 
         }
-        else if ((perms.charge) && (contactorInfo[CHARGE].contactorClosed != CLOSE_CONTACTOR) && (mbmsStatus.nChargeEnable == 0)) {
+        else if ((perms.charge) && (contactorInfo[CHARGE].contactorClosed != CLOSE_CONTACTOR) && (mbmsStatus.chargeEnable == 1)) {
             contactorCommand.charge = CLOSE_CONTACTOR;
 
         }
@@ -699,19 +705,19 @@ void startupCheck(){
 
 
 	/* Waiting for contactor heartbeats */
-	uint8_t heartbeatDead = 0;
-	if (((previousHeartbeats[0] == 0) || (previousHeartbeats[1] == 0) || (previousHeartbeats[2] == 0) ||
-		   (previousHeartbeats[3] == 0) || (previousHeartbeats[4] == 0))) // was != 0 oops!
-	{
-		// set heartbeatDead so we can break out of while loop lol
-		if( heartbeat_check_count <= heartbeat_update_count) {
-			heartbeatDead = waitForFirstHeartbeats();
-		}
-
-	}
-	if (heartbeatDead == 1){
-		enter_BPS_FAULT();
-	}
+//	uint8_t heartbeatDead = 0;
+//	if (((previousHeartbeats[0] == 0) || (previousHeartbeats[1] == 0) || (previousHeartbeats[2] == 0) ||
+//		   (previousHeartbeats[3] == 0) || (previousHeartbeats[4] == 0))) // was != 0 oops!
+//	{
+//		// set heartbeatDead so we can break out of while loop lol
+//		if( heartbeat_check_count <= heartbeat_update_count) {
+//			heartbeatDead = waitForFirstHeartbeats();
+//		}
+//
+//	}
+//	if (heartbeatDead == 1){
+//		enter_BPS_FAULT();
+//	}
 
 	/* Check to ensure no contactors are closed */
 	if ((checkContactorsOpen() == 0) || checkPrechargersOpen() == 0){
@@ -740,19 +746,19 @@ uint8_t waitForFirstHeartbeats() {
 			osStatus_t a = osMutexAcquire(MBMSTripMutexHandle, 5);
 			if(a == osOK) {
 				switch (i) {
-					case 0:
+					case COMMON:
 						mbmsTrip.commonHeartbeatDeadTrip = 1;
 						break;
-					case 1:
+					case MOTOR:
 						mbmsTrip.motorHeartbeatDeadTrip = 1;
 						break;
-					case 2:
+					case ARRAY:
 						mbmsTrip.arrayHeartbeatDeadTrip = 1;
 						break;
-					case 3:
+					case LOWV:
 						mbmsTrip.LVHeartbeatDeadTrip = 1;
 						break;
-					case 4:
+					case CHARGE:
 						mbmsTrip.chargeHeartbeatDeadTrip = 1;
 						break;
 				}
@@ -771,7 +777,7 @@ uint8_t waitForFirstHeartbeats() {
 		osStatus_t a = osMutexAcquire(ContactorInfoMutexHandle, READING_MUTEX_TIMEOUT);
 		if (a == osOK) {
 			if(previousHeartbeats[i] >= contactorInfo[i].heartbeat){
-				if(((osKernelGetTickCount() - heartbeatLastUpdatedTime[i]) * FREERTOS_TICK_PERIOD) > CONTACTOR_HEARTBEAT_TIMEOUT) { // where contactor_heartbeat_timeout is how often a heartbeat is sent out/recieved
+				if(((osKernelGetTickCount() - heartbeatLastUpdatedTime[i])) > CONTACTOR_HEARTBEAT_TIMEOUT) { // where contactor_heartbeat_timeout is how often a heartbeat is sent out/recieved
 					heartbeatFailCounter[i]++;
 
 				}
@@ -966,7 +972,7 @@ void CheckContactorHeartbeats() {
 	}
 
 	if(BPSFault) {
-		enter_BPS_FAULT();
+		//enter_BPS_FAULT();
 	}
 }
 

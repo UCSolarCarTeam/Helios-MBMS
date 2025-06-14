@@ -657,11 +657,11 @@ static void MX_GPIO_Init(void)
                           |G3_Pin|A4_Pin|G4_Pin|A5_Pin
                           |G5_Pin|nCHG_LV_En_Pin|EN1_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pin : NC_Pin */
-  GPIO_InitStruct.Pin = NC_Pin;
+  /*Configure GPIO pin : CHARGE_PLUGGED_Pin */
+  GPIO_InitStruct.Pin = CHARGE_PLUGGED_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(NC_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(CHARGE_PLUGGED_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : n3A_OC_Pin nDCDC_On_Pin nCHG_Fault_Pin nCHG_On_Pin */
   GPIO_InitStruct.Pin = n3A_OC_Pin|nDCDC_On_Pin|nCHG_Fault_Pin|nCHG_On_Pin;

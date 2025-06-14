@@ -154,8 +154,8 @@ void sendPowerSelectionStatus() {
 void sendMBMSStatusCanMessage() {
 	CANMsg mbmsStatusMsg;
 	uint16_t mbmsStatusData = ((mbmsStatus.auxilaryBattVoltage & 0x1f) << 0) + ((mbmsStatus.strobeBMSLight & 0x1) << 5)
-			+ ((mbmsStatus.nChargeEnable & 0x1) << 6)   				     + ((mbmsStatus.nChargeSafety & 0x1) << 7)
-			+ ((mbmsStatus.nDischargeEnable & 0x1) << 8)    				 + ((mbmsStatus.orionCANReceived & 0x1) << 9)
+			+ ((mbmsStatus.chargeEnable & 0x1) << 6)   				     + ((mbmsStatus.nChargeSafety & 0x1) << 7)
+			+ ((mbmsStatus.dischargeEnable & 0x1) << 8)    				 + ((mbmsStatus.orionCANReceived & 0x1) << 9)
 			+ ((mbmsStatus.dischargeShouldTrip & 0x1) << 10) 				 + ((mbmsStatus.chargeShouldTrip & 0x1) << 11)
 			+ ((mbmsStatus.startupState & 0xf) << 12)						 + ((mbmsStatus.carState & 0x7) << 15);
 

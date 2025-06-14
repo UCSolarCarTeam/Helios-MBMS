@@ -127,12 +127,12 @@ typedef struct {
 typedef struct {
 	uint8_t auxilaryBattVoltage; // bits 0-4
 	uint8_t strobeBMSLight;
-	uint8_t nChargeEnable; // remember ur question may 7: is it straight up gpio, or is it something i decide
+	uint8_t chargeEnable; // remember ur question may 7: is it straight up gpio, or is it something i decide
 	uint8_t nChargeSafety;
-	uint8_t nDischargeEnable;
+	uint8_t dischargeEnable;
 	uint8_t orionCANReceived;
-	uint8_t dischargeShouldTrip;
-	uint8_t chargeShouldTrip;
+	uint8_t dischargeShouldTrip; //unused
+	uint8_t chargeShouldTrip;    // unused
 	uint8_t startupState;
 	uint8_t carState;
 } MBMSStatus;

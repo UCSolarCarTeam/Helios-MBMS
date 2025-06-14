@@ -80,8 +80,8 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define NC_Pin GPIO_PIN_2
-#define NC_GPIO_Port GPIOE
+#define CHARGE_PLUGGED_Pin GPIO_PIN_2
+#define CHARGE_PLUGGED_GPIO_Port GPIOE
 #define n3A_OC_Pin GPIO_PIN_3
 #define n3A_OC_GPIO_Port GPIOE
 #define nDCDC_On_Pin GPIO_PIN_4
