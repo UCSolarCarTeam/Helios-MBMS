@@ -69,6 +69,8 @@ void enter_BOOT();
 
 #define NO_CURRENT_THRESHOLD 3 // (AMPS). So if less than this, consider no current, if more than this, consider there is current
 
+#define MINIMUM_ORION_MESSAGE_RECEIVED 5
+
 // in seconds
 #define CONTACTOR_RESPONSE_TIMEOUT 3
 

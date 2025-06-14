@@ -46,6 +46,10 @@ extern uint32_t heartbeat_update_count;
 
 extern uint32_t lastSentTime[6];
 
+uint32_t pack_info_counter = 0;
+uint32_t temp_info_counter = 0;
+uint32_t cell_voltages_counter = 0;
+
 /*
  * Local Variables
  */
@@ -279,7 +283,9 @@ void UpdateOrionInfoStruct() {
 				batteryInfo.packAmphours = (data[5] + (data[6] << 8)) / 10;
 				batteryInfo.packDOD = (data[7]) /2;
 
+				pack_info_counter++;
 				orionMessagesReceived |= 0x1;
+
 				osMutexRelease(BatteryInfoMutexHandle);
 
 			}
@@ -313,7 +319,9 @@ void UpdateOrionInfoStruct() {
 				batteryInfo.lowTemp = data[2];
 				batteryInfo.avgTemp = data[4];
 
+				temp_info_counter++;
 				orionMessagesReceived |= 0x2;
+
 				osMutexRelease(BatteryInfoMutexHandle);
 			}
 		}
@@ -325,7 +333,10 @@ void UpdateOrionInfoStruct() {
 				batteryInfo.highCellVoltage= (float) (data[3] + (data[4] << 8)) /10000;
 				batteryInfo.highCellVoltageID = data[5];
 
+
+				cell_voltages_counter++;
 				orionMessagesReceived |= 0x4;
+
 				osMutexRelease(BatteryInfoMutexHandle);
 			}
 
@@ -411,9 +422,13 @@ void clear_Warnings() {
 }
 
 void enter_BOOT() {
-	orionMessagesReceived = 0;
+	orionMessagesReceived = 0; // prob not using anymore tbh
 	startup_Check_Counter = 0;
 	BCT_Counter = 0;
+
+	pack_info_counter = 0;
+	temp_info_counter = 0;
+	cell_voltages_counter = 0;
 
 	for(int i = 0; i < 5; i++) {
 		previousHeartbeats[i] = 0;
@@ -499,9 +514,16 @@ void SystemStateMachine() {
 
 	switch (carState) {
 		case BOOT:
-			if(orionMessagesReceived == 0x7) { //ik i dont have to check here but i just am
+//			if(orionMessagesReceived == 0x7) { //ik i dont have to check here but i just am
+//				carState = STARTUP;
+//			}
+
+			if((pack_info_counter >= MINIMUM_ORION_MESSAGE_RECEIVED) && (temp_info_counter >= MINIMUM_ORION_MESSAGE_RECEIVED)
+					&& (cell_voltages_counter >= MINIMUM_ORION_MESSAGE_RECEIVED))
+			{
 				carState = STARTUP;
 			}
+
 			if ( (0x304 & CONTACTORMASK) == (0x200 & CONTACTORMASK)) {
 				uint8_t x = 0;
 			}
