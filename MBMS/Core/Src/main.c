@@ -702,11 +702,11 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : Key_Pin CRITICAL_OV_UV_Pin */
-  GPIO_InitStruct.Pin = Key_Pin|CRITICAL_OV_UV_Pin;
+  /*Configure GPIO pin : Key_Pin */
+  GPIO_InitStruct.Pin = Key_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  HAL_GPIO_Init(Key_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : G1_Pin A2_Pin G2_Pin A3_Pin
                            G3_Pin A4_Pin G4_Pin A5_Pin
@@ -724,6 +724,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(LV_OC_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : CRITICAL_OV_UV_Pin */
+  GPIO_InitStruct.Pin = CRITICAL_OV_UV_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(CRITICAL_OV_UV_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : nCHG_LV_En_Pin */
   GPIO_InitStruct.Pin = nCHG_LV_En_Pin;
