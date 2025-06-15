@@ -83,7 +83,7 @@ void CANRxGatekeeper()
 			status = osMessageQueuePut(batteryControlMessageQueueHandle, &msg, 0, 0); // idk maybe shouldnt wait forever tho..
 			if(status != osOK){
 				// also handle error here but idk do what :(
-				Error_Handler();
+				//Error_Handler();
 				batteryControlQueueFull++;
 			}
 			else {
@@ -96,7 +96,7 @@ void CANRxGatekeeper()
 			status = osMessageQueuePut(contactorMessageQueueHandle, &msg, 0, 0); // idk maybe shouldnt wait forever tho..
 			if(status != osOK){
 				// also handle error here but idk do what :(
-				Error_Handler();
+				//Error_Handler();
 				contactorQueueFull++;
 			}
 		}
@@ -171,7 +171,7 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan){
 
 	osStatus_t status = osMessageQueuePut(RxCANMessageQueueHandle, &msg, 0, 0); // timeout should be 0
 	if(status != osOK){
-		Error_Handler();
+		//Error_Handler();
 		RxCanIntQueueFull++;
 		// need to handle error ,,
 	}

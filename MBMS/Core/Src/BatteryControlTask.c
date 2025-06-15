@@ -499,7 +499,7 @@ void enter_FULLY_OPERATIONAL() {
 void SystemStateMachine() {
 
 	// make var plugged for now to stand in for the CAN msg that charger is plugged in or not
-	uint8_t plugged = read_Charge_Enable();
+	uint8_t plugged = read_CHARGE_PLUGGED();
 
 	switch (carState) {
 		case BOOT:
@@ -551,10 +551,11 @@ void SystemStateMachine() {
 			if( plugged && (contactorInfo[LOWV].contactorClosed == OPEN_CONTACTOR) && (contactorInfo[MOTOR].contactorClosed == OPEN_CONTACTOR)) {
 				HAL_GPIO_WritePin(nCHG_LV_En_GPIO_Port, nCHG_LV_En_Pin, GPIO_PIN_RESET); // enable charging
 				perms.charge = 1;
+				enter_CHARGING(); //DEBUG!
 			}
 
 			if (plugged && (contactorInfo[CHARGE].contactorClosed == CLOSE_CONTACTOR)) {
-				enter_CHARGING();
+				//enter_CHARGING(); DEBUG!
 			}
 
 			/* Running checks */

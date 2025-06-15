@@ -22,6 +22,8 @@
 #define read_Charge_Enable()      HAL_GPIO_ReadPin(CHARGE_ENABLE_SENSE_GPIO_Port, CHARGE_ENABLE_SENSE_Pin)
 #define read_Discharge_Enable()   HAL_GPIO_ReadPin(DISCHARGE_ENABLE_SENSE_GPIO_Port, DISCHARGE_ENABLE_SENSE_Pin)
 #define read_LV_OC()              HAL_GPIO_ReadPin(LV_OC_GPIO_Port, LV_OC_Pin)
+#define read_CHARGE_PLUGGED() 	  HAL_GPIO_ReadPin(CHARGE_PLUGGED_GPIO_Port, CHARGE_PLUGGED_Pin)
+
 
 
 //GPIO_PinState read_nMPS(void);
