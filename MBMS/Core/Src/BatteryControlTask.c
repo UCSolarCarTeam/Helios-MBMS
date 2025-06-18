@@ -524,6 +524,11 @@ void SystemStateMachine() {
 				break;
 			}
 
+			if(read_ESD() == 1) {
+				mbmsTrip.ESDEnabledTrip = 1;
+				enter_BPS_FAULT();
+			}
+
 			if (mbmsStatus.startupState == COMPLETED){
 				enter_FULLY_OPERATIONAL();
 			}
