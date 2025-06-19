@@ -1091,7 +1091,8 @@ void UpdateTripStatus() {
 			}
 
 			/* not using HIGH CURRENT TRIPS as of now. May 17. */
-			/*
+			/* ugh using them again june 19 smh */
+
 			if ((contactorInfo[MOTOR].lineCurrent > HARD_MAX_MOTORS_CONTACTOR_CURRENT)){
 				mbmsTrip.motorHighCurrentTrip = 1;
 			}
@@ -1109,7 +1110,7 @@ void UpdateTripStatus() {
 				mbmsTrip.chargeHighCurrentTrip = 1;
 			}
 
-			 */
+
 
 
 			/* Not using PROTECTION TRIP as of now. May 17. */
