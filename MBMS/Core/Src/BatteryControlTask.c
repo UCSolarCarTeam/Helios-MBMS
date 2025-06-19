@@ -46,6 +46,12 @@ extern uint32_t heartbeat_update_count;
 
 extern uint32_t lastSentTime[6];
 
+uint32_t pack_info_count = 0;
+uint32_t temp_info_count = 0;
+uint32_t cell_voltages_count = 0;
+
+uint32_t orion_received_tick = 0;
+
 /*
  * Local Variables
  */
@@ -54,8 +60,8 @@ extern uint32_t lastSentTime[6];
 // no init for this as of rn ... may 21
 
 /* used for checking ummmm heartbeats */
-static uint8_t heartbeatLastUpdatedTime[6] = {0};
-static uint16_t previousHeartbeats[6] = {0}; //check this !!! syntax !
+static uint32_t heartbeatLastUpdatedTime[5] = {0};
+static uint32_t previousHeartbeats[5] = {0}; //check this !!! syntax !
 
 
 uint32_t orion_msg_from_queue = 0;
@@ -230,7 +236,7 @@ void MBMSStatus_init() {
 	mbmsStatus.chargeEnable = 0;
 	mbmsStatus.nChargeSafety = 1;
 	mbmsStatus.dischargeEnable = 0;
-	mbmsStatus.orionCANReceived = 0;
+	//mbmsStatus.orionCANReceived = 0;
 	mbmsStatus.dischargeShouldTrip = 0;
 	mbmsStatus.chargeShouldTrip = 0;
 
@@ -247,17 +253,19 @@ void perms_init() {
 /*
  * This function dequeues Orion CAN msg and updates battery info struct
  */
+uint16_t orionMessageCounter = 0;
 void UpdateOrionInfoStruct() {
 
 	CANMsg orionMsg;
 	//osDelay(1000); // why there a delay here .... maybe from when i was testing...
-	static uint8_t orionMessageCounter = 0;
 
 	osStatus status = osMessageQueueGet(batteryControlMessageQueueHandle, &orionMsg, NULL, ORION_MSG_WAIT_TIMEOUT); //timeout is in timer ticks...... so ms?
 
 	if (status == osOK) {
 
 		orion_msg_from_queue++;
+
+		orion_received_tick = osKernelGetTickCount(); // gets here every 10 ticks wow !!!!
 
 		// reset counter to zero now that you've received message
 		orionMessageCounter = 0;
@@ -278,6 +286,8 @@ void UpdateOrionInfoStruct() {
 				batteryInfo.packSOC =( data[4]) / 2;
 				batteryInfo.packAmphours = (data[5] + (data[6] << 8)) / 10;
 				batteryInfo.packDOD = (data[7]) /2;
+
+				pack_info_count++;
 
 				orionMessagesReceived |= 0x1;
 				osMutexRelease(BatteryInfoMutexHandle);
@@ -317,6 +327,8 @@ void UpdateOrionInfoStruct() {
 				batteryInfo.lowTemp = data[2];
 				batteryInfo.avgTemp = data[4];
 
+				temp_info_count++;
+
 				orionMessagesReceived |= 0x2;
 				osMutexRelease(BatteryInfoMutexHandle);
 			}
@@ -328,6 +340,8 @@ void UpdateOrionInfoStruct() {
 				batteryInfo.lowCellVoltageID = data[2];
 				batteryInfo.highCellVoltage= (float) (data[3] + (data[4] << 8)) /10000;
 				batteryInfo.highCellVoltageID = data[5];
+
+				cell_voltages_count++;
 
 				orionMessagesReceived |= 0x4;
 				osMutexRelease(BatteryInfoMutexHandle);
@@ -418,6 +432,10 @@ void enter_BOOT() {
 	orionMessagesReceived = 0;
 	startup_Check_Counter = 0;
 	BCT_Counter = 0;
+	pack_info_count = 0;
+	temp_info_count = 0;
+	cell_voltages_count = 0;
+	orionMessageCounter = 0;
 
 	for(int i = 0; i < 5; i++) {
 		previousHeartbeats[i] = 0;
@@ -505,12 +523,17 @@ void SystemStateMachine() {
 		case BOOT:
 			static uint32_t boot_counter = 0;
 			boot_counter++;
-			if((orionMessagesReceived == 0x7) && boot_counter >= 500) { //ik i dont have to check here but i just am
+//			if((orionMessagesReceived == 0x7) && boot_counter >= 500) { //ik i dont have to check here but i just am
+//				carState = STARTUP;
+//			}
+
+			if((pack_info_count >= 5) && (temp_info_count >= 5)
+					&& (cell_voltages_count >=5) && heartbeat_update_count >= 15
+					&& mbmsStatus.orionCANReceived)
+			{
 				carState = STARTUP;
 			}
-			if ( (0x304 & CONTACTORMASK) == (0x200 & CONTACTORMASK)) {
-				uint8_t x = 0;
-			}
+
 			break;
 
 		case STARTUP:
@@ -556,11 +579,11 @@ void SystemStateMachine() {
 			if( plugged && (contactorInfo[LOWV].contactorClosed == OPEN_CONTACTOR) && (contactorInfo[MOTOR].contactorClosed == OPEN_CONTACTOR)) {
 				HAL_GPIO_WritePin(nCHG_LV_En_GPIO_Port, nCHG_LV_En_Pin, GPIO_PIN_RESET); // enable charging
 				perms.charge = 1;
-				enter_CHARGING(); //DEBUG!
+				//enter_CHARGING(); //DEBUG!
 			}
 
 			if (plugged && (contactorInfo[CHARGE].contactorClosed == CLOSE_CONTACTOR)) {
-				//enter_CHARGING(); DEBUG!
+				enter_CHARGING(); //DEBUG!
 			}
 
 			/* Running checks */
@@ -711,19 +734,19 @@ void startupCheck(){
 
 
 	/* Waiting for contactor heartbeats */
-//	uint8_t heartbeatDead = 0;
-//	if (((previousHeartbeats[0] == 0) || (previousHeartbeats[1] == 0) || (previousHeartbeats[2] == 0) ||
-//		   (previousHeartbeats[3] == 0) || (previousHeartbeats[4] == 0))) // was != 0 oops!
-//	{
-//		// set heartbeatDead so we can break out of while loop lol
-//		if( heartbeat_check_count <= heartbeat_update_count) {
-//			heartbeatDead = waitForFirstHeartbeats();
-//		}
-//
-//	}
-//	if (heartbeatDead == 1){
-//		enter_BPS_FAULT();
-//	}
+	uint8_t heartbeatDead = 0;
+	if (((previousHeartbeats[0] == 0) || (previousHeartbeats[1] == 0) || (previousHeartbeats[2] == 0) ||
+		   (previousHeartbeats[3] == 0) || (previousHeartbeats[4] == 0))) // was != 0 oops!
+	{
+		// set heartbeatDead so we can break out of while loop lol
+		if( heartbeat_check_count <= heartbeat_update_count) {
+			heartbeatDead = waitForFirstHeartbeats();
+		}
+
+	}
+	if (heartbeatDead == 1){
+		enter_BPS_FAULT();
+	}
 
 	/* Check to ensure no contactors are closed */
 	if ((checkContactorsOpen() == 0) || checkPrechargersOpen() == 0){
@@ -978,7 +1001,7 @@ void CheckContactorHeartbeats() {
 	}
 
 	if(BPSFault) {
-		//enter_BPS_FAULT();
+		enter_BPS_FAULT();
 	}
 }
 

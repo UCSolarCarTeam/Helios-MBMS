@@ -49,8 +49,6 @@ void Startup()
 	perms_init();
 	MBMSStatus_init();
 
-	osEventFlagsSet(shutoffFlagHandle, 0x0);
-
 	HAL_GPIO_WritePin(GRN_LED_GPIO_Port, GRN_LED_Pin, GPIO_PIN_SET);
 	HAL_GPIO_WritePin(BLU_LED_GPIO_Port, BLU_LED_Pin, GPIO_PIN_SET);
 	HAL_GPIO_WritePin(RED_LED_GPIO_Port, RED_LED_Pin, GPIO_PIN_SET);

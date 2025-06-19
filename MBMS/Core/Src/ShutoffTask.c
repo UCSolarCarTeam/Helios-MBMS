@@ -110,6 +110,7 @@ void Shutoff()
 			osDelay(200);
 			// start thread for startup!!!
 			if(read_nMPS() == 0) {
+				mbmsStatus.startupState = nMPS_ENABLED;
 				enter_BOOT();
 				osEventFlagsDelete(shutoffFlagHandle);
 				shutoffFlagHandle = osEventFlagsNew(&shutoffFlag_attributes);
