@@ -300,8 +300,8 @@ void UpdateOrionInfoStruct() {
 			// PROBLEM: look over this.. also change names
 			// updating allow charge/discharge on mbmsStatus, based on SOC
 
-			mbmsStatus.chargeEnable = read_Charge_Enable();
-			mbmsStatus.dischargeEnable = read_Discharge_Enable();
+			mbmsStatus.chargeEnable = (read_Charge_Enable() == CHARGE_ENABLE_ACTIVE);
+			mbmsStatus.dischargeEnable = (read_Discharge_Enable() == DISCHARGE_ENABLE_ACTIVE);
 
 //			if (read_Charge_Enable() == 1) {
 //				mbmsStatus.nChargeEnable = 0;
@@ -517,7 +517,7 @@ void enter_FULLY_OPERATIONAL() {
 void SystemStateMachine() {
 
 	// make var plugged for now to stand in for the CAN msg that charger is plugged in or not
-	uint8_t plugged = read_CHARGE_PLUGGED();
+	uint8_t plugged = (read_CHARGE_PLUGGED() == CHARGE_PLUGGED_ACTIVE);
 
 	switch (carState) {
 		case BOOT:
@@ -542,12 +542,12 @@ void SystemStateMachine() {
 			startupCheck();
 
 			// checks MPS
-			if(read_nMPS() == 1) {
+			if(read_nMPS() == nMPS_ACTIVE) {
 				enter_MPS_DISCONNECTED();
 				break;
 			}
 
-			if(read_ESD() == 1) {
+			if(read_ESD() == ESD_ACTIVE) {
 				mbmsTrip.ESDEnabledTrip = 1;
 				enter_BPS_FAULT();
 			}
@@ -565,19 +565,19 @@ void SystemStateMachine() {
 //
 //			start_tick_fully_op = toggle_led(GRN, 500, start_tick_fully_op);
 
-			if(read_nMPS() == 1) {
+			if(read_nMPS() == nMPS_ACTIVE) {
 				enter_MPS_DISCONNECTED();
 				break;
 			}
 
-			if (plugged && (read_Charge_Enable() == 1)) {
+			if (plugged && (read_Charge_Enable() == CHARGE_ENABLE_ACTIVE)) {
 				perms.lv = 0;
 				perms.motor = 0;
 				HAL_GPIO_WritePin(_12V_CAN_En_GPIO_Port, _12V_CAN_En_Pin, GPIO_PIN_RESET); // disable 12V CAN
 			}
 
 			if( plugged && (contactorInfo[LOWV].contactorClosed == OPEN_CONTACTOR) && (contactorInfo[MOTOR].contactorClosed == OPEN_CONTACTOR)) {
-				HAL_GPIO_WritePin(nCHG_LV_En_GPIO_Port, nCHG_LV_En_Pin, GPIO_PIN_RESET); // enable charging
+				HAL_GPIO_WritePin(nCHG_LV_En_GPIO_Port, nCHG_LV_En_Pin, !nCHG_LV_EN_ACTIVE); // enable charging
 				perms.charge = 1;
 				//enter_CHARGING(); //DEBUG!
 			}
@@ -600,14 +600,14 @@ void SystemStateMachine() {
 			// turns off car if key is off
 			checkKeyShutdown();
 
-			if(read_nMPS() == 1) {
+			if(read_nMPS() == nMPS_ACTIVE) {
 				enter_MPS_DISCONNECTED();
 				break;
 			}
 
 			// checks if charger is unplugged
-			if (!plugged && (read_Discharge_Enable() == 1)) {
-				HAL_GPIO_WritePin(nCHG_LV_En_GPIO_Port, nCHG_LV_En_Pin, GPIO_PIN_SET); // disable charging
+			if (!plugged && (read_Discharge_Enable() == DISCHARGE_ENABLE_ACTIVE)) {
+				HAL_GPIO_WritePin(nCHG_LV_En_GPIO_Port, nCHG_LV_En_Pin, nCHG_LV_EN_ACTIVE); // disable charging
 				perms.charge = 0;
 			}
 			if(contactorInfo[CHARGE].contactorClosed == OPEN_CONTACTOR) {
@@ -642,7 +642,7 @@ void SystemStateMachine() {
 			if(softBatteryTrip.cell_UV == 1) {
 				perms.motor = 0;
 			}
-			if(read_nMPS() == 1) {
+			if(read_nMPS() == nMPS_ACTIVE) {
 				enter_MPS_DISCONNECTED();
 				break;
 			}
@@ -1213,12 +1213,12 @@ void UpdateTripStatus() {
 
 		// this is techincally not a "trip" that will cause BPS....
 		// its just for information purposes i suppose
-		if(read_nMPS() == 1){
+		if(read_nMPS() == nMPS_ACTIVE){
 			mbmsTrip.MPSDisabledTrip = 1;
 
 		}
 
-		if(read_ESD() == 1){
+		if(read_ESD() == ESD_ACTIVE){
 			mbmsTrip.ESDEnabledTrip = 1;
 			BPS_Fault = 1;
 		}

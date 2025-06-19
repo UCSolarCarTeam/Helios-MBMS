@@ -58,7 +58,7 @@ void Startup()
 	mbmsStatus.startupState = nMPS_ENABLED;
 
 
-	while (read_nMPS() == 1) {
+	while (read_nMPS() == nMPS_ACTIVE) {
 			osDelay(200);
 		// SET TRIP HERE
 		// wait for MPS to be on/enabled
@@ -68,7 +68,7 @@ void Startup()
 
 
 
-	while (read_ESD() == 1) {
+	while (read_ESD() == ESD_ACTIVE) {
 		// do BPS fault
 		// instead should i just have an osDelay, for BCT to run and set the trip/fault..? bc we have to keep track of that in the struct
 
