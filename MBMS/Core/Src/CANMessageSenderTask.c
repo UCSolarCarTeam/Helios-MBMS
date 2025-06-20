@@ -123,8 +123,9 @@ void sendSoftBatteryLimitCanMessage() {
 	uint16_t tripData = ((mbmsSoftBatteryLimitWarning.highCellVoltageWarning & 0x1) << 0)   	+ ((mbmsSoftBatteryLimitWarning.lowCellVoltageWarning & 0x1) << 1)
 			+ ((mbmsSoftBatteryLimitWarning.commonHighCurrentWarning & 0x1) << 2)   			+ ((mbmsSoftBatteryLimitWarning.motorHighCurrentWarning & 0x1) << 3)
 			+ ((mbmsSoftBatteryLimitWarning.arrayHighCurrentWarning & 0x1) << 4)    			+ ((mbmsSoftBatteryLimitWarning.LVHighCurrentWarning & 0x1) << 5)
-			+ ((mbmsSoftBatteryLimitWarning.chargeHighCurrentWarning & 0x1) << 6)   		    + ((mbmsSoftBatteryLimitWarning.highBatteryWarning & 0x1) << 7)
-		    + ((mbmsSoftBatteryLimitWarning.highTemperatureWarning & 0x1 << 8))		     	+ ((mbmsSoftBatteryLimitWarning.lowTemperatureWarning & 0x1 << 9));
+			+ ((mbmsSoftBatteryLimitWarning.chargeHighCurrentWarning & 0x1) << 6)   		   // + ((mbmsSoftBatteryLimitWarning.highBatteryWarning & 0x1) << 7)
+		    + ((mbmsSoftBatteryLimitWarning.highTemperatureWarning & 0x1 << 7))		      		+ ((mbmsSoftBatteryLimitWarning.lowTemperatureWarning & 0x1 << 8)
+		    + ((mbmsSoftBatteryLimitWarning._12V_CAN_OC_Warning & 0x1) << 9));
 
 	tripMsg.data[0] = (tripData & 0xff);
 	tripMsg.data[1] = (tripData & 0xff00) >> 8;

@@ -72,6 +72,10 @@ void enter_BOOT();
 // in seconds
 #define CONTACTOR_RESPONSE_TIMEOUT 3
 
+
+// in milliseconds (ticks)
+#define LV_OC_TIMEOUT 10
+
 #define HARD_MAX_CELL_VOLTAGE 4.5F
 #define SOFT_MAX_CELL_VOLTAGE 4.2F
 #define HARD_MIN_CELL_VOLTAGE 3.5F

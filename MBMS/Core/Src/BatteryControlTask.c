@@ -52,6 +52,8 @@ uint32_t cell_voltages_count = 0;
 
 uint32_t orion_received_tick = 0;
 
+uint32_t LV_OC_tick_count = 0;
+
 /*
  * Local Variables
  */
@@ -425,6 +427,7 @@ void clear_Warnings() {
 	mbmsSoftBatteryLimitWarning.highCellVoltageWarning = 0;
 	mbmsSoftBatteryLimitWarning.lowCellVoltageWarning = 0;
 	mbmsSoftBatteryLimitWarning.motorHighCurrentWarning = 0;
+	mbmsSoftBatteryLimitWarning._12V_CAN_OC_Warning = 0;
 
 }
 
@@ -437,6 +440,8 @@ void enter_BOOT() {
 	cell_voltages_count = 0;
 	orionMessageCounter = 0;
 
+	mbmsStatus.carState = BOOT;
+
 	for(int i = 0; i < 5; i++) {
 		previousHeartbeats[i] = 0;
 		heartbeatLastUpdatedTime[i] = osKernelGetTickCount() + 15;
@@ -445,13 +450,13 @@ void enter_BOOT() {
 
 	clear_Trips();
 	clear_Warnings();
-	carState = BOOT;
+	mbmsStatus.carState = BOOT;
 
 }
 
 void enter_MPS_DISCONNECTED() {
 	mbmsTrip.MPSDisabledTrip = 1;
-	carState = MPS_DISCONNECTED;
+	mbmsStatus.carState = MPS_DISCONNECTED;
 	HAL_GPIO_WritePin(GRN_LED_GPIO_Port, GRN_LED_Pin, GPIO_PIN_SET);
 
 	perms.faulted = 1; // stop contactors from closing...
@@ -479,7 +484,7 @@ void enter_BPS_FAULT() {
 //	perms.charge = 0;
 	perms.faulted = 1;
 
-	carState = BPS_FAULT;
+	mbmsStatus.carState = BPS_FAULT;
 
 	osStatus_t a = osMutexAcquire(MBMSStatusMutexHandle, 5);
 	if(a == osOK) {
@@ -498,19 +503,19 @@ void enter_BPS_FAULT() {
 }
 
 void enter_SOFT_TRIP() {
-	carState = SOFT_TRIP;
+	mbmsStatus.carState = SOFT_TRIP;
 	HAL_GPIO_WritePin(GRN_LED_GPIO_Port, GRN_LED_Pin, GPIO_PIN_SET);
 	HAL_GPIO_WritePin(BLU_LED_GPIO_Port, BLU_LED_Pin, GPIO_PIN_RESET);
 	perms.faulted = 1;
 }
 
 void enter_CHARGING() {
-	carState = CHARGING;
+	mbmsStatus.carState = CHARGING;
 	HAL_GPIO_WritePin(GRN_LED_GPIO_Port, GRN_LED_Pin, GPIO_PIN_SET);
 }
 
 void enter_FULLY_OPERATIONAL() {
-	carState = FULLY_OPERATIONAL;
+	mbmsStatus.carState = FULLY_OPERATIONAL;
 	HAL_GPIO_WritePin(GRN_LED_GPIO_Port, GRN_LED_Pin, GPIO_PIN_RESET);
 }
 
@@ -519,7 +524,7 @@ void SystemStateMachine() {
 	// make var plugged for now to stand in for the CAN msg that charger is plugged in or not
 	uint8_t plugged = (read_CHARGE_PLUGGED() == CHARGE_PLUGGED_ACTIVE);
 
-	switch (carState) {
+	switch (mbmsStatus.carState) {
 		case BOOT:
 			static uint32_t boot_counter = 0;
 			boot_counter++;
@@ -531,7 +536,7 @@ void SystemStateMachine() {
 					&& (cell_voltages_count >=5) && heartbeat_update_count >= 15
 					&& mbmsStatus.orionCANReceived)
 			{
-				carState = STARTUP;
+				mbmsStatus.carState = STARTUP;
 			}
 
 			break;
@@ -616,7 +621,7 @@ void SystemStateMachine() {
 				perms.motor = 1;
 			}
 			if((contactorInfo[LOWV].contactorClosed == CLOSE_CONTACTOR) && (contactorInfo[MOTOR].contactorClosed == CLOSE_CONTACTOR)) {
-				carState = FULLY_OPERATIONAL;
+				mbmsStatus.carState = FULLY_OPERATIONAL;
 			}
 
 			/* Running checks */
@@ -1210,6 +1215,19 @@ void UpdateTripStatus() {
 
 			osMutexRelease(ContactorCommandMutexHandle);
 
+		}
+
+		if(read_LV_OC() == LV_OC_ACTIVE) {
+			mbmsSoftBatteryLimitWarning._12V_CAN_OC_Warning = 1;
+			LV_OC_tick_count++; // erm actually does it get here every millisecond tho.. idont think so
+			if ((LV_OC_tick_count) >= LV_OC_TIMEOUT ) {
+				// turn off 12V Can.....
+				HAL_GPIO_WritePin(_12V_CAN_En_GPIO_Port, _12V_CAN_En_Pin, !(_12V_CAN_EN_ACTIVE));
+			}
+		}
+		else {
+			LV_OC_tick_count = 0;
+			mbmsSoftBatteryLimitWarning._12V_CAN_OC_Warning = 0;
 		}
 
 		// this is techincally not a "trip" that will cause BPS....

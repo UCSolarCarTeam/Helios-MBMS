@@ -40,6 +40,8 @@ typedef enum { false = 0, true = 1 } boolean;
 #define nCHG_LV_EN_ACTIVE 1 // do not allow charge!!
 #define CHARGE_ENABLE_ACTIVE 1 // orion allows charge
 #define DISCHARGE_ENABLE_ACTIVE 1 // orion allows discharge
+#define LV_OC_ACTIVE 0 // there is overcurrent in 12V CAN line !!!
+#define _12V_CAN_EN_ACTIVE 1 // 12V CAN enabled
 
 
 enum Contactor {
@@ -183,6 +185,7 @@ typedef struct {
 	uint8_t highBatteryWarning;
 	uint8_t highTemperatureWarning;
 	uint8_t lowTemperatureWarning;
+	uint8_t _12V_CAN_OC_Warning;
 
 } MBMSSoftBatteryLimitWarning;
 
