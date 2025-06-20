@@ -126,8 +126,8 @@ typedef struct {
 	uint8_t contactorClosed; // march 8: two bits become one variable, 00 = open, 01 = closed, 10 = closing
 	uint8_t contactorClosing;
 	uint8_t contactorError;
-	int16_t lineCurrent; // CHANGED FROM UINT16 ON APRIL 2
-	int16_t chargeCurrent;
+	float lineCurrent; // CHANGED FROM UINT16 ON APRIL 2
+	float chargeCurrent;
 	uint8_t contactorOpeningError;
 	uint16_t heartbeat;
 } ContactorInfo;

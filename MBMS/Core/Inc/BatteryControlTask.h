@@ -30,7 +30,7 @@ void initiateBPSFault();
 void checkKeyShutdown();
 void updateContactorInfo(uint8_t contactor, uint8_t prechargerClosed, uint8_t prechargerClosing,
 		uint8_t prechargerError, uint8_t contactorClosed, uint8_t contactorClosing,
-		uint8_t contactorError, int16_t lineCurrent, int16_t chargeCurrent, uint8_t BPSerror);
+		uint8_t contactorError, float lineCurrent, float chargeCurrent, uint8_t BPSerror);
 
 void startupCheck();
 uint8_t waitForFirstHeartbeats();
@@ -85,16 +85,16 @@ void enter_BOOT();
 
 
 /* in A */
-#define HARD_MAX_COMMON_CONTACTOR_CURRENT 300
-#define HARD_MAX_MOTORS_CONTACTOR_CURRENT 300
-#define HARD_MAX_ARRAY_CONTACTOR_CURRENT 300
-#define HARD_MAX_LV_CONTACTOR_CURRENT 300
-#define HARD_MAX_CHARGE_CONTACTOR_CURRENT  300
-#define SOFT_MAX_COMMON_CONTACTOR_CURRENT 290
-#define SOFT_MAX_MOTORS_CONTACTOR_CURRENT 290
-#define SOFT_MAX_ARRAY_CONTACTOR_CURRENT 290
-#define SOFT_MAX_LV_CONTACTOR_CURRENT 290
-#define SOFT_MAX_CHARGE_CONTACTOR_CURRENT 290
+#define HARD_MAX_COMMON_CONTACTOR_CURRENT 300.0F
+#define HARD_MAX_MOTORS_CONTACTOR_CURRENT 300.0F
+#define HARD_MAX_ARRAY_CONTACTOR_CURRENT 300.0F
+#define HARD_MAX_LV_CONTACTOR_CURRENT 300.0F
+#define HARD_MAX_CHARGE_CONTACTOR_CURRENT  300.0F
+#define SOFT_MAX_COMMON_CONTACTOR_CURRENT 290.0F
+#define SOFT_MAX_MOTORS_CONTACTOR_CURRENT 290.0F
+#define SOFT_MAX_ARRAY_CONTACTOR_CURRENT 290.0F
+#define SOFT_MAX_LV_CONTACTOR_CURRENT 290.0F
+#define SOFT_MAX_CHARGE_CONTACTOR_CURRENT 290.0F
 
 
 #define	HARD_MAX_TEMP 45

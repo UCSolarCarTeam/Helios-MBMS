@@ -178,8 +178,8 @@ void UpdateContactorInfoStruct() {
 			uint8_t contactorClosed = (data[0] & 0x08) ? CLOSE_CONTACTOR: OPEN_CONTACTOR; // extract bit 3
 			uint8_t contactorClosing = (data[0] & 0x10) ? CLOSE_CONTACTOR: OPEN_CONTACTOR; // extract bit 4
 			uint8_t contactorError = (data[0] & 0x20) ? CLOSE_CONTACTOR: OPEN_CONTACTOR; // extract bit 5
-			int16_t lineCurrent = ((data[0] & 0xc0) >> 6) | ((data[1] & 0xff) << 2) | ((data[2] & 0x03) << 10); // extract bits 6 to 17
-			int16_t chargeCurrent = ((data[2] & 0xfc) >> 2) | ((data[3] & 0x3f) << 6); // extract bits 18 to 29
+			float lineCurrent = (((data[0] & 0xc0) >> 6) | ((data[1] & 0xff) << 2) | ((data[2] & 0x03) << 10)) / 10; // extract bits 6 to 17
+			float chargeCurrent = (((data[2] & 0xfc) >> 2) | ((data[3] & 0x3f) << 6)) /10; // extract bits 18 to 29
 			uint8_t contactorOpeningError = (data[3] & 0x80) ? CLOSE_CONTACTOR: OPEN_CONTACTOR; //extract bit 30
 			updateContactorInfo((contactorMsg.extendedID - CONTACTORIDS), prechargerClosed, prechargerClosing, prechargerError,
 					contactorClosed, contactorClosing, contactorError, lineCurrent, chargeCurrent, contactorOpeningError);
@@ -190,7 +190,7 @@ void UpdateContactorInfoStruct() {
 }
 
 void updateContactorInfo(uint8_t contactor, uint8_t prechargerClosed, uint8_t prechargerClosing, uint8_t prechargerError,
-	uint8_t contactorClosed, uint8_t contactorClosing, uint8_t contactorError, int16_t lineCurrent, int16_t chargeCurrent, uint8_t contactorOpeningError) {
+	uint8_t contactorClosed, uint8_t contactorClosing, uint8_t contactorError, float lineCurrent, float chargeCurrent, uint8_t contactorOpeningError) {
 	osStatus_t a = osMutexAcquire(ContactorInfoMutexHandle, UPDATING_MUTEX_TIMEOUT);
 	if(a == osOK) {
 		contactorInfo[contactor].prechargerClosed = prechargerClosed;
@@ -578,7 +578,12 @@ void SystemStateMachine() {
 			if (plugged && (read_Charge_Enable() == CHARGE_ENABLE_ACTIVE)) {
 				perms.lv = 0;
 				perms.motor = 0;
-				HAL_GPIO_WritePin(_12V_CAN_En_GPIO_Port, _12V_CAN_En_Pin, GPIO_PIN_RESET); // disable 12V CAN
+				HAL_GPIO_WritePin(_12V_CAN_En_GPIO_Port, _12V_CAN_En_Pin, !(_12V_CAN_EN_ACTIVE)); // disable 12V CAN
+			}
+			else {
+				perms.lv = 1;
+				perms.motor = 1;
+				HAL_GPIO_WritePin(_12V_CAN_En_GPIO_Port, _12V_CAN_En_Pin, _12V_CAN_EN_ACTIVE);
 			}
 
 			if( plugged && (contactorInfo[LOWV].contactorClosed == OPEN_CONTACTOR) && (contactorInfo[MOTOR].contactorClosed == OPEN_CONTACTOR)) {
@@ -684,19 +689,19 @@ void UpdateContactors() {
             contactorCommand.common = CLOSE_CONTACTOR;
 //            sendContactorCommand = 1; // had this here before but i think ill just consistently send lowkey..
         }
-        else if ((perms.lv) && (contactorInfo[LOWV].contactorClosed != CLOSE_CONTACTOR) && (mbmsStatus.dischargeEnable == 1)) {
+        else if ((perms.lv) && (contactorInfo[LOWV].contactorClosed != CLOSE_CONTACTOR) && (mbmsStatus.dischargeEnable == DISCHARGE_ENABLE_ACTIVE)) {
             contactorCommand.LV = CLOSE_CONTACTOR;
 
         }
-        else if ((perms.motor) && (contactorInfo[MOTOR].contactorClosed != CLOSE_CONTACTOR) && (mbmsStatus.dischargeEnable == 1)) {
+        else if ((perms.motor) && (contactorInfo[MOTOR].contactorClosed != CLOSE_CONTACTOR) && (mbmsStatus.dischargeEnable == DISCHARGE_ENABLE_ACTIVE)) {
             contactorCommand.motor = CLOSE_CONTACTOR;
 
         }
-        else if ((perms.array) && (contactorInfo[ARRAY].contactorClosed != CLOSE_CONTACTOR) && (mbmsStatus.chargeEnable == 1)) {
+        else if ((perms.array) && (contactorInfo[ARRAY].contactorClosed != CLOSE_CONTACTOR) && (mbmsStatus.chargeEnable == CHARGE_ENABLE_ACTIVE)) {
             contactorCommand.array = CLOSE_CONTACTOR;
 
         }
-        else if ((perms.charge) && (contactorInfo[CHARGE].contactorClosed != CLOSE_CONTACTOR) && (mbmsStatus.chargeEnable == 1)) {
+        else if ((perms.charge) && (contactorInfo[CHARGE].contactorClosed != CLOSE_CONTACTOR) && (mbmsStatus.chargeEnable == CHARGE_ENABLE_ACTIVE)) {
             contactorCommand.charge = CLOSE_CONTACTOR;
 
         }
@@ -1100,19 +1105,23 @@ void UpdateTripStatus() {
 
 			if ((contactorInfo[MOTOR].lineCurrent > HARD_MAX_MOTORS_CONTACTOR_CURRENT)){
 				mbmsTrip.motorHighCurrentTrip = 1;
+				BPS_Fault = 1;
 			}
 
 			if (contactorInfo[ARRAY].lineCurrent > HARD_MAX_ARRAY_CONTACTOR_CURRENT){
 				mbmsTrip.arrayHighCurrentTrip = 1;
+				BPS_Fault = 1;
 			}
 
 			if (contactorInfo[LOWV].lineCurrent > HARD_MAX_LV_CONTACTOR_CURRENT){
 				mbmsTrip.LVHighCurrentTrip = 1;
+				BPS_Fault = 1;
 			}
 
 
 			if (contactorInfo[CHARGE].lineCurrent > HARD_MAX_CHARGE_CONTACTOR_CURRENT){
 				mbmsTrip.chargeHighCurrentTrip = 1;
+				BPS_Fault = 1;
 			}
 
 
@@ -1234,6 +1243,7 @@ void UpdateTripStatus() {
 		// its just for information purposes i suppose
 		if(read_nMPS() == nMPS_ACTIVE){
 			mbmsTrip.MPSDisabledTrip = 1;
+			enter_MPS_DISCONNECTED();
 
 		}
 
