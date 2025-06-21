@@ -54,6 +54,9 @@ uint32_t orion_received_tick = 0;
 
 uint32_t LV_OC_tick_count = 0;
 
+
+uint32_t contactor_command_start_tick[5] = osKernelGetTickCount() + 15;
+
 /*
  * Local Variables
  */
@@ -659,7 +662,7 @@ void SystemStateMachine() {
 			}
 			/* Running checks */
 			CheckContactorHeartbeats();
-			//CheckSoftBatteryLimit();
+			CheckSoftBatteryLimit();
 			UpdateTripStatus();
 
 			break;
@@ -688,50 +691,60 @@ void UpdateContactors() {
     if (!contactorClosing && !perms.faulted) {
         if ((perms.common) && (contactorInfo[COMMON].contactorClosed != CLOSE_CONTACTOR) && (contactorCommand.common != CLOSE_CONTACTOR)) {
             contactorCommand.common = CLOSE_CONTACTOR;
+            contactor_command_start_tick[COMMON] = osKernelGetTickCount();
 //            sendContactorCommand = 1; // had this here before but i think ill just consistently send lowkey..
         }
         else if ((perms.lv) && (contactorInfo[LOWV].contactorClosed != CLOSE_CONTACTOR)
         		&& (mbmsStatus.dischargeEnable == DISCHARGE_ENABLE_ACTIVE) && (contactorCommand.LV != CLOSE_CONTACTOR)) {
             contactorCommand.LV = CLOSE_CONTACTOR;
+            contactor_command_start_tick[LOWV] = osKernelGetTickCount();
 
         }
         else if ((perms.motor) && (contactorInfo[MOTOR].contactorClosed != CLOSE_CONTACTOR)
         		&& (mbmsStatus.dischargeEnable == DISCHARGE_ENABLE_ACTIVE) && (contactorCommand.motor != CLOSE_CONTACTOR)) {
             contactorCommand.motor = CLOSE_CONTACTOR;
+            contactor_command_start_tick[MOTOR] = osKernelGetTickCount();
 
         }
         else if ((perms.array) && (contactorInfo[ARRAY].contactorClosed != CLOSE_CONTACTOR)
         		&& (mbmsStatus.chargeEnable == CHARGE_ENABLE_ACTIVE) && (contactorCommand.array != CLOSE_CONTACTOR)) {
             contactorCommand.array = CLOSE_CONTACTOR;
+            contactor_command_start_tick[ARRAY] = osKernelGetTickCount();
 
         }
         else if ((perms.charge) && (contactorInfo[CHARGE].contactorClosed != CLOSE_CONTACTOR)
         		&& (mbmsStatus.chargeEnable == CHARGE_ENABLE_ACTIVE) && (contactorCommand.charge != CLOSE_CONTACTOR)) {
             contactorCommand.charge = CLOSE_CONTACTOR;
+            contactor_command_start_tick[CHARGE] = osKernelGetTickCount();
 
         }
     }
 
     // Open contactors as needed
-    if ((!perms.common)) { // tbh i lowkey do not even want to check contactor state, just perms but idk hehe
+    if ((!perms.common) && (contactorCommand.common != OPEN_CONTACTOR)) { // tbh i lowkey do not even want to check contactor state, just perms but idk hehe
     	contactorCommand.common = OPEN_CONTACTOR;
+    	contactor_command_start_tick[COMMON] = osKernelGetTickCount();
     }
-    if ((!perms.motor)) {
+    if ((!perms.motor) && (contactorCommand.motor != OPEN_CONTACTOR)) {
         contactorCommand.motor = OPEN_CONTACTOR;
+        contactor_command_start_tick[MOTOR] = osKernelGetTickCount();
     }
 
-    if ((!perms.array)) {
+    if ((!perms.array) && (contactorCommand.array != OPEN_CONTACTOR)) {
         contactorCommand.array = OPEN_CONTACTOR;
+        contactor_command_start_tick[ARRAY] = osKernelGetTickCount();
 
     }
 
-    if ((!perms.lv)) {
+    if ((!perms.lv) && (contactorCommand.LV != OPEN_CONTACTOR)) {
         contactorCommand.LV = OPEN_CONTACTOR;
+        contactor_command_start_tick[LOWV] = osKernelGetTickCount();
 
     }
 
-    if ((!perms.charge)) {
+    if ((!perms.charge) && (contactorCommand.charge != OPEN_CONTACTOR)) {
         contactorCommand.charge = OPEN_CONTACTOR;
+        contactor_command_start_tick[CHARGE] = osKernelGetTickCount();
 
     }
 }
@@ -1190,11 +1203,16 @@ void UpdateTripStatus() {
 
 			/* Contactor disconnected unexpectedely */
 			/* To check, we compare a minimum current draw with the state of the contactor */
-			if(((		 contactorCommand.common == CLOSE_CONTACTOR) && (batteryInfo.packCurrent < NO_CURRENT_THRESHOLD))
-					|| ((contactorCommand.motor == CLOSE_CONTACTOR) && (contactorInfo[MOTOR].lineCurrent < NO_CURRENT_THRESHOLD))
-					|| ((contactorCommand.array  == CLOSE_CONTACTOR) && (contactorInfo[ARRAY].lineCurrent  < NO_CURRENT_THRESHOLD))
-					|| ((contactorCommand.LV     == CLOSE_CONTACTOR) && (contactorInfo[LOWV].lineCurrent   < NO_CURRENT_THRESHOLD))
-					|| ((contactorCommand.charge == CLOSE_CONTACTOR) && (contactorInfo[CHARGE].lineCurrent < NO_CURRENT_THRESHOLD))
+			if(		   ((contactorCommand.common == CLOSE_CONTACTOR) && (batteryInfo.packCurrent < NO_CURRENT_THRESHOLD)
+						 && ((osKernelGetTickCount() - contactor_command_start_tick[COMMON]) >= CLOSE_CONTACTOR_TIMEOUT))
+					|| ((contactorCommand.motor == CLOSE_CONTACTOR) && (contactorInfo[MOTOR].lineCurrent < NO_CURRENT_THRESHOLD)
+						 && ((osKernelGetTickCount() - contactor_command_start_tick[MOTOR]) >= CLOSE_CONTACTOR_TIMEOUT))
+					|| ((contactorCommand.array  == CLOSE_CONTACTOR) && (contactorInfo[ARRAY].lineCurrent  < NO_CURRENT_THRESHOLD)
+						 && ((osKernelGetTickCount() - contactor_command_start_tick[ARRAY]) >= CLOSE_CONTACTOR_TIMEOUT))
+					|| ((contactorCommand.LV     == CLOSE_CONTACTOR) && (contactorInfo[LOWV].lineCurrent   < NO_CURRENT_THRESHOLD)
+						 && ((osKernelGetTickCount() - contactor_command_start_tick[LOWV]) >= CLOSE_CONTACTOR_TIMEOUT))
+					|| ((contactorCommand.charge == CLOSE_CONTACTOR) && (contactorInfo[CHARGE].lineCurrent < NO_CURRENT_THRESHOLD)
+						 && ((osKernelGetTickCount() - contactor_command_start_tick[CHARGE]) >= CLOSE_CONTACTOR_TIMEOUT))
 				)
 			{
 				mbmsTrip.contactorDisconnectedUnexpectedlyTrip = 1;
@@ -1203,8 +1221,10 @@ void UpdateTripStatus() {
 			}
 
 			/* Contactor connected unexpectedly trip */
-			if(((		 contactorCommand.common == OPEN_CONTACTOR) && (batteryInfo.packCurrent >= NO_CURRENT_THRESHOLD))
-					|| ((contactorCommand.motor == OPEN_CONTACTOR) && (contactorInfo[MOTOR].lineCurrent >= NO_CURRENT_THRESHOLD))
+			if(((		 contactorCommand.common == OPEN_CONTACTOR) && (batteryInfo.packCurrent >= NO_CURRENT_THRESHOLD)
+						 && ((osKernelGetTickCount() - contactor_command_start_tick[COMMON]) >= OPEN_CONTACTOR_TIMEOUT))
+					|| ((contactorCommand.motor == OPEN_CONTACTOR) && (contactorInfo[MOTOR].lineCurrent >= NO_CURRENT_THRESHOLD)
+						 && ((osKernelGetTickCount() - contactor_command_start_tick[MOTOR]) >= OPEN_CONTACTOR_TIMEOUT))
 					|| ((contactorCommand.array  == OPEN_CONTACTOR) && (contactorInfo[ARRAY].lineCurrent  >= NO_CURRENT_THRESHOLD))
 					|| ((contactorCommand.LV     == OPEN_CONTACTOR) && (contactorInfo[LOWV].lineCurrent   >= NO_CURRENT_THRESHOLD))
 					|| ((contactorCommand.charge == OPEN_CONTACTOR) && (contactorInfo[CHARGE].lineCurrent >= NO_CURRENT_THRESHOLD))

@@ -102,6 +102,10 @@ void enter_BOOT();
 #define	HARD_MIN_TEMP 0
 #define	SOFT_MIN_TEMP 5
 
+// in milliseconds
+#define CLOSE_CONTACTOR_TIMEOUT 5000 // so big for testing ok
+#define OPEN_CONTACTOR_TIMEOUT 5000
+
 
 
 

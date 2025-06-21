@@ -58,10 +58,10 @@ void Shutoff()
 		}
 
 		//disable 12V CAN
-		HAL_GPIO_WritePin(_12V_CAN_En_GPIO_Port, _12V_CAN_En_Pin, GPIO_PIN_RESET);
+		HAL_GPIO_WritePin(_12V_CAN_En_GPIO_Port, _12V_CAN_En_Pin, !(_12V_CAN_EN_ACTIVE));
 
 		// ensure charging is disabled
-		HAL_GPIO_WritePin(nCHG_LV_En_GPIO_Port, nCHG_LV_En_Pin, GPIO_PIN_SET);
+		HAL_GPIO_WritePin(nCHG_LV_En_GPIO_Port, nCHG_LV_En_Pin, nCHG_LV_EN_ACTIVE);
 
 		// open common
 		perms.common = 0;
