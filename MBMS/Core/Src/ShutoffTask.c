@@ -68,31 +68,31 @@ void Shutoff()
 
 		// wait to open CHECK THIS
 		while(contactorInfo[COMMON].contactorClosed == CLOSE_CONTACTOR) {
-
+			osDelay(50);
 		}
 
 		perms.motor = 0;
 		// wait to open CHECK THIS
 		while(contactorInfo[MOTOR].contactorClosed == CLOSE_CONTACTOR) {
-
+			osDelay(50);
 		}
 
 		perms.array = 0;
 		// wait to open CHECK THIS
 		while(contactorInfo[ARRAY].contactorClosed == CLOSE_CONTACTOR) {
-
+			osDelay(50);
 		}
 
 		perms.lv = 0;
 		// wait to open CHECK THIS
 		while(contactorInfo[LOWV].contactorClosed == CLOSE_CONTACTOR) {
-
+			osDelay(50);
 		}
 
 		perms.charge = 0;
 		// wait to open CHECK THIS
 		while(contactorInfo[CHARGE].contactorClosed == CLOSE_CONTACTOR) {
-
+			osDelay(50);
 		}
 
 		// Disable EN1...

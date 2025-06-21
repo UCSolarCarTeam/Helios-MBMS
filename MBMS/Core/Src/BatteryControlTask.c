@@ -439,6 +439,7 @@ void enter_BOOT() {
 	temp_info_count = 0;
 	cell_voltages_count = 0;
 	orionMessageCounter = 0;
+	perms.faulted = 0;
 
 	mbmsStatus.carState = BOOT;
 
@@ -626,7 +627,7 @@ void SystemStateMachine() {
 				perms.motor = 1;
 			}
 			if((contactorInfo[LOWV].contactorClosed == CLOSE_CONTACTOR) && (contactorInfo[MOTOR].contactorClosed == CLOSE_CONTACTOR)) {
-				mbmsStatus.carState = FULLY_OPERATIONAL;
+				enter_FULLY_OPERATIONAL();
 			}
 
 			/* Running checks */
@@ -685,23 +686,27 @@ void UpdateContactors() {
 
     // If no contactors are currently closing, and battery not in fault type state (MPS, BPS)
     if (!contactorClosing && !perms.faulted) {
-        if ((perms.common) && (contactorInfo[COMMON].contactorClosed != CLOSE_CONTACTOR)) {
+        if ((perms.common) && (contactorInfo[COMMON].contactorClosed != CLOSE_CONTACTOR) && (contactorCommand.common != CLOSE_CONTACTOR)) {
             contactorCommand.common = CLOSE_CONTACTOR;
 //            sendContactorCommand = 1; // had this here before but i think ill just consistently send lowkey..
         }
-        else if ((perms.lv) && (contactorInfo[LOWV].contactorClosed != CLOSE_CONTACTOR) && (mbmsStatus.dischargeEnable == DISCHARGE_ENABLE_ACTIVE)) {
+        else if ((perms.lv) && (contactorInfo[LOWV].contactorClosed != CLOSE_CONTACTOR)
+        		&& (mbmsStatus.dischargeEnable == DISCHARGE_ENABLE_ACTIVE) && (contactorCommand.LV != CLOSE_CONTACTOR)) {
             contactorCommand.LV = CLOSE_CONTACTOR;
 
         }
-        else if ((perms.motor) && (contactorInfo[MOTOR].contactorClosed != CLOSE_CONTACTOR) && (mbmsStatus.dischargeEnable == DISCHARGE_ENABLE_ACTIVE)) {
+        else if ((perms.motor) && (contactorInfo[MOTOR].contactorClosed != CLOSE_CONTACTOR)
+        		&& (mbmsStatus.dischargeEnable == DISCHARGE_ENABLE_ACTIVE) && (contactorCommand.motor != CLOSE_CONTACTOR)) {
             contactorCommand.motor = CLOSE_CONTACTOR;
 
         }
-        else if ((perms.array) && (contactorInfo[ARRAY].contactorClosed != CLOSE_CONTACTOR) && (mbmsStatus.chargeEnable == CHARGE_ENABLE_ACTIVE)) {
+        else if ((perms.array) && (contactorInfo[ARRAY].contactorClosed != CLOSE_CONTACTOR)
+        		&& (mbmsStatus.chargeEnable == CHARGE_ENABLE_ACTIVE) && (contactorCommand.array != CLOSE_CONTACTOR)) {
             contactorCommand.array = CLOSE_CONTACTOR;
 
         }
-        else if ((perms.charge) && (contactorInfo[CHARGE].contactorClosed != CLOSE_CONTACTOR) && (mbmsStatus.chargeEnable == CHARGE_ENABLE_ACTIVE)) {
+        else if ((perms.charge) && (contactorInfo[CHARGE].contactorClosed != CLOSE_CONTACTOR)
+        		&& (mbmsStatus.chargeEnable == CHARGE_ENABLE_ACTIVE) && (contactorCommand.charge != CLOSE_CONTACTOR)) {
             contactorCommand.charge = CLOSE_CONTACTOR;
 
         }
@@ -709,7 +714,7 @@ void UpdateContactors() {
 
     // Open contactors as needed
     if ((!perms.common)) { // tbh i lowkey do not even want to check contactor state, just perms but idk hehe
-    	contactorCommand.motor = OPEN_CONTACTOR;
+    	contactorCommand.common = OPEN_CONTACTOR;
     }
     if ((!perms.motor)) {
         contactorCommand.motor = OPEN_CONTACTOR;
