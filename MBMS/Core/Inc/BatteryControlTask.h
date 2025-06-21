@@ -80,7 +80,7 @@ void enter_BOOT();
 #define SOFT_MAX_CELL_VOLTAGE 4.2F
 #define HARD_MIN_CELL_VOLTAGE 3.5F
 #define SOFT_MIN_CELL_VOLTAGE 3.7F
-#define HARD_MAX_PACK_VOLTAGE 120
+#define HARD_MAX_PACK_VOLTAGE 120 // um yeah idk if these even a trip soo i dont htink so :)
 #define SOFT_MAX_PACK_VOLTAGE 115
 
 

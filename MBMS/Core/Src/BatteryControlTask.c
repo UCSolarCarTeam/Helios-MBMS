@@ -55,7 +55,7 @@ uint32_t orion_received_tick = 0;
 uint32_t LV_OC_tick_count = 0;
 
 
-uint32_t contactor_command_start_tick[5] = osKernelGetTickCount() + 15;
+uint32_t contactor_command_start_tick[5] = {0};
 
 /*
  * Local Variables
@@ -86,6 +86,9 @@ uint32_t BCT_difference_seconds = 0;
 void BatteryControlTask(void* arg)
 {
 	uint32_t taskTickLastStart = osKernelGetTickCount();
+	for (int i = 0; i < 5; i++) {
+		contactor_command_start_tick[i] = osKernelGetTickCount() + 15;
+	}
 
     while(1)
     {
@@ -1225,9 +1228,12 @@ void UpdateTripStatus() {
 						 && ((osKernelGetTickCount() - contactor_command_start_tick[COMMON]) >= OPEN_CONTACTOR_TIMEOUT))
 					|| ((contactorCommand.motor == OPEN_CONTACTOR) && (contactorInfo[MOTOR].lineCurrent >= NO_CURRENT_THRESHOLD)
 						 && ((osKernelGetTickCount() - contactor_command_start_tick[MOTOR]) >= OPEN_CONTACTOR_TIMEOUT))
-					|| ((contactorCommand.array  == OPEN_CONTACTOR) && (contactorInfo[ARRAY].lineCurrent  >= NO_CURRENT_THRESHOLD))
-					|| ((contactorCommand.LV     == OPEN_CONTACTOR) && (contactorInfo[LOWV].lineCurrent   >= NO_CURRENT_THRESHOLD))
-					|| ((contactorCommand.charge == OPEN_CONTACTOR) && (contactorInfo[CHARGE].lineCurrent >= NO_CURRENT_THRESHOLD))
+					|| ((contactorCommand.array  == OPEN_CONTACTOR) && (contactorInfo[ARRAY].lineCurrent  >= NO_CURRENT_THRESHOLD)
+						 && ((osKernelGetTickCount() - contactor_command_start_tick[ARRAY]) >= OPEN_CONTACTOR_TIMEOUT))
+					|| ((contactorCommand.LV     == OPEN_CONTACTOR) && (contactorInfo[LOWV].lineCurrent   >= NO_CURRENT_THRESHOLD)
+						 && ((osKernelGetTickCount() - contactor_command_start_tick[LOWV]) >= OPEN_CONTACTOR_TIMEOUT))
+					|| ((contactorCommand.charge == OPEN_CONTACTOR) && (contactorInfo[CHARGE].lineCurrent >= NO_CURRENT_THRESHOLD)
+						 && ((osKernelGetTickCount() - contactor_command_start_tick[CHARGE]) >= OPEN_CONTACTOR_TIMEOUT))
 				)
 			{
 				mbmsTrip.contactorConnectedUnexpectedlyTrip = 1;
