@@ -42,6 +42,9 @@ typedef enum { false = 0, true = 1 } boolean;
 #define DISCHARGE_ENABLE_ACTIVE 1 // orion allows discharge
 #define LV_OC_ACTIVE 0 // there is overcurrent in 12V CAN line !!!
 #define _12V_CAN_EN_ACTIVE 1 // 12V CAN enabled
+#define _12V_PCHG_EN_ACTIVE 1 // 12V CAN PCHG enabled
+#define EN1_ACTIVE 1 // HV
+#define CRITICAL_OV_UV_ACTIVE 0 // the precharging is finished !!!!!!!
 
 
 enum Contactor {

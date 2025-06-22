@@ -58,8 +58,10 @@ void Startup()
 	mbmsStatus.startupState = nMPS_ENABLED;
 
 
+	uint8_t nMPS = read_nMPS();
 	while (read_nMPS() == nMPS_ACTIVE) {
-			osDelay(200);
+		uint8_t nMPS = read_nMPS();
+		osDelay(200);
 		// SET TRIP HERE
 		// wait for MPS to be on/enabled
 	}
@@ -74,6 +76,7 @@ void Startup()
 
 		// SET TRIP HERE naw i dont like this im just gonna add a delay and BCT can figure it out tbh
 		//osEventFlagsSet(shutoffFlagHandle, HARD_BL_FLAG);
+		uint8_t ESD = read_ESD();
 		osDelay(200);
 		// um idk lol lets hope it will be running BCT
 		if (carState == BPS_FAULT) {
@@ -83,6 +86,7 @@ void Startup()
 	}
 
 	mbmsStatus.startupState = ESD_DISABLED;
+
 
 
 	while(startup_Check_Counter < 5) {
@@ -116,23 +120,23 @@ void Startup()
 		//Error_Handler();
 	}
 	mbmsStatus.startupState = LV_CLOSED;
-
+/* UNCOMMENT WHEN DONE DEBUG
 	// enable DCDC HV through EN1
-	HAL_GPIO_WritePin(EN1_GPIO_Port, EN1_Pin, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(EN1_GPIO_Port, EN1_Pin, EN1_ACTIVE);
 
 	mbmsStatus.startupState = EN1_ON;
 
 	//precharge 12V CAN
-	HAL_GPIO_WritePin(_12V_PCHG_En_GPIO_Port, _12V_PCHG_En_Pin, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(_12V_PCHG_En_GPIO_Port, _12V_PCHG_En_Pin, _12V_PCHG_EN_ACTIVE);
 	//wait to finish precharging!
-	while(read_LV_OC() == 1) { // 0 is good to go
+	while(read_Critical_OV_UV() != CRITICAL_OV_UV_ACTIVE) { // 0 is good to go
 
 	}
 	//Enable 12V CAN
-	HAL_GPIO_WritePin(_12V_CAN_En_GPIO_Port, _12V_CAN_En_Pin, GPIO_PIN_SET);
-	HAL_GPIO_WritePin(_12V_PCHG_En_GPIO_Port, _12V_PCHG_En_Pin, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(_12V_CAN_En_GPIO_Port, _12V_CAN_En_Pin, _12V_CAN_EN_ACTIVE);
+	HAL_GPIO_WritePin(_12V_PCHG_En_GPIO_Port, _12V_PCHG_En_Pin, !(_12V_PCHG_EN_ACTIVE));
 
-
+*/
 
 	// set flag to give permission to precharge/close motor contactor
 	// just check that everything is good still (doesnt HAVE to close motor before moving on to next part)

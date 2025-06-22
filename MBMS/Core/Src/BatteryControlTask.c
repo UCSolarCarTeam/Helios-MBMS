@@ -378,7 +378,7 @@ void UpdateOrionInfoStruct() {
 		orionMessageCounter += 1;
 	}
 	if(orionMessageCounter >= 200){ // was 20/21 when timeout was 0
-		osStatus_t a = osMutexAcquire(MBMSStatusMutexHandle, 5);
+		osStatus_t a = osMutexAcquire(MBMSStatusMutexHandle, UPDATING_MUTEX_TIMEOUT);
 		if (a == osOK) {
 			mbmsStatus.orionCANReceived = 0; // no orion message recieved !!!
 			osMutexRelease(MBMSStatusMutexHandle);
@@ -628,13 +628,19 @@ void SystemStateMachine() {
 				perms.charge = 0;
 			}
 			if(contactorInfo[CHARGE].contactorClosed == OPEN_CONTACTOR) {
-				HAL_GPIO_WritePin(_12V_CAN_En_GPIO_Port, _12V_CAN_En_Pin, GPIO_PIN_SET); // enable 12V CAN
+				HAL_GPIO_WritePin(_12V_CAN_En_GPIO_Port, _12V_CAN_En_Pin, GPIO_PIN_SET); // enable 12V CAN PAUSE I SHOULD PRECHARGE STOOPID
 				perms.lv = 1;
 				perms.motor = 1;
 			}
 			if((contactorInfo[LOWV].contactorClosed == CLOSE_CONTACTOR) && (contactorInfo[MOTOR].contactorClosed == CLOSE_CONTACTOR)) {
-				enter_FULLY_OPERATIONAL();
+				HAL_GPIO_WritePin(_12V_PCHG_En_GPIO_Port, _12V_PCHG_En_Pin, _12V_PCHG_EN_ACTIVE); // turn on precharge
+				if(read_Critical_OV_UV() == CRITICAL_OV_UV_ACTIVE) { // if equals 0 good to go
+					HAL_GPIO_WritePin(_12V_CAN_En_GPIO_Port, _12V_CAN_En_Pin, _12V_CAN_EN_ACTIVE); // anable 12V CAN
+					HAL_GPIO_WritePin(_12V_PCHG_En_GPIO_Port, _12V_PCHG_En_Pin, !(_12V_PCHG_EN_ACTIVE));
+					enter_FULLY_OPERATIONAL();
+				}
 			}
+
 
 			/* Running checks */
 			CheckContactorHeartbeats();
@@ -870,6 +876,23 @@ uint8_t checkContactorsOpen() {
 		for (int i = 0; i < 5; i++) {
 			if (contactorInfo[i].contactorClosed == CLOSE_CONTACTOR) {
 				allOpen = 0;
+				switch(i) {
+					case COMMON:
+						mbmsTrip.commonHeartbeatDeadTrip = 1;
+						break;
+					case MOTOR:
+						mbmsTrip.motorHeartbeatDeadTrip = 1;
+						break;
+					case ARRAY:
+						mbmsTrip.arrayHeartbeatDeadTrip = 1;
+						break;
+					case LOWV:
+						mbmsTrip.LVHeartbeatDeadTrip = 1;
+						break;
+					case CHARGE:
+						mbmsTrip.chargeHeartbeatDeadTrip = 1;
+						break;
+				}
 				break;
 			}
 		}
