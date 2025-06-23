@@ -224,7 +224,7 @@ void updateContactorInfo(uint8_t contactor, uint8_t prechargerClosed, uint8_t pr
  *
  */
 void UpdatePowerSelectionStruct() {
-	powerSelectionStatus.nMainPowerSwitch = read_nMPS();
+	powerSelectionStatus.nMainPowerSwitch = read_nMPS2();
 	powerSelectionStatus.ExternalShutdown = read_ESD();
 	powerSelectionStatus.EN1 = read_EN1();
 	powerSelectionStatus.nDCDC_Fault = read_nDCDC_Fault();
@@ -528,6 +528,49 @@ void enter_FULLY_OPERATIONAL() {
 
 void SystemStateMachine() {
 
+	for (int i = 0; i < 5; i++) {
+		if(contactorInfo[i].contactorClosed == CLOSE_CONTACTOR) {
+			switch(i) {
+				case COMMON:
+					HAL_GPIO_WritePin(G1_GPIO_Port, G1_Pin, CONTACTOR_LED_ACTIVE);
+					break;
+				case MOTOR:
+					HAL_GPIO_WritePin(G2_GPIO_Port, G2_Pin, CONTACTOR_LED_ACTIVE);
+					break;
+				case ARRAY:
+					HAL_GPIO_WritePin(G3_GPIO_Port, G3_Pin, CONTACTOR_LED_ACTIVE);
+					break;
+				case LOWV:
+					HAL_GPIO_WritePin(G4_GPIO_Port, G4_Pin, CONTACTOR_LED_ACTIVE);
+					break;
+				case CHARGE:
+					HAL_GPIO_WritePin(G5_GPIO_Port, G5_Pin, CONTACTOR_LED_ACTIVE);
+					break;
+
+			}
+		}
+		else {
+			switch(i) {
+				case COMMON:
+					HAL_GPIO_WritePin(G1_GPIO_Port, G1_Pin, !CONTACTOR_LED_ACTIVE);
+					break;
+				case MOTOR:
+					HAL_GPIO_WritePin(G2_GPIO_Port, G2_Pin, !CONTACTOR_LED_ACTIVE);
+					break;
+				case ARRAY:
+					HAL_GPIO_WritePin(G3_GPIO_Port, G3_Pin, !CONTACTOR_LED_ACTIVE);
+					break;
+				case LOWV:
+					HAL_GPIO_WritePin(G4_GPIO_Port, G4_Pin, !CONTACTOR_LED_ACTIVE);
+					break;
+				case CHARGE:
+					HAL_GPIO_WritePin(G5_GPIO_Port, G5_Pin, !CONTACTOR_LED_ACTIVE);
+					break;
+
+			}
+		}
+	}
+
 	// make var plugged for now to stand in for the CAN msg that charger is plugged in or not
 	uint8_t plugged = (read_CHARGE_PLUGGED() == CHARGE_PLUGGED_ACTIVE);
 
@@ -554,7 +597,7 @@ void SystemStateMachine() {
 			startupCheck();
 
 			// checks MPS
-			if(read_nMPS() == nMPS_ACTIVE) {
+			if(read_nMPS2() == nMPS_ACTIVE) {
 				enter_MPS_DISCONNECTED();
 				break;
 			}
@@ -577,7 +620,10 @@ void SystemStateMachine() {
 //
 //			start_tick_fully_op = toggle_led(GRN, 500, start_tick_fully_op);
 
-			if(read_nMPS() == nMPS_ACTIVE) {
+			// DEBUG : REMOVE THIS AFTER GORL
+			perms.charge = 1;
+
+			if(read_nMPS2() == nMPS_ACTIVE) {
 				enter_MPS_DISCONNECTED();
 				break;
 			}
@@ -617,7 +663,7 @@ void SystemStateMachine() {
 			// turns off car if key is off
 			checkKeyShutdown();
 
-			if(read_nMPS() == nMPS_ACTIVE) {
+			if(read_nMPS2() == nMPS_ACTIVE) {
 				enter_MPS_DISCONNECTED();
 				break;
 			}
@@ -665,7 +711,7 @@ void SystemStateMachine() {
 			if(softBatteryTrip.cell_UV == 1) {
 				perms.motor = 0;
 			}
-			if(read_nMPS() == nMPS_ACTIVE) {
+			if(read_nMPS2() == nMPS_ACTIVE) {
 				enter_MPS_DISCONNECTED();
 				break;
 			}
@@ -782,7 +828,9 @@ void startupCheck(){
 
 	}
 	if (heartbeatDead == 1){
+#if 0
 		enter_BPS_FAULT();
+#endif
 	}
 
 	/* Check to ensure no contactors are closed */
@@ -1055,7 +1103,9 @@ void CheckContactorHeartbeats() {
 	}
 
 	if(BPSFault) {
+#if 0
 		enter_BPS_FAULT();
+#endif
 	}
 }
 
@@ -1146,7 +1196,7 @@ void UpdateTripStatus() {
 
 			/* not using HIGH CURRENT TRIPS as of now. May 17. */
 			/* ugh using them again june 19 smh */
-
+#if 0
 			if ((contactorInfo[MOTOR].lineCurrent > HARD_MAX_MOTORS_CONTACTOR_CURRENT)){
 				mbmsTrip.motorHighCurrentTrip = 1;
 				BPS_Fault = 1;
@@ -1168,7 +1218,7 @@ void UpdateTripStatus() {
 				BPS_Fault = 1;
 			}
 
-
+#endif
 
 
 			/* Not using PROTECTION TRIP as of now. May 17. */
@@ -1295,7 +1345,7 @@ void UpdateTripStatus() {
 
 		// this is techincally not a "trip" that will cause BPS....
 		// its just for information purposes i suppose
-		if(read_nMPS() == nMPS_ACTIVE){
+		if(read_nMPS2() == nMPS_ACTIVE){
 			mbmsTrip.MPSDisabledTrip = 1;
 			enter_MPS_DISCONNECTED();
 

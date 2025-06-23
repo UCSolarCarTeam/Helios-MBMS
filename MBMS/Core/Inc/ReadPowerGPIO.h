@@ -9,6 +9,7 @@
 #define INC_READPOWERGPIO_H_
 
 #define read_nMPS()               HAL_GPIO_ReadPin(nMPS_GPIO_Port, nMPS_Pin)               // PC4
+#define read_nMPS2()               HAL_GPIO_ReadPin(nMPS2_GPIO_Port, nMPS2_Pin)    // PC10
 #define read_ESD()                HAL_GPIO_ReadPin(ESD_GPIO_Port, ESD_Pin)                 // PC5
 #define read_EN1()                HAL_GPIO_ReadPin(EN1_GPIO_Port, EN1_Pin)                 // PE1
 #define read_nDCDC_Fault()        HAL_GPIO_ReadPin(nDCDC_Fault_GPIO_Port, nDCDC_Fault_Pin) // PC13

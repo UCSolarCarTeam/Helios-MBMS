@@ -57,10 +57,18 @@ void Startup()
 
 	mbmsStatus.startupState = nMPS_ENABLED;
 
-
+#if 0
 	uint8_t nMPS = read_nMPS();
 	while (read_nMPS() == nMPS_ACTIVE) {
 		uint8_t nMPS = read_nMPS();
+		osDelay(200);
+		// SET TRIP HERE
+		// wait for MPS to be on/enabled
+	}
+#endif
+	uint8_t nMPS2 = read_nMPS2();
+	while (read_nMPS2() == nMPS_ACTIVE) {
+		uint8_t nMPS2 = read_nMPS2();
 		osDelay(200);
 		// SET TRIP HERE
 		// wait for MPS to be on/enabled
