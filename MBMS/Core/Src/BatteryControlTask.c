@@ -294,8 +294,9 @@ void UpdateOrionInfoStruct() {
 			osStatus_t a = osMutexAcquire(BatteryInfoMutexHandle, 5);
 			if(a == osOK) {
 				// update batteryInfo instance for the pack info stuff
-				batteryInfo.packCurrent = (data[0] + (data[1] << 8)) / 10;
-				batteryInfo.packVoltage = (data[2] + (data[3] << 8)) / 10;
+				float curr = ( (float) data[0] + (float) (data[1] << 8));
+				batteryInfo.packCurrent = ( (float) data[0] + (float) (data[1] << 8)) / 10.0;
+				batteryInfo.packVoltage = ((float) data[2] + (float) (data[3] << 8)) / 10.0;
 				batteryInfo.packSOC =( data[4]) / 2;
 				batteryInfo.packAmphours = (data[5] + (data[6] << 8)) / 10;
 				batteryInfo.packDOD = (data[7]) /2;
@@ -349,9 +350,9 @@ void UpdateOrionInfoStruct() {
 		else if (orionMsg.extendedID == CELL_VOLTAGES_ID) {
 			osStatus_t a = osMutexAcquire(BatteryInfoMutexHandle, 5);
 			if(a == osOK) {
-				batteryInfo.lowCellVoltage = (float)(data[0] + (data[1] << 8)) / 10000;
+				batteryInfo.lowCellVoltage = (float)(data[0] + (data[1] << 8)) / 10000.0;
 				batteryInfo.lowCellVoltageID = data[2];
-				batteryInfo.highCellVoltage= (float) (data[3] + (data[4] << 8)) /10000;
+				batteryInfo.highCellVoltage= (float) (data[3] + (data[4] << 8)) /10000.0;
 				batteryInfo.highCellVoltageID = data[5];
 
 				cell_voltages_count++;
@@ -648,7 +649,7 @@ void SystemStateMachine() {
 //			start_tick_fully_op = toggle_led(GRN, 500, start_tick_fully_op);
 
 			// DEBUG : REMOVE THIS AFTER GORL
-#if 1
+#if 0
 			perms.charge = 1;
 #endif
 
@@ -1339,7 +1340,9 @@ void UpdateTripStatus() {
 				)
 			{
 				mbmsTrip.contactorConnectedUnexpectedlyTrip = 1;
+#if 0
 				BPS_Fault = 1;
+#endif
 
 
 			}
