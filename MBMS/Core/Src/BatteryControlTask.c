@@ -90,6 +90,11 @@ void BatteryControlTask(void* arg)
 		contactor_command_start_tick[i] = osKernelGetTickCount() + 15;
 	}
 
+#if 1
+	//just added this june 23 for the lights LOLLLL dont need this if it fucks up the code ...
+	enter_BOOT();
+#endif
+
     while(1)
     {
     	BCT_start_tick = osKernelGetTickCount();
@@ -438,6 +443,11 @@ void clear_Warnings() {
 }
 
 void enter_BOOT() {
+	//cyan
+	HAL_GPIO_WritePin(GRN_LED_GPIO_Port, GRN_LED_Pin, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(BLU_LED_GPIO_Port, GRN_LED_Pin, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(RED_LED_GPIO_Port, RED_LED_Pin, GPIO_PIN_SET);
+
 	orionMessagesReceived = 0;
 	startup_Check_Counter = 0;
 	BCT_Counter = 0;
@@ -464,7 +474,11 @@ void enter_BOOT() {
 void enter_MPS_DISCONNECTED() {
 	mbmsTrip.MPSDisabledTrip = 1;
 	mbmsStatus.carState = MPS_DISCONNECTED;
+
+	// blue
+	HAL_GPIO_WritePin(BLU_LED_GPIO_Port, BLU_LED_Pin, GPIO_PIN_RESET);
 	HAL_GPIO_WritePin(GRN_LED_GPIO_Port, GRN_LED_Pin, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(RED_LED_GPIO_Port, RED_LED_Pin, GPIO_PIN_SET);
 
 	perms.faulted = 1; // stop contactors from closing...
 	osEventFlagsSet(shutoffFlagHandle, (nMPS_FLAG | SHUTOFF_FLAG));
@@ -481,8 +495,10 @@ void enter_BPS_FAULT() {
 	// strpbe enable
 	HAL_GPIO_WritePin(Strobe_En_GPIO_Port, Strobe_En_Pin, 1);
 
+	//red
 	HAL_GPIO_WritePin(RED_LED_GPIO_Port, RED_LED_Pin, GPIO_PIN_RESET);
 	HAL_GPIO_WritePin(GRN_LED_GPIO_Port, GRN_LED_Pin, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(BLU_LED_GPIO_Port, BLU_LED_Pin, GPIO_PIN_SET);
 
 //	perms.common = 0;
 //	perms.motor = 0;
@@ -511,19 +527,30 @@ void enter_BPS_FAULT() {
 
 void enter_SOFT_TRIP() {
 	mbmsStatus.carState = SOFT_TRIP;
-	HAL_GPIO_WritePin(GRN_LED_GPIO_Port, GRN_LED_Pin, GPIO_PIN_SET);
+	//magenta
+	HAL_GPIO_WritePin(RED_LED_GPIO_Port, RED_LED_Pin, GPIO_PIN_RESET);
 	HAL_GPIO_WritePin(BLU_LED_GPIO_Port, BLU_LED_Pin, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(GRN_LED_GPIO_Port, GRN_LED_Pin, GPIO_PIN_SET);
 	perms.faulted = 1;
 }
 
 void enter_CHARGING() {
+
+	//orange/yellow
+	HAL_GPIO_WritePin(RED_LED_GPIO_Port, RED_LED_Pin, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(GRN_LED_GPIO_Port, GRN_LED_Pin, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(BLU_LED_GPIO_Port, BLU_LED_Pin, GPIO_PIN_SET);
+
 	mbmsStatus.carState = CHARGING;
 	HAL_GPIO_WritePin(GRN_LED_GPIO_Port, GRN_LED_Pin, GPIO_PIN_SET);
 }
 
 void enter_FULLY_OPERATIONAL() {
 	mbmsStatus.carState = FULLY_OPERATIONAL;
+	//green
 	HAL_GPIO_WritePin(GRN_LED_GPIO_Port, GRN_LED_Pin, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(BLU_LED_GPIO_Port, BLU_LED_Pin, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(RED_LED_GPIO_Port, RED_LED_Pin, GPIO_PIN_SET);
 }
 
 void SystemStateMachine() {
@@ -621,7 +648,9 @@ void SystemStateMachine() {
 //			start_tick_fully_op = toggle_led(GRN, 500, start_tick_fully_op);
 
 			// DEBUG : REMOVE THIS AFTER GORL
+#if 1
 			perms.charge = 1;
+#endif
 
 			if(read_nMPS2() == nMPS_ACTIVE) {
 				enter_MPS_DISCONNECTED();

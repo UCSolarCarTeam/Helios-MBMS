@@ -106,9 +106,11 @@ void Startup()
 	// dont worry, discharge and charge enable are checked for their respective contactors in BCT
 	perms.common = 1;
 	// commented out for testing only
-//	while ((contactorInfo[COMMON].contactorClosed != CLOSE_CONTACTOR)) {
-//
-//	}
+#if 0
+	while ((contactorInfo[COMMON].contactorClosed != CLOSE_CONTACTOR)) {
+
+	}
+#endif
 	if (contactorInfo[COMMON].contactorError) {
 		// TO DO: handle error
 		//Error_Handler();
@@ -119,9 +121,11 @@ void Startup()
 	perms.lv = 1;
 
 	// commented out for testing only
-//	while ((contactorInfo[LOWV].contactorClosed != CLOSE_CONTACTOR)) {
-//		// wait for LV contactor to close
-//	}
+#if 0
+	while ((contactorInfo[LOWV].contactorClosed != CLOSE_CONTACTOR)) {
+		// wait for LV contactor to close
+	}
+#endif
 
 	if (contactorInfo[LOWV].contactorError) {
 		// TO DO: handle error
