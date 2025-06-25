@@ -229,7 +229,7 @@ void updateContactorInfo(uint8_t contactor, uint8_t prechargerClosed, uint8_t pr
  *
  */
 void UpdatePowerSelectionStruct() {
-	powerSelectionStatus.nMainPowerSwitch = read_nMPS2();
+	powerSelectionStatus.nMainPowerSwitch = read_nMPS();
 	powerSelectionStatus.ExternalShutdown = read_ESD();
 	powerSelectionStatus.EN1 = read_EN1();
 	powerSelectionStatus.nDCDC_Fault = read_nDCDC_Fault();
@@ -625,7 +625,7 @@ void SystemStateMachine() {
 			startupCheck();
 
 			// checks MPS
-			if(read_nMPS2() == nMPS_ACTIVE) {
+			if(read_nMPS() == nMPS_ACTIVE) {
 				enter_MPS_DISCONNECTED();
 				break;
 			}
@@ -653,7 +653,7 @@ void SystemStateMachine() {
 			perms.charge = 1;
 #endif
 
-			if(read_nMPS2() == nMPS_ACTIVE) {
+			if(read_nMPS() == nMPS_ACTIVE) {
 				enter_MPS_DISCONNECTED();
 				break;
 			}
@@ -694,7 +694,7 @@ void SystemStateMachine() {
 			checkKeyShutdown();
 			HAL_GPIO_WritePin(GRN_LED_GPIO_Port, GRN_LED_Pin, GPIO_PIN_RESET);
 
-			if(read_nMPS2() == nMPS_ACTIVE) {
+			if(read_nMPS() == nMPS_ACTIVE) {
 				enter_MPS_DISCONNECTED();
 				break;
 			}
@@ -742,7 +742,7 @@ void SystemStateMachine() {
 			if(softBatteryTrip.cell_UV == 1) {
 				perms.motor = 0;
 			}
-			if(read_nMPS2() == nMPS_ACTIVE) {
+			if(read_nMPS() == nMPS_ACTIVE) {
 				enter_MPS_DISCONNECTED();
 				break;
 			}
@@ -1378,7 +1378,7 @@ void UpdateTripStatus() {
 
 		// this is techincally not a "trip" that will cause BPS....
 		// its just for information purposes i suppose
-		if(read_nMPS2() == nMPS_ACTIVE){
+		if(read_nMPS() == nMPS_ACTIVE){
 			mbmsTrip.MPSDisabledTrip = 1;
 			enter_MPS_DISCONNECTED();
 

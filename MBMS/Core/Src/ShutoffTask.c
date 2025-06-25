@@ -109,7 +109,7 @@ void Shutoff()
 		else {
 			osDelay(200);
 			// start thread for startup!!!
-			if(read_nMPS2() != nMPS_ACTIVE) { // SWITCH BACC NMPS IF FIXED DEBUG
+			if(read_nMPS() != nMPS_ACTIVE) { // SWITCH BACC NMPS IF FIXED DEBUG
 				mbmsStatus.startupState = nMPS_ENABLED;
 				enter_BOOT();
 				osEventFlagsDelete(shutoffFlagHandle);

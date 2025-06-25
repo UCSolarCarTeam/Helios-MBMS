@@ -49,15 +49,12 @@ void Startup()
 	perms_init();
 	MBMSStatus_init();
 
-	HAL_GPIO_WritePin(GRN_LED_GPIO_Port, GRN_LED_Pin, GPIO_PIN_SET);
-	HAL_GPIO_WritePin(BLU_LED_GPIO_Port, BLU_LED_Pin, GPIO_PIN_SET);
-	HAL_GPIO_WritePin(RED_LED_GPIO_Port, RED_LED_Pin, GPIO_PIN_SET);
 
 
 
 	mbmsStatus.startupState = nMPS_ENABLED;
 
-#if 0
+#if 1
 	uint8_t nMPS = read_nMPS();
 	while (read_nMPS() == nMPS_ACTIVE) {
 		uint8_t nMPS = read_nMPS();
@@ -66,6 +63,8 @@ void Startup()
 		// wait for MPS to be on/enabled
 	}
 #endif
+
+#if 0
 	uint8_t nMPS2 = read_nMPS2();
 	while (read_nMPS2() == nMPS_ACTIVE) {
 		uint8_t nMPS2 = read_nMPS2();
@@ -73,6 +72,7 @@ void Startup()
 		// SET TRIP HERE
 		// wait for MPS to be on/enabled
 	}
+#endif
 
 	mbmsStatus.startupState = nMPS_DISABLED;
 
