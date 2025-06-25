@@ -68,16 +68,17 @@ void enter_BOOT();
 #define SOC_SAFE_FOR_CHARGE 90 // maybe can do if SOC is less than 90, safe to charge
 #define SOC_SAFE_FOR_DISCHARGE 25 // maybe if SOC greater than this, safe to discharge ?
 
-#define NO_CURRENT_THRESHOLD 3 // (AMPS). So if less than this, consider no current, if more than this, consider there is current
+#define NO_CURRENT_THRESHOLD 1 // (AMPS). So if less than this, consider no current, if more than this, consider there is current
 
 // in seconds
 #define CONTACTOR_RESPONSE_TIMEOUT 3
 
 
 // in milliseconds (ticks)
-#define LV_OC_TIMEOUT 2000
+#define LV_OC_TIMEOUT 5000
 #define HARD_CURRENT_TRIP_TIMEOUT 2000 // 2 seconds for now ....... for all current trips includinh 12V OC lol oops
 
+//volts ?
 #define HARD_MAX_CELL_VOLTAGE 4.15F
 #define SOFT_MAX_CELL_VOLTAGE 4.0F
 #define HARD_MIN_CELL_VOLTAGE 2.6F

@@ -211,6 +211,9 @@ void updateContactorInfo(uint8_t contactor, uint8_t prechargerClosed, uint8_t pr
 		contactorInfo[contactor].prechargerError = prechargerError;
 		contactorInfo[contactor].contactorClosed = contactorClosed;
 		contactorInfo[contactor].contactorError = contactorError;
+		if(lineCurrent < 0) {
+			lineCurrent *= -1; // get absolute value i guess....
+		}
 		contactorInfo[contactor].lineCurrent = lineCurrent;
 		contactorInfo[contactor].chargeCurrent = chargeCurrent;
 		contactorInfo[contactor].contactorOpeningError = contactorOpeningError;
@@ -296,8 +299,11 @@ void UpdateOrionInfoStruct() {
 			osStatus_t a = osMutexAcquire(BatteryInfoMutexHandle, 5);
 			if(a == osOK) {
 				// update batteryInfo instance for the pack info stuff
-				float curr = ( (float) data[0] + (float) (data[1] << 8));
-				batteryInfo.packCurrent = ( (float) data[0] + (float) (data[1] << 8)) / 10.0;
+				float current = ((float) data[0] + (float) (data[1] << 8)) / 10.0;
+				if (current < 0) {
+					current = current * -1;
+				}
+				batteryInfo.packCurrent = current;
 				batteryInfo.packVoltage = ((float) data[2] + (float) (data[3] << 8)) / 10.0;
 				batteryInfo.packSOC =( data[4]) / 2;
 				batteryInfo.packAmphours = (data[5] + (data[6] << 8)) / 10;
@@ -1377,7 +1383,7 @@ void UpdateTripStatus() {
 				BPS_Fault = 1;
 #endif
 
-
+//make it aboslute, make cyrrent threshold 1
 			}
 
 			/* Here, it is also a contactor connected unexpectedly trip if the contactor won't open when told to */
