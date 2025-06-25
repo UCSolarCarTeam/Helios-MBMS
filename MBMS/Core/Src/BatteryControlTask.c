@@ -57,6 +57,8 @@ uint32_t LV_OC_tick_count = 0;
 
 uint32_t contactor_command_start_tick[5] = {0};
 
+uint32_t hard_high_current_count[5] = {0};
+
 /*
  * Local Variables
  */
@@ -272,7 +274,7 @@ void UpdateOrionInfoStruct() {
 	CANMsg orionMsg;
 	//osDelay(1000); // why there a delay here .... maybe from when i was testing...
 
-	osStatus status = osMessageQueueGet(batteryControlMessageQueueHandle, &orionMsg, NULL, ORION_MSG_WAIT_TIMEOUT); //timeout is in timer ticks...... so ms?
+	osStatus status = osMessageQueueGet(batteryControlMessageQueueHandle, &orionMsg, NULL, 0); //timeout is in timer ticks...... so ms?
 
 	if (status == osOK) {
 
@@ -383,7 +385,7 @@ void UpdateOrionInfoStruct() {
 	{
 		orionMessageCounter += 1;
 	}
-	if(orionMessageCounter >= 200){ // was 20/21 when timeout was 0
+	if((orionMessageCounter * 10) >= ORION_MSG_WAIT_TIMEOUT){ // idk hehe
 		osStatus_t a = osMutexAcquire(MBMSStatusMutexHandle, UPDATING_MUTEX_TIMEOUT);
 		if (a == osOK) {
 			mbmsStatus.orionCANReceived = 0; // no orion message recieved !!!
@@ -1055,9 +1057,9 @@ uint8_t startupBatteryCheck() {
  * This function turns off charging when key is off to shut off car
  */
 void checkKeyShutdown() {
-	if (read_Key() == 0) {
+	if (read_Key() == !KEY_ENABLE_ACTIVE) {
 		// turn off charge LV enable to shutoff car..
-		HAL_GPIO_WritePin(nCHG_LV_En_GPIO_Port, nCHG_LV_En_Pin, GPIO_PIN_SET);
+		HAL_GPIO_WritePin(nCHG_LV_En_GPIO_Port, nCHG_LV_En_Pin, nCHG_LV_EN_ACTIVE);
 
 	}
 }
@@ -1221,34 +1223,64 @@ void UpdateTripStatus() {
 		if (a1 == osOK){
 
 			if (batteryInfo.packCurrent > HARD_MAX_COMMON_CONTACTOR_CURRENT){
-				mbmsTrip.commonHighCurrentTrip = 1;
-				BPS_Fault = 1;
+				hard_high_current_count[COMMON]++;
+				if((hard_high_current_count[COMMON] * 10) > HARD_CURRENT_TRIP_TIMEOUT) { // because runs every 10 seconds lol lowkey i may have not done this for other things but just adjust them as needed i guess... ?
+					mbmsTrip.commonHighCurrentTrip = 1;
+					BPS_Fault = 1;
+				}
+
+			}
+			else {
+				hard_high_current_count[COMMON] = 0;
 			}
 
 			/* not using HIGH CURRENT TRIPS as of now. May 17. */
 			/* ugh using them again june 19 smh */
-#if 0
+#if 1
 			if ((contactorInfo[MOTOR].lineCurrent > HARD_MAX_MOTORS_CONTACTOR_CURRENT)){
-				mbmsTrip.motorHighCurrentTrip = 1;
-				BPS_Fault = 1;
+				hard_high_current_count[MOTOR]++;
+				if((hard_high_current_count[MOTOR] * 10) > HARD_CURRENT_TRIP_TIMEOUT) {
+					mbmsTrip.motorHighCurrentTrip = 1;
+					BPS_Fault = 1;
+				}
+			}
+			else {
+				hard_high_current_count[MOTOR] = 0;
 			}
 
 			if (contactorInfo[ARRAY].lineCurrent > HARD_MAX_ARRAY_CONTACTOR_CURRENT){
-				mbmsTrip.arrayHighCurrentTrip = 1;
-				BPS_Fault = 1;
+				hard_high_current_count[ARRAY]++;
+				if((hard_high_current_count[ARRAY] * 10) > HARD_CURRENT_TRIP_TIMEOUT) {
+					mbmsTrip.arrayHighCurrentTrip = 1;
+					BPS_Fault = 1;
+				}
+			}
+			else {
+				hard_high_current_count[ARRAY] = 0;
 			}
 
 			if (contactorInfo[LOWV].lineCurrent > HARD_MAX_LV_CONTACTOR_CURRENT){
-				mbmsTrip.LVHighCurrentTrip = 1;
-				BPS_Fault = 1;
+				hard_high_current_count[LOWV]++;
+				if((hard_high_current_count[LOWV] * 10) > HARD_CURRENT_TRIP_TIMEOUT) {
+					mbmsTrip.LVHighCurrentTrip = 1;
+					BPS_Fault = 1;
+				}
+			}
+			else {
+				hard_high_current_count[LOWV] = 0;
 			}
 
 
 			if (contactorInfo[CHARGE].lineCurrent > HARD_MAX_CHARGE_CONTACTOR_CURRENT){
-				mbmsTrip.chargeHighCurrentTrip = 1;
-				BPS_Fault = 1;
+				hard_high_current_count[CHARGE]++;
+				if((hard_high_current_count[CHARGE] * 10) > HARD_CURRENT_TRIP_TIMEOUT) {
+					mbmsTrip.chargeHighCurrentTrip = 1;
+					BPS_Fault = 1;
+				}
 			}
-
+			else {
+				hard_high_current_count[CHARGE] = 0;
+			}
 #endif
 
 
@@ -1366,9 +1398,10 @@ void UpdateTripStatus() {
 		if(read_LV_OC() == LV_OC_ACTIVE) {
 			mbmsSoftBatteryLimitWarning._12V_CAN_OC_Warning = 1;
 			LV_OC_tick_count++; // erm actually does it get here every millisecond tho.. idont think so
-			if ((LV_OC_tick_count) >= LV_OC_TIMEOUT ) {
+			if ((LV_OC_tick_count * 10) >= LV_OC_TIMEOUT ) {
 				// turn off 12V Can.....
 				HAL_GPIO_WritePin(_12V_CAN_En_GPIO_Port, _12V_CAN_En_Pin, !(_12V_CAN_EN_ACTIVE));
+				// not a bps fault, lowkey do nothing else, driver should deal with it ...
 			}
 		}
 		else {

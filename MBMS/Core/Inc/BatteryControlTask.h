@@ -61,9 +61,10 @@ void enter_BOOT();
 
 
 
-#define ORION_MSG_WAIT_TIMEOUT 5//1000 //ms
+#define ORION_MSG_WAIT_TIMEOUT 1000 //ms
 #define CONTACTOR_HEARTBEAT_TIMEOUT 2500 //1500 // smilliseconds !!
 
+// these two unused
 #define SOC_SAFE_FOR_CHARGE 90 // maybe can do if SOC is less than 90, safe to charge
 #define SOC_SAFE_FOR_DISCHARGE 25 // maybe if SOC greater than this, safe to discharge ?
 
@@ -74,33 +75,36 @@ void enter_BOOT();
 
 
 // in milliseconds (ticks)
-#define LV_OC_TIMEOUT 10000
+#define LV_OC_TIMEOUT 2000
+#define HARD_CURRENT_TRIP_TIMEOUT 2000 // 2 seconds for now ....... for all current trips includinh 12V OC lol oops
 
-#define HARD_MAX_CELL_VOLTAGE 4.5F
-#define SOFT_MAX_CELL_VOLTAGE 4.2F
-#define HARD_MIN_CELL_VOLTAGE 3.5F
-#define SOFT_MIN_CELL_VOLTAGE 3.7F
+#define HARD_MAX_CELL_VOLTAGE 4.15F
+#define SOFT_MAX_CELL_VOLTAGE 4.0F
+#define HARD_MIN_CELL_VOLTAGE 2.6F
+#define SOFT_MIN_CELL_VOLTAGE 2.75F
+
+// pretty sure these two are unused lol
 #define HARD_MAX_PACK_VOLTAGE 120 // um yeah idk if these even a trip soo i dont htink so :)
 #define SOFT_MAX_PACK_VOLTAGE 115
 
 
 /* in A */
-#define HARD_MAX_COMMON_CONTACTOR_CURRENT 300.0F
-#define HARD_MAX_MOTORS_CONTACTOR_CURRENT 300.0F
-#define HARD_MAX_ARRAY_CONTACTOR_CURRENT 300.0F
-#define HARD_MAX_LV_CONTACTOR_CURRENT 300.0F
-#define HARD_MAX_CHARGE_CONTACTOR_CURRENT  300.0F
-#define SOFT_MAX_COMMON_CONTACTOR_CURRENT 290.0F
-#define SOFT_MAX_MOTORS_CONTACTOR_CURRENT 290.0F
-#define SOFT_MAX_ARRAY_CONTACTOR_CURRENT 290.0F
-#define SOFT_MAX_LV_CONTACTOR_CURRENT 290.0F
-#define SOFT_MAX_CHARGE_CONTACTOR_CURRENT 290.0F
+#define HARD_MAX_COMMON_CONTACTOR_CURRENT 260.0F
+#define HARD_MAX_MOTORS_CONTACTOR_CURRENT 260.0F
+#define HARD_MAX_ARRAY_CONTACTOR_CURRENT 28.0F
+#define HARD_MAX_LV_CONTACTOR_CURRENT 18.0F
+#define HARD_MAX_CHARGE_CONTACTOR_CURRENT  48.0F
+#define SOFT_MAX_COMMON_CONTACTOR_CURRENT 234.0F //do 10% under as warning
+#define SOFT_MAX_MOTORS_CONTACTOR_CURRENT 234.0F
+#define SOFT_MAX_ARRAY_CONTACTOR_CURRENT 25.20F
+#define SOFT_MAX_LV_CONTACTOR_CURRENT 16.2F
+#define SOFT_MAX_CHARGE_CONTACTOR_CURRENT 43.2F
 
-
-#define	HARD_MAX_TEMP 45
-#define	SOFT_MAX_TEMP 40
-#define	HARD_MIN_TEMP 0
-#define	SOFT_MIN_TEMP 5
+// celsius i guess
+#define	HARD_MAX_TEMP 40
+#define	SOFT_MAX_TEMP 35
+#define	HARD_MIN_TEMP 5
+#define	SOFT_MIN_TEMP 10
 
 // in milliseconds
 #define CLOSE_CONTACTOR_TIMEOUT 5000 // so big for testing ok

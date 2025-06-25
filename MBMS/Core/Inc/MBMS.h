@@ -46,6 +46,7 @@ typedef enum { false = 0, true = 1 } boolean;
 #define EN1_ACTIVE 1 // HV
 #define CRITICAL_OV_UV_ACTIVE 0 // the precharging is finished !!!!!!!
 #define CONTACTOR_LED_ACTIVE 1 // contactor led is on ... g1-g5, a1-a5
+#define KEY_ENABLE_ACTIVE 1  // key turned so that car is on ...
 
 
 enum Contactor {
