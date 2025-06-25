@@ -74,7 +74,7 @@ void enter_BOOT();
 
 
 // in milliseconds (ticks)
-#define LV_OC_TIMEOUT 10
+#define LV_OC_TIMEOUT 10000
 
 #define HARD_MAX_CELL_VOLTAGE 4.5F
 #define SOFT_MAX_CELL_VOLTAGE 4.2F

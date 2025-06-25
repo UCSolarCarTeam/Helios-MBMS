@@ -446,7 +446,7 @@ void clear_Warnings() {
 void enter_BOOT() {
 	//cyan
 	HAL_GPIO_WritePin(GRN_LED_GPIO_Port, GRN_LED_Pin, GPIO_PIN_RESET);
-	HAL_GPIO_WritePin(BLU_LED_GPIO_Port, GRN_LED_Pin, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(BLU_LED_GPIO_Port, BLU_LED_Pin, GPIO_PIN_RESET);
 	HAL_GPIO_WritePin(RED_LED_GPIO_Port, RED_LED_Pin, GPIO_PIN_SET);
 
 	orionMessagesReceived = 0;
@@ -600,7 +600,7 @@ void SystemStateMachine() {
 	}
 
 	// make var plugged for now to stand in for the CAN msg that charger is plugged in or not
-	uint8_t plugged = (read_CHARGE_PLUGGED() == CHARGE_PLUGGED_ACTIVE);
+	uint8_t plugged = (read_CHARGE_PLUGGED() == GPIO_PIN_SET);
 
 	switch (mbmsStatus.carState) {
 		case BOOT:
@@ -692,6 +692,7 @@ void SystemStateMachine() {
 		case CHARGING:
 			// turns off car if key is off
 			checkKeyShutdown();
+			HAL_GPIO_WritePin(GRN_LED_GPIO_Port, GRN_LED_Pin, GPIO_PIN_RESET);
 
 			if(read_nMPS2() == nMPS_ACTIVE) {
 				enter_MPS_DISCONNECTED();

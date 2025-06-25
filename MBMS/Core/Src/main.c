@@ -398,6 +398,7 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.PLL.PLLN = 168;
   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
   RCC_OscInitStruct.PLL.PLLQ = 4;
+  osStatus_t HAL_result = HAL_RCC_OscConfig(&RCC_OscInitStruct); // i added this -millaine
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
     Error_Handler();
@@ -624,7 +625,7 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin : CHARGE_PLUGGED_Pin */
   GPIO_InitStruct.Pin = CHARGE_PLUGGED_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(CHARGE_PLUGGED_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : n3A_OC_Pin nDCDC_On_Pin nCHG_Fault_Pin nCHG_On_Pin */

@@ -132,7 +132,7 @@ void Startup()
 		//Error_Handler();
 	}
 	mbmsStatus.startupState = LV_CLOSED;
-/* UNCOMMENT WHEN DONE DEBUG
+
 	// enable DCDC HV through EN1
 	HAL_GPIO_WritePin(EN1_GPIO_Port, EN1_Pin, EN1_ACTIVE);
 
@@ -148,7 +148,7 @@ void Startup()
 	HAL_GPIO_WritePin(_12V_CAN_En_GPIO_Port, _12V_CAN_En_Pin, _12V_CAN_EN_ACTIVE);
 	HAL_GPIO_WritePin(_12V_PCHG_En_GPIO_Port, _12V_PCHG_En_Pin, !(_12V_PCHG_EN_ACTIVE));
 
-*/
+
 
 	// set flag to give permission to precharge/close motor contactor
 	// just check that everything is good still (doesnt HAVE to close motor before moving on to next part)
