@@ -134,6 +134,7 @@ extern ScreenDataDictionary screenData;
 //* Function Prototypes */
 // TODO: Clean up redundant functions and ensure they are used correctly, this was done in a time crunch
 BatteryInfoScreen convertToScreenBatteryInfo(const BatteryInfo* b);
+TripScreen convertToTripScreen(const MBMSTrip* t);
 
 
 #ifdef __cplusplus

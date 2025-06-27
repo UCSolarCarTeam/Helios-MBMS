@@ -17,4 +17,29 @@ BatteryInfoScreen convertToScreenBatteryInfo(const BatteryInfo* b) {
 }
 
 
+TripScreen convertToTripScreen(const MBMSTrip* t) {
+    TripScreen screen = {
+        .highCellVoltageTrip     = t->highCellVoltageTrip,
+        .lowCellVoltageTrip      = t->lowCellVoltageTrip,
+        .commonHighCurrentTrip   = t->commonHighCurrentTrip,
+        .motorHighCurrentTrip    = t->motorHighCurrentTrip,
+        .arrayHighCurrentTrip    = t->arrayHighCurrentTrip,
+        .lvHighCurrentTrip       = t->LVHighCurrentTrip,
+        .chargeHighCurrentTrip   = t->chargeHighCurrentTrip,
+        .protectionTrip          = t->protectionTrip,
+        .orionMsgTimeoutTrip     = t->orionMessageTimeoutTrip,
+        .contactorDiscUnexpected = t->contactorDisconnectedUnexpectedlyTrip,
+        .contactorConnUnexpected = t->contactorConnectedUnexpectedlyTrip,
+        .commonHeartbeatDead     = t->commonHeartbeatDeadTrip,
+        .motorHeartbeatDead      = t->motorHeartbeatDeadTrip,
+        .arrayHeartbeatDead      = t->arrayHeartbeatDeadTrip,
+        .lvHeartbeatDead         = t->LVHeartbeatDeadTrip,
+        .chargeHeartbeatDead     = t->chargeHeartbeatDeadTrip,
+        .mpsDisabledTrip         = t->MPSDisabledTrip,
+        .esdEnabledTrip          = t->ESDEnabledTrip,
+        .highTempTrip            = t->highTemperatureTrip,
+        .lowTempTrip             = t->lowTemperatureTrip
+    };
 
+    return screen;
+}
