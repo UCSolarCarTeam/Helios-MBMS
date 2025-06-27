@@ -1449,6 +1449,7 @@ void UpdateScreenDataStructs(void){
 	screenData.batteryInfo = convertToScreenBatteryInfo(&batteryInfo);
 	screenData.powerStatus = powerSelectionStatus;
 	screenData.tripScreen =  convertToTripScreen(&mbmsTrip);
+	screenData.mbmsStatus = convertToMBMSStatusScreen(&mbmsStatus);
 
 }
 

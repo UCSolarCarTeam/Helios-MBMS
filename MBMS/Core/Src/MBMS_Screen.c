@@ -43,3 +43,20 @@ TripScreen convertToTripScreen(const MBMSTrip* t) {
 
     return screen;
 }
+
+MBMSStatusScreen convertToMBMSStatusScreen(const MBMSStatus* status) {
+    MBMSStatusScreen screen = {
+        .auxBatteryVoltage     = status->auxilaryBattVoltage, 
+        .strobeBMSLight        = status->strobeBMSLight,
+        .nChargeEnable         = status->chargeEnable,
+        .nChargeSafety         = status->nChargeSafety,
+        .nDischargeEnable      = status->dischargeEnable,
+        .orionCANRx            = status->orionCANReceived,
+        .dischargeShouldTrip   = status->dischargeShouldTrip,
+        .chargeShouldTrip      = status->chargeShouldTrip,
+        .startupState          = (StartupState)status->startupState,
+        .systemState           = (CarState)status->carState
+    };
+
+    return screen;
+}
