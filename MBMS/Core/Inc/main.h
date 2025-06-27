@@ -136,8 +136,6 @@ void Error_Handler(void);
 #define CHARGE_ENABLE_SENSE_GPIO_Port GPIOC
 #define CAN1_MODE_Pin GPIO_PIN_8
 #define CAN1_MODE_GPIO_Port GPIOA
-#define nMPS2_Pin GPIO_PIN_10
-#define nMPS2_GPIO_Port GPIOC
 #define LV_OC_Pin GPIO_PIN_1
 #define LV_OC_GPIO_Port GPIOD
 #define _12V_PCHG_En_Pin GPIO_PIN_7

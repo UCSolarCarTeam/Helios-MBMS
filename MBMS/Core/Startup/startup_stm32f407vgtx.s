@@ -58,7 +58,7 @@ defined in linker script */
   .weak  Reset_Handler
   .type  Reset_Handler, %function
 Reset_Handler:  
-	  ldr   sp, =_estack     /* set stack pointer */
+  ldr   sp, =_estack     /* set stack pointer */
 
 /* Copy the data segment initializers from flash to SRAM */  
   ldr r0, =_sdata
@@ -127,7 +127,6 @@ Infinite_Loop:
 g_pfnVectors:
   .word  _estack
   .word  Reset_Handler
-
   .word  NMI_Handler
   .word  HardFault_Handler
   .word  MemManage_Handler
