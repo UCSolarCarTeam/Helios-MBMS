@@ -1450,7 +1450,7 @@ void UpdateScreenDataStructs(void){
 	screenData.powerStatus = powerSelectionStatus;
 	screenData.tripScreen =  convertToTripScreen(&mbmsTrip);
 	screenData.mbmsStatus = convertToMBMSStatusScreen(&mbmsStatus);
-
+	screenData.contactorScreen = convertToContactorScreen(contactorInfo);
 }
 
 

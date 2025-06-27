@@ -60,3 +60,33 @@ MBMSStatusScreen convertToMBMSStatusScreen(const MBMSStatus* status) {
 
     return screen;
 }
+
+static BoardStatus convertToBoardStatus(const ContactorInfo* info) {
+    BoardStatus status = {
+        .heartbeat      = info->heartbeat,
+        .lineCurrent    = info->lineCurrent,
+        .chargeCurrent  = info->chargeCurrent,
+        .prechargerState =
+            info->prechargerError   ? PRECHARGE_ERROR   :
+            info->prechargerClosing ? PRECHARGE_CLOSING :
+            info->prechargerClosed  ? PRECHARGE_CLOSED  :
+                                      PRECHARGE_OPEN,
+        .contactorState =
+            info->contactorError   ? CONTACTOR_ERROR   :
+            info->contactorClosing ? CONTACTOR_CLOSING :
+            info->contactorClosed  ? CONTACTOR_CLOSED  :
+                                     CONTACTOR_OPEN
+    };
+    return status;
+}
+
+//Hard coded to match contactorInfo array size, flexibility can be added later if needed with enum or size parameter
+ContactorScreen convertToContactorScreen(const ContactorInfo contactorInfo[5]) {
+    ContactorScreen screen;
+    screen.commonBoard = convertToBoardStatus(&contactorInfo[COMMON]);
+    screen.motorBoard  = convertToBoardStatus(&contactorInfo[MOTOR]);
+    screen.arrayBoard  = convertToBoardStatus(&contactorInfo[ARRAY]);
+    screen.lvBoard     = convertToBoardStatus(&contactorInfo[LOWV]);
+    screen.chargeBoard = convertToBoardStatus(&contactorInfo[CHARGE]);
+    return screen;
+}

@@ -136,6 +136,7 @@ extern ScreenDataDictionary screenData;
 BatteryInfoScreen convertToScreenBatteryInfo(const BatteryInfo* b);
 TripScreen convertToTripScreen(const MBMSTrip* t);
 MBMSStatusScreen convertToMBMSStatusScreen(const MBMSStatus* status);
+ContactorScreen convertToContactorScreen(const ContactorInfo contactorInfo[5]);
 
 #ifdef __cplusplus
 }
