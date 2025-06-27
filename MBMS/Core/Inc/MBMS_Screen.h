@@ -2,7 +2,6 @@
 #define INC_SCREEN_DATA_DICTIONARY_H_
 
 #include <stdint.h>
-#include <stdbool.h>
 #include "MBMS.h"
 
 #ifdef __cplusplus
@@ -24,6 +23,29 @@ typedef enum {
   CONTACTOR_CLOSING,
   CONTACTOR_ERROR
 } ContactorState;
+
+typedef enum {
+  STARTUP_nMPS_ENABLED = 0,
+  STARTUP_nMPS_DISABLED,
+  STARTUP_ESD_DISABLED,
+  STARTUP_CHECKS_PASSED,
+  STARTUP_COMMON_CLOSED,
+  STARTUP_LV_CLOSED,
+  STARTUP_EN1_ON,
+  STARTUP_MOTORS_PERMS,
+  STARTUP_ARRAY_PERMS,
+  STARTUP_COMPLETED
+} StartupState;
+
+typedef enum {
+  CARSTATE_BOOT = 0,
+  CARSTATE_STARTUP,
+  CARSTATE_FULLY_OPERATIONAL,
+  CARSTATE_CHARGING,
+  CARSTATE_BPS_FAULT,
+  CARSTATE_MPS_DISCONNECTED,
+  CARSTATE_SOFT_TRIP
+} CarState;
 
 // COMMON STRUCT FOR BOARD STATUS
 typedef struct {
@@ -107,6 +129,12 @@ typedef struct {
 } ScreenDataDictionary;
 
 extern ScreenDataDictionary screenData;
+
+
+//* Function Prototypes */
+// TODO: Clean up redundant functions and ensure they are used correctly, this was done in a time crunch
+BatteryInfoScreen convertToScreenBatteryInfo(const BatteryInfo* b);
+
 
 #ifdef __cplusplus
 }
