@@ -30,6 +30,7 @@
 #include <CANMessageSenderTask.h>
 #include <DebugInterfaceTask.h>
 #include <DisplayTask.h>
+#include "ScreenUART_Task.h"
 #include <stdint.h>
 
 #include "StartupTask.h"
@@ -185,6 +186,12 @@ const osThreadAttr_t CANMessageSenderTask_attributes = {
   .priority = (osPriority_t) osPriorityHigh2, // idk what priority to put ngl
 };
 
+osThreadId_t UART_ScreenTaskHandle;
+const osThreadAttr_t UART_ScreenTaskHandle_attributes = {
+  .name = "UART_ScreenTask",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityRealtime3, 
+};
 
 
 osMutexId_t MBMSStatusMutexHandle;
@@ -341,6 +348,7 @@ int main(void)
 
   CANMessageSenderTaskHandle = osThreadNew(CANMessageSenderTask, NULL, &CANMessageSenderTask_attributes);
 
+  UART_ScreenTaskHandle = osThreadNew(UART_ScreenTask, NULL, &UART_ScreenTaskHandle_attributes);
 
 
   /* USER CODE END RTOS_THREADS */

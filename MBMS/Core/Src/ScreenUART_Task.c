@@ -1,4 +1,20 @@
-#include "ScreenUART.h"
+#include "ScreenUART_Task.h"
+
+void UART_ScreenTask(void* arg){
+    uint8_t txBuffer[SCREEN_DATA_BUFFER_SIZE];
+    size_t txLen;
+
+    for (;;) {
+        // Serialize screenData into txBuffer
+        serializeScreenData(txBuffer, &screenData, &txLen);
+
+        // Transmit over UART4 (blocking)
+        HAL_UART_Transmit(&huart4, txBuffer, txLen, HAL_MAX_DELAY);
+
+        // Delay for 1000 ms (1 second)
+        osDelay(1000);
+    }
+}
 
 // Helper: write uint8_t to buffer
 static void write_uint8(uint8_t **buf_ptr, uint8_t val) {
