@@ -42,6 +42,8 @@ void clear_Trips();
 void clear_Warnings();
 
 
+void UpdateScreenDataStructs(void);
+
 
 /* "public" functions */
 void UpdateContactorInfoStruct();

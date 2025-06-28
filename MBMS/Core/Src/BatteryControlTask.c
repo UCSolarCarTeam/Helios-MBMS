@@ -16,6 +16,7 @@
 #include "ReadPowerGPIO.h"
 #include "CANMessageSenderTask.h"
 #include "MBMS.h"
+#include "MBMS_Screen.h"
 #include "main.h"
 
 /*
@@ -38,6 +39,8 @@ MBMSStatus mbmsStatus; // made specific init function for this, may 21
 
 Permissions perms = {0};
 ContactorInfo contactorInfo[5]; // one for each contactor        add volatile to the extern thing too
+
+ScreenDataDictionary screenData; // this is the root data structure for the screen
 
 uint8_t orionMessagesReceived = 0x0;
 
@@ -120,7 +123,7 @@ void BatteryControl()
 	UpdateContactorInfoStruct();
 	UpdatePowerSelectionStruct();
 	UpdateOrionInfoStruct();
-
+	UpdateScreenDataStructs();
 
 	/* Tracking states */
 	SystemStateMachine();
@@ -1446,6 +1449,13 @@ void UpdateTripStatus() {
 
 
 
+void UpdateScreenDataStructs(void){
+	screenData.batteryInfo = convertToScreenBatteryInfo(&batteryInfo);
+	screenData.powerStatus = powerSelectionStatus;
+	screenData.tripScreen =  convertToTripScreen(&mbmsTrip);
+	screenData.mbmsStatus = convertToMBMSStatusScreen(&mbmsStatus);
+	screenData.contactorScreen = convertToContactorScreen(contactorInfo);
+}
 
 
 
