@@ -191,7 +191,7 @@ void UpdateContactorInfoStruct() {
 			uint8_t contactorClosed = (data[0] & 0x08) ? CLOSE_CONTACTOR: OPEN_CONTACTOR; // extract bit 3
 			uint8_t contactorClosing = (data[0] & 0x10) ? CLOSE_CONTACTOR: OPEN_CONTACTOR; // extract bit 4
 			uint8_t contactorError = (data[0] & 0x20) ? CLOSE_CONTACTOR: OPEN_CONTACTOR; // extract bit 5
-			float lineCurrent = (((data[0] & 0xc0) >> 6) | ((data[1] & 0xff) << 2) | ((data[2] & 0x03) << 10)) / 10; // extract bits 6 to 17
+			float lineCurrent = (float) (((data[0] & 0xc0) >> 6) |((data[1] & 0xff) << 2) | ((data[2] & 0x03) << 10)) / 10.0; // extract bits 6 to 17
 			float chargeCurrent = (((data[2] & 0xfc) >> 2) | ((data[3] & 0x3f) << 6)) /10; // extract bits 18 to 29
 			uint8_t contactorOpeningError = (data[3] & 0x80) ? CLOSE_CONTACTOR: OPEN_CONTACTOR; //extract bit 30
 			updateContactorInfo((contactorMsg.extendedID - CONTACTORIDS), prechargerClosed, prechargerClosing, prechargerError,
@@ -277,7 +277,7 @@ void UpdateOrionInfoStruct() {
 	CANMsg orionMsg;
 	//osDelay(1000); // why there a delay here .... maybe from when i was testing...
 
-	osStatus status = osMessageQueueGet(batteryControlMessageQueueHandle, &orionMsg, NULL, 0); //timeout is in timer ticks...... so ms?
+	osStatus status = osMessageQueueGet(batteryControlMessageQueueHandle, &orionMsg, NULL, 5); //timeout is in timer ticks...... so ms?
 
 	if (status == osOK) {
 
@@ -391,7 +391,7 @@ void UpdateOrionInfoStruct() {
 	{
 		orionMessageCounter += 1;
 	}
-	if((orionMessageCounter * 10) >= ORION_MSG_WAIT_TIMEOUT){ // idk hehe
+	if((orionMessageCounter) >= 200){ // idk hehe
 		osStatus_t a = osMutexAcquire(MBMSStatusMutexHandle, UPDATING_MUTEX_TIMEOUT);
 		if (a == osOK) {
 			mbmsStatus.orionCANReceived = 0; // no orion message recieved !!!
@@ -1258,7 +1258,11 @@ void UpdateTripStatus() {
 				hard_high_current_count[ARRAY]++;
 				if((hard_high_current_count[ARRAY] * 10) > HARD_CURRENT_TRIP_TIMEOUT) {
 					mbmsTrip.arrayHighCurrentTrip = 1;
+
+#if 0
 					BPS_Fault = 1;
+
+#endif
 				}
 			}
 			else {
@@ -1404,7 +1408,7 @@ void UpdateTripStatus() {
 		if(read_LV_OC() == LV_OC_ACTIVE) {
 			mbmsSoftBatteryLimitWarning._12V_CAN_OC_Warning = 1;
 			LV_OC_tick_count++; // erm actually does it get here every millisecond tho.. idont think so
-			if ((LV_OC_tick_count * 10) >= LV_OC_TIMEOUT ) {
+			if ((LV_OC_tick_count) >= LV_OC_TIMEOUT ) {
 				// turn off 12V Can.....
 				HAL_GPIO_WritePin(_12V_CAN_En_GPIO_Port, _12V_CAN_En_Pin, !(_12V_CAN_EN_ACTIVE));
 				// not a bps fault, lowkey do nothing else, driver should deal with it ...
