@@ -188,10 +188,13 @@ void sendContactorsCanMessage() {
 	contactorCommandMsg.extendedID = CONTACTOR_COMMAND_ID;
 	contactorCommandMsg.ID = 0x0;
 
-	contactorCommandMsg.data[0] = ((contactorCommand.common & 0x01) << COMMON) + ((contactorCommand.motor & 0x01) << MOTOR)
-								+ ((contactorCommand.array & 0x01) << ARRAY)   + ((contactorCommand.LV & 0x01) << LOWV)
-								+ ((contactorCommand.charge & 0x01) << CHARGE);
+//	contactorCommandMsg.data[0] = ((contactorCommand.common & 0x01) << COMMON) + ((contactorCommand.motor & 0x01) << MOTOR)
+//								+ ((contactorCommand.array & 0x01) << ARRAY)   + ((contactorCommand.LV & 0x01) << LOWV)
+//								+ ((contactorCommand.charge & 0x01) << CHARGE);
 
+	contactorCommandMsg.data[0] = ((contactorCommand.common & 0x01) << COMMON) + ((contactorCommand.motor & 0x01) << MOTOR)
+									+ ((contactorCommand.array & 0x01) << ARRAY)
+									+ ((contactorCommand.charge & 0x01) << CHARGE);
 	osMessageQueuePut(TxCANMessageQueueHandle, &contactorCommandMsg, 0, osWaitForever);
 
 }

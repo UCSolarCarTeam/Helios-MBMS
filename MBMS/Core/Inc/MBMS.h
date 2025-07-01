@@ -93,7 +93,7 @@ typedef struct {
 	uint8_t common;
 	uint8_t motor;
 	uint8_t array;
-	uint8_t lv;
+//	uint8_t lv;
 	uint8_t charge;
 	uint8_t startupDone;
 	uint8_t faulted;

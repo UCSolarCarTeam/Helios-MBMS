@@ -86,7 +86,10 @@ ContactorScreen convertToContactorScreen(const ContactorInfo contactorInfo[5]) {
     screen.commonBoard = convertToBoardStatus(&contactorInfo[COMMON]);
     screen.motorBoard  = convertToBoardStatus(&contactorInfo[MOTOR]);
     screen.arrayBoard  = convertToBoardStatus(&contactorInfo[ARRAY]);
-    screen.lvBoard     = convertToBoardStatus(&contactorInfo[LOWV]);
+
+    // this is actually just the motor board but easiest fix rn
+    screen.lvBoard     = convertToBoardStatus(&contactorInfo[MOTOR]);
+
     screen.chargeBoard = convertToBoardStatus(&contactorInfo[CHARGE]);
     return screen;
 }

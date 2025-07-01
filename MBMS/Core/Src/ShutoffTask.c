@@ -83,11 +83,11 @@ void Shutoff()
 			osDelay(50);
 		}
 
-		perms.lv = 0;
-		// wait to open CHECK THIS
-		while(contactorInfo[LOWV].contactorClosed == CLOSE_CONTACTOR) {
-			osDelay(50);
-		}
+//		perms.lv = 0;
+//		// wait to open CHECK THIS
+//		while(contactorInfo[LOWV].contactorClosed == CLOSE_CONTACTOR) {
+//			osDelay(50);
+//		}
 
 		perms.charge = 0;
 		// wait to open CHECK THIS
