@@ -579,13 +579,6 @@ void SystemStateMachine() {
 				case ARRAY:
 					HAL_GPIO_WritePin(G3_GPIO_Port, G3_Pin, CONTACTOR_LED_ACTIVE);
 					break;
-				case LOWV:
-					/* turn on motors instead */
-					HAL_GPIO_WritePin(G2_GPIO_Port, G2_Pin, CONTACTOR_LED_ACTIVE);
-
-					/* original code for separate LV contactor board */
-//					HAL_GPIO_WritePin(G4_GPIO_Port, G4_Pin, CONTACTOR_LED_ACTIVE);
-					break;
 				case CHARGE:
 					HAL_GPIO_WritePin(G5_GPIO_Port, G5_Pin, CONTACTOR_LED_ACTIVE);
 					break;
@@ -602,13 +595,6 @@ void SystemStateMachine() {
 					break;
 				case ARRAY:
 					HAL_GPIO_WritePin(G3_GPIO_Port, G3_Pin, !CONTACTOR_LED_ACTIVE);
-					break;
-				case LOWV:
-					/* turn on motors instead */
-					HAL_GPIO_WritePin(G2_GPIO_Port, G2_Pin, !CONTACTOR_LED_ACTIVE);
-
-					/* original code for separate LV contactor board */
-//					HAL_GPIO_WritePin(G4_GPIO_Port, G4_Pin, !CONTACTOR_LED_ACTIVE);
 					break;
 				case CHARGE:
 					HAL_GPIO_WritePin(G5_GPIO_Port, G5_Pin, !CONTACTOR_LED_ACTIVE);
@@ -688,7 +674,7 @@ void SystemStateMachine() {
 				HAL_GPIO_WritePin(_12V_CAN_En_GPIO_Port, _12V_CAN_En_Pin, _12V_CAN_EN_ACTIVE);
 			}
 
-			if( plugged && (contactorInfo[LOWV].contactorClosed == OPEN_CONTACTOR) && (contactorInfo[MOTOR].contactorClosed == OPEN_CONTACTOR)) {
+			if( plugged && (contactorInfo[MOTOR].contactorClosed == OPEN_CONTACTOR)) {
 				HAL_GPIO_WritePin(nCHG_LV_En_GPIO_Port, nCHG_LV_En_Pin, !nCHG_LV_EN_ACTIVE); // enable charging
 				perms.charge = 1;
 				//enter_CHARGING(); //DEBUG!
@@ -728,7 +714,7 @@ void SystemStateMachine() {
 //				perms.lv = 1;
 				perms.motor = 1;
 			}
-			if((contactorInfo[LOWV].contactorClosed == CLOSE_CONTACTOR) && (contactorInfo[MOTOR].contactorClosed == CLOSE_CONTACTOR)) {
+			if((contactorInfo[MOTOR].contactorClosed == CLOSE_CONTACTOR)) {
 				HAL_GPIO_WritePin(_12V_PCHG_En_GPIO_Port, _12V_PCHG_En_Pin, _12V_PCHG_EN_ACTIVE); // turn on precharge
 				if(read_Critical_OV_UV() == CRITICAL_OV_UV_ACTIVE) { // if equals 0 good to go
 					HAL_GPIO_WritePin(_12V_CAN_En_GPIO_Port, _12V_CAN_En_Pin, _12V_CAN_EN_ACTIVE); // anable 12V CAN
@@ -925,9 +911,6 @@ uint8_t waitForFirstHeartbeats() {
 					case ARRAY:
 						mbmsTrip.arrayHeartbeatDeadTrip = 1;
 						break;
-//					case LOWV:
-//						mbmsTrip.LVHeartbeatDeadTrip = 1;
-//						break;
 					case CHARGE:
 						mbmsTrip.chargeHeartbeatDeadTrip = 1;
 						break;
@@ -990,9 +973,6 @@ uint8_t checkContactorsOpen() {
 					case ARRAY:
 						mbmsTrip.arrayHeartbeatDeadTrip = 1;
 						break;
-//					case LOWV:
-//						mbmsTrip.LVHeartbeatDeadTrip = 1;
-//						break;
 					case CHARGE:
 						mbmsTrip.chargeHeartbeatDeadTrip = 1;
 						break;
@@ -1133,9 +1113,6 @@ void CheckContactorHeartbeats() {
 						case ARRAY:
 							mbmsTrip.arrayHeartbeatDeadTrip = 1;
 							break;
-//						case LOWV:
-//							mbmsTrip.LVHeartbeatDeadTrip = 1;
-//							break;
 						case CHARGE:
 							mbmsTrip.chargeHeartbeatDeadTrip = 1;
 							break;

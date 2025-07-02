@@ -159,7 +159,7 @@ typedef struct {
 	uint8_t commonHighCurrentTrip;
 	uint8_t motorHighCurrentTrip;
 	uint8_t arrayHighCurrentTrip;
-	uint8_t LVHighCurrentTrip = 0;
+	uint8_t LVHighCurrentTrip;
 	uint8_t chargeHighCurrentTrip;
 	uint8_t protectionTrip;
 	uint8_t orionMessageTimeoutTrip;
@@ -169,7 +169,7 @@ typedef struct {
 	uint8_t commonHeartbeatDeadTrip;
 	uint8_t motorHeartbeatDeadTrip;
 	uint8_t arrayHeartbeatDeadTrip;
-	uint8_t LVHeartbeatDeadTrip = 0;
+	uint8_t LVHeartbeatDeadTrip;
 	uint8_t chargeHeartbeatDeadTrip;
 	uint8_t MPSDisabledTrip; // this is not a BPS fault !
 	uint8_t ESDEnabledTrip;
