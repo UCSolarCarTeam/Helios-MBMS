@@ -605,7 +605,9 @@ void SystemStateMachine() {
 	}
 
 	// make var plugged for now to stand in for the CAN msg that charger is plugged in or not
-	uint8_t plugged = (read_CHARGE_PLUGGED() == GPIO_PIN_SET);
+	uint8_t plugged = (read_CHARGE_PLUGGED() == CHARGE_PLUGGED_ACTIVE);
+
+
 
 	switch (mbmsStatus.carState) {
 		case BOOT:
@@ -663,6 +665,7 @@ void SystemStateMachine() {
 				break;
 			}
 
+
 			if (plugged && (read_Charge_Enable() == CHARGE_ENABLE_ACTIVE)) {
 //				perms.lv = 0;
 				perms.motor = 0;
@@ -672,6 +675,13 @@ void SystemStateMachine() {
 //				perms.lv = 1;
 				perms.motor = 1;
 				HAL_GPIO_WritePin(_12V_CAN_En_GPIO_Port, _12V_CAN_En_Pin, _12V_CAN_EN_ACTIVE);
+	            /* Khadeeja: Added below lines because we now have 4 CCP boards and array and charge are connected */
+				if (read_Charge_Enable() == CHARGE_ENABLE_ACTIVE){
+					// turn on the array
+					perms.array = 1;
+					perms.charge = 1;
+				}
+				/* end of Khadeeja edit */
 			}
 
 			if( plugged && (contactorInfo[MOTOR].contactorClosed == OPEN_CONTACTOR)) {
@@ -722,6 +732,7 @@ void SystemStateMachine() {
 					enter_FULLY_OPERATIONAL();
 				}
 			}
+
 
 
 			/* Running checks */
@@ -802,7 +813,7 @@ void UpdateContactors() {
         }
         else if ((perms.array) && (contactorInfo[ARRAY].contactorClosed != CLOSE_CONTACTOR)
         		&& (mbmsStatus.chargeEnable == CHARGE_ENABLE_ACTIVE) && (contactorCommand.array != CLOSE_CONTACTOR)) {
-            contactorCommand.array = CLOSE_CONTACTOR;
+        	contactorCommand.array = CLOSE_CONTACTOR;
             contactor_command_start_tick[ARRAY] = osKernelGetTickCount();
 
         }
@@ -826,6 +837,7 @@ void UpdateContactors() {
 
     if ((!perms.array) && (contactorCommand.array != OPEN_CONTACTOR)) {
         contactorCommand.array = OPEN_CONTACTOR;
+
         contactor_command_start_tick[ARRAY] = osKernelGetTickCount();
 
     }

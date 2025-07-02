@@ -118,20 +118,20 @@ void Startup()
 	mbmsStatus.startupState = COMMON_CLOSED;
 
 	// set flag to give permission to precharge/close LV
-	perms.motor = 1;
-
-	// commented out for testing only
-#if 1
-	while ((contactorInfo[MOTOR].contactorClosed != CLOSE_CONTACTOR)) {
-		// wait for LV (motors now sucka!) contactor to close
-	}
-#endif
-
-	if (contactorInfo[MOTOR].contactorError) {
-		// TO DO: handle error
-		//Error_Handler();
-	}
-	mbmsStatus.startupState = MOTORS_PERMS;
+//	perms.lv = 1;
+//
+//	// commented out for testing only
+//#if 1
+//	while ((contactorInfo[LOWV].contactorClosed != CLOSE_CONTACTOR)) {
+//		// wait for LV contactor to close
+//	}
+//#endif
+//
+//	if (contactorInfo[LOWV].contactorError) {
+//		// TO DO: handle error
+//		//Error_Handler();
+//	}
+//	mbmsStatus.startupState = LV_CLOSED;
 
 	// enable DCDC HV through EN1
 	HAL_GPIO_WritePin(EN1_GPIO_Port, EN1_Pin, EN1_ACTIVE);
@@ -149,18 +149,19 @@ void Startup()
 	HAL_GPIO_WritePin(_12V_PCHG_En_GPIO_Port, _12V_PCHG_En_Pin, !(_12V_PCHG_EN_ACTIVE));
 
 
-
 	// set flag to give permission to precharge/close motor contactor
 	// just check that everything is good still (doesnt HAVE to close motor before moving on to next part)
-//	perms.motor = 1;
-//
-//	mbmsStatus.startupState = MOTORS_PERMS;
+	perms.motor = 1;
+
+	mbmsStatus.startupState = MOTORS_PERMS;
 
 	// set flag to give permission to precharge/close array contactor
 	// wait until array contactor done (same as above, make sure everything okay still, doesnt NEED it to bed closed...)
-	perms.array = 1;
 
-	mbmsStatus.startupState = ARRAY_PERMS;
+/* Khadeeja: COMMENTED THIS OUT because we gonna do this in the state machine now */
+//	perms.array = 1;
+//
+//	mbmsStatus.startupState = ARRAY_PERMS;
 
 	// MAYBE MAKE SURE BCT HAS RUN A COUPLE TIMES FIRST BEFORE SAYING COMPLETED >>> idk
 

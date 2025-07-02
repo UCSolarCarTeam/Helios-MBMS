@@ -80,8 +80,8 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define CHARGE_PLUGGED_Pin GPIO_PIN_2
-#define CHARGE_PLUGGED_GPIO_Port GPIOE
+#define ABATT_Disable_Pin GPIO_PIN_2
+#define ABATT_Disable_GPIO_Port GPIOE
 #define n3A_OC_Pin GPIO_PIN_3
 #define n3A_OC_GPIO_Port GPIOE
 #define nDCDC_On_Pin GPIO_PIN_4
@@ -104,8 +104,8 @@ void Error_Handler(void);
 #define nMPS_GPIO_Port GPIOC
 #define ESD_Pin GPIO_PIN_5
 #define ESD_GPIO_Port GPIOC
-#define ABATT_Disable_Pin GPIO_PIN_0
-#define ABATT_Disable_GPIO_Port GPIOB
+#define CHARGE_PLUGGED_Pin GPIO_PIN_0
+#define CHARGE_PLUGGED_GPIO_Port GPIOB
 #define Key_Pin GPIO_PIN_1
 #define Key_GPIO_Port GPIOB
 #define A1_Pin GPIO_PIN_2
