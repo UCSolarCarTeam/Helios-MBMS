@@ -38,7 +38,7 @@ PowerSelectionStatus powerSelectionStatus = {0};
 MBMSStatus mbmsStatus; // made specific init function for this, may 21
 
 Permissions perms = {0};
-ContactorInfo contactorInfo[5]; // one for each contactor        add volatile to the extern thing too
+ContactorInfo contactorInfo[NUM_OF_CONTACTORS]; // one for each contactor        add volatile to the extern thing too
 
 ScreenDataDictionary screenData; // this is the root data structure for the screen
 
@@ -58,9 +58,9 @@ uint32_t orion_received_tick = 0;
 uint32_t LV_OC_tick_count = 0;
 
 
-uint32_t contactor_command_start_tick[5] = {0};
+uint32_t contactor_command_start_tick[NUM_OF_CONTACTORS] = {0};
 
-uint32_t hard_high_current_count[5] = {0};
+uint32_t hard_high_current_count[NUM_OF_CONTACTORS] = {0};
 
 /*
  * Local Variables
@@ -70,8 +70,8 @@ uint32_t hard_high_current_count[5] = {0};
 // no init for this as of rn ... may 21
 
 /* used for checking ummmm heartbeats */
-static uint32_t heartbeatLastUpdatedTime[5] = {0};
-static uint32_t previousHeartbeats[5] = {0}; //check this !!! syntax !
+static uint32_t heartbeatLastUpdatedTime[NUM_OF_CONTACTORS] = {0};
+static uint32_t previousHeartbeats[NUM_OF_CONTACTORS] = {0}; //check this !!! syntax !
 
 
 uint32_t orion_msg_from_queue = 0;
@@ -91,7 +91,7 @@ uint32_t BCT_difference_seconds = 0;
 void BatteryControlTask(void* arg)
 {
 	uint32_t taskTickLastStart = osKernelGetTickCount();
-	for (int i = 0; i < 5; i++) {
+	for (int i = 0; i < NUM_OF_CONTACTORS; i++) {
 		contactor_command_start_tick[i] = osKernelGetTickCount() + 15;
 	}
 
@@ -471,7 +471,7 @@ void enter_BOOT() {
 
 	mbmsStatus.carState = BOOT;
 
-	for(int i = 0; i < 5; i++) {
+	for(int i = 0; i < NUM_OF_CONTACTORS; i++) {
 		previousHeartbeats[i] = 0;
 		heartbeatLastUpdatedTime[i] = osKernelGetTickCount() + 15;
 		contactorInfo[i].heartbeat = 0;
@@ -554,7 +554,7 @@ void enter_CHARGING() {
 	HAL_GPIO_WritePin(BLU_LED_GPIO_Port, BLU_LED_Pin, GPIO_PIN_SET);
 
 	mbmsStatus.carState = CHARGING;
-	HAL_GPIO_WritePin(GRN_LED_GPIO_Port, GRN_LED_Pin, GPIO_PIN_SET);
+//	HAL_GPIO_WritePin(GRN_LED_GPIO_Port, GRN_LED_Pin, GPIO_PIN_SET);
 }
 
 void enter_FULLY_OPERATIONAL() {
@@ -567,7 +567,7 @@ void enter_FULLY_OPERATIONAL() {
 
 void SystemStateMachine() {
 
-	for (int i = 0; i < 5; i++) {
+	for (int i = 0; i < NUM_OF_CONTACTORS; i++) {
 		if(contactorInfo[i].contactorClosed == CLOSE_CONTACTOR) {
 			switch(i) {
 				case COMMON:
@@ -782,7 +782,7 @@ void UpdateContactors() {
     uint8_t contactorClosing = false;
 
     // Check if any contactors are currently closing
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < NUM_OF_CONTACTORS; i++) {
         if (contactorInfo[i].contactorClosing == CLOSING_CONTACTOR) { // lowkey switch this back to an enum if u have time smh.. stoopid fr
             contactorClosing = true;
             break;
@@ -882,7 +882,7 @@ void startupCheck(){
 
 	}
 	if (heartbeatDead == 1){
-#if 0
+#if 1
 		enter_BPS_FAULT();
 #endif
 	}
@@ -903,11 +903,11 @@ void startupCheck(){
 
 uint8_t waitForFirstHeartbeats() {
 
-	static uint8_t heartbeatFailCounter[5] = {0};
+	static uint8_t heartbeatFailCounter[NUM_OF_CONTACTORS] = {0};
 	uint8_t dead = 0;
 
 
-	for(int i = 0; i < 5; i++) {
+	for(int i = 0; i < NUM_OF_CONTACTORS; i++) {
 		heartbeat_check_count++;
 
 		if(heartbeatFailCounter[i] > 3) {
@@ -972,7 +972,7 @@ uint8_t checkContactorsOpen() {
 	osStatus_t acquire = osMutexAcquire(ContactorInfoMutexHandle, 5);
 	if (acquire == osOK) {
 
-		for (int i = 0; i < 5; i++) {
+		for (int i = 0; i < NUM_OF_CONTACTORS; i++) {
 			if (contactorInfo[i].contactorClosed == CLOSE_CONTACTOR) {
 				allOpen = 0;
 				switch(i) {
@@ -1010,7 +1010,7 @@ uint8_t checkPrechargersOpen() {
 	osStatus_t acquire = osMutexAcquire(ContactorInfoMutexHandle, 5);
 	if (acquire == osOK) {
 
-		for (int i = 1; i < 5; i++) { //COMMON HAS NO PRECHARGER which is why i = 1
+		for (int i = 1; i < NUM_OF_CONTACTORS; i++) { //COMMON HAS NO PRECHARGER which is why i = 1
 			if (contactorInfo[i].prechargerClosed == CLOSE_CONTACTOR) {
 				allOpen = 0;
 				break;
@@ -1098,7 +1098,7 @@ void CheckContactorHeartbeats() {
 
 
 	static uint8_t BPSFault = 0;
-	for(int i = 0; i < 5; i++) {
+	for(int i = 0; i < NUM_OF_CONTACTORS; i++) {
 
 		heartbeat_check_count++;
 

@@ -113,7 +113,8 @@ void enter_BOOT();
 #define CLOSE_CONTACTOR_TIMEOUT 5000 // so big for testing ok
 #define OPEN_CONTACTOR_TIMEOUT 5000
 
-
+// contactors
+#define NUM_OF_CONTACTORS 4
 
 
 

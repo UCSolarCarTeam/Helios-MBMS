@@ -64,7 +64,7 @@ enum startupStates {
 	ESD_DISABLED,
 	CHECKS_PASSED,
 	COMMON_CLOSED,
-	LV_CLOSED,
+//	LV_CLOSED,
 	EN1_ON,
 	MOTORS_PERMS,
 	ARRAY_PERMS,
@@ -214,7 +214,7 @@ typedef struct{
 	uint8_t common;
 	uint8_t motor;
 	uint8_t array;
-	uint8_t LV;
+//	uint8_t LV;
 	uint8_t charge;
 } ContactorCommand;
 
