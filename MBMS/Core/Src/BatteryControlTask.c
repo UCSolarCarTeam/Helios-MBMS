@@ -1139,6 +1139,10 @@ void CheckContactorHeartbeats() {
 						case CHARGE:
 							mbmsTrip.chargeHeartbeatDeadTrip = 1;
 							break;
+						default:
+							// do nothing
+							break;
+
 					}
 					osMutexRelease(MBMSTripMutexHandle);
 					BPSFault = 1;
