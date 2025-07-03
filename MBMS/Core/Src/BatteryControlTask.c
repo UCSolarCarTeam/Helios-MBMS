@@ -739,6 +739,12 @@ void SystemStateMachine() {
 					tim_started = 0;
 					enter_FULLY_OPERATIONAL();
 				}
+
+				// KHADEEJA: If there's no precharging
+#if 0
+				HAL_GPIO_WritePin(_12V_CAN_En_GPIO_Port, _12V_CAN_En_Pin, _12V_CAN_EN_ACTIVE); // anable 12V CAN
+				enter_FULLY_OPERATIONAL();
+#endif
 			}
 
 
