@@ -720,13 +720,14 @@ void SystemStateMachine() {
 			// checks if charger is unplugged
 			if (!plugged && (read_Discharge_Enable() == DISCHARGE_ENABLE_ACTIVE)) {
 				HAL_GPIO_WritePin(nCHG_LV_En_GPIO_Port, nCHG_LV_En_Pin, nCHG_LV_EN_ACTIVE); // disable charging
-				perms.charge = 0;
-			}
-			if(contactorInfo[CHARGE].contactorClosed == OPEN_CONTACTOR) {
-				HAL_GPIO_WritePin(_12V_CAN_En_GPIO_Port, _12V_CAN_En_Pin, GPIO_PIN_SET); // enable 12V CAN PAUSE I SHOULD PRECHARGE STOOPID
-//				perms.lv = 1;
 				perms.motor = 1;
+				//perms.charge = 0;
 			}
+//			if(contactorInfo[CHARGE].contactorClosed == OPEN_CONTACTOR) {
+//				HAL_GPIO_WritePin(_12V_CAN_En_GPIO_Port, _12V_CAN_En_Pin, GPIO_PIN_SET); // enable 12V CAN PAUSE I SHOULD PRECHARGE STOOPID
+////				perms.lv = 1;
+//				perms.motor = 1;
+//			}
 			if((contactorInfo[MOTOR].contactorClosed == CLOSE_CONTACTOR)) {
 				HAL_GPIO_WritePin(_12V_PCHG_En_GPIO_Port, _12V_PCHG_En_Pin, _12V_PCHG_EN_ACTIVE); // turn on precharge
 				if(read_Critical_OV_UV() == CRITICAL_OV_UV_ACTIVE) { // if equals 0 good to go
