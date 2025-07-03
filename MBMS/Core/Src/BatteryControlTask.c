@@ -1156,7 +1156,7 @@ void CheckContactorHeartbeats() {
 	}
 
 	if(BPSFault) {
-#if 0
+#if 1
 		enter_BPS_FAULT();
 #endif
 	}
@@ -1273,7 +1273,7 @@ void UpdateTripStatus() {
 				if((hard_high_current_count[ARRAY] * 10) > HARD_CURRENT_TRIP_TIMEOUT) {
 					mbmsTrip.arrayHighCurrentTrip = 1;
 
-#if 0
+#if 1
 					BPS_Fault = 1;
 
 #endif
@@ -1416,7 +1416,7 @@ void UpdateTripStatus() {
 				)
 			{
 				mbmsTrip.contactorConnectedUnexpectedlyTrip = 1;
-#if 0
+#if 1
 				BPS_Fault = 1;
 #endif
 
