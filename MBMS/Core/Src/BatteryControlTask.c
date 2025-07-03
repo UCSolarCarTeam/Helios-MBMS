@@ -676,21 +676,24 @@ void SystemStateMachine() {
 				perms.motor = 1;
 				HAL_GPIO_WritePin(_12V_CAN_En_GPIO_Port, _12V_CAN_En_Pin, _12V_CAN_EN_ACTIVE);
 	            /* Khadeeja: Added below lines because we now have 4 CCP boards and array and charge are connected */
+				/* ERM I COMMENTED THIS OUT BUT IDK WHAT THE CODE USED TO BE BUT PROBABLY CHILL
 				if (read_Charge_Enable() == CHARGE_ENABLE_ACTIVE){
 					// turn on the array
 					perms.array = 1;
 					perms.charge = 1;
 				}
+				*/
 				/* end of Khadeeja edit */
 			}
 
 			if( plugged && (contactorInfo[MOTOR].contactorClosed == OPEN_CONTACTOR)) {
 				HAL_GPIO_WritePin(nCHG_LV_En_GPIO_Port, nCHG_LV_En_Pin, !nCHG_LV_EN_ACTIVE); // enable charging
-				perms.charge = 1;
+//				perms.charge = 1;
+//				perms.array = 1; // NEW MILLAINE
 				//enter_CHARGING(); //DEBUG!
 			}
 
-			if (plugged && (contactorInfo[CHARGE].contactorClosed == CLOSE_CONTACTOR)) {
+			if (plugged && (contactorInfo[CHARGE].contactorClosed == CLOSE_CONTACTOR) && (contactorInfo[ARRAY].contactorClosed == CLOSE_CONTACTOR)) {
 				enter_CHARGING(); //DEBUG!
 			}
 

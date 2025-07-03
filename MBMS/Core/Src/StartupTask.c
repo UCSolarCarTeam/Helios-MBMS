@@ -159,9 +159,10 @@ void Startup()
 	// wait until array contactor done (same as above, make sure everything okay still, doesnt NEED it to bed closed...)
 
 /* Khadeeja: COMMENTED THIS OUT because we gonna do this in the state machine now */
-//	perms.array = 1;
-//
-//	mbmsStatus.startupState = ARRAY_PERMS;
+	perms.array = 1;
+	perms.charge = 1; // NEW MILLAINE
+
+	mbmsStatus.startupState = ARRAY_PERMS;
 
 	// MAYBE MAKE SURE BCT HAS RUN A COUPLE TIMES FIRST BEFORE SAYING COMPLETED >>> idk
 
