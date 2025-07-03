@@ -110,7 +110,7 @@ void Startup()
 	// commented out for testing only
 
 	// KHADEEJA: CHANGE THIS BACK TO 1
-#if 0
+#if 1
 	while ((contactorInfo[COMMON].contactorClosed != CLOSE_CONTACTOR)) {
 
 	}

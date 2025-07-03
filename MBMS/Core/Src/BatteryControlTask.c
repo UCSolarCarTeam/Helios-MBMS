@@ -899,7 +899,7 @@ void startupCheck(){
 
 
 		// KHADEEJA: CHANGE if 0 to 1
-#if 0
+#if 1
 		enter_BPS_FAULT();
 #endif
 	}
@@ -1164,7 +1164,7 @@ void CheckContactorHeartbeats() {
 	if(BPSFault) {
 
 		// KHADEEJA: CHANGE IF 0 to 1
-#if 0
+#if 1
 		enter_BPS_FAULT();
 #endif
 	}

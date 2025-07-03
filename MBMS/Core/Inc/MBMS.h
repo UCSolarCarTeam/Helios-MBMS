@@ -35,7 +35,7 @@ typedef enum { false = 0, true = 1 } boolean;
 //};
 
 #define nMPS_ACTIVE 1 //MPS has been disconnected
-#define ESD_ACTIVE 0 //ESD enabled -> trip
+#define ESD_ACTIVE 1 //ESD enabled -> trip
 #define CHARGE_PLUGGED_ACTIVE 1 //charger plugged in
 #define nCHG_LV_EN_ACTIVE 1 // do not allow charge!!
 #define CHARGE_ENABLE_ACTIVE 1 // orion allows charge
