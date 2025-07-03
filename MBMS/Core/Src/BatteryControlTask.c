@@ -705,7 +705,7 @@ void SystemStateMachine() {
 		case CHARGING:
 			// turns off car if key is off
 			checkKeyShutdown();
-			HAL_GPIO_WritePin(GRN_LED_GPIO_Port, GRN_LED_Pin, GPIO_PIN_RESET);
+//			HAL_GPIO_WritePin(GRN_LED_GPIO_Port, GRN_LED_Pin, GPIO_PIN_RESET);
 
 			if(read_nMPS() == nMPS_ACTIVE) {
 				enter_MPS_DISCONNECTED();
