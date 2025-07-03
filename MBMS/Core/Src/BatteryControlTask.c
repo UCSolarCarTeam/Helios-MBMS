@@ -81,7 +81,7 @@ uint32_t BCT_end_tick = 0;
 uint32_t BCT_difference_tick = 0;
 
 uint32_t BCT_difference_seconds = 0;
-
+uint32_t taskTickLastStart = 0;
 
 
 
@@ -90,7 +90,7 @@ uint32_t BCT_difference_seconds = 0;
 
 void BatteryControlTask(void* arg)
 {
-	uint32_t taskTickLastStart = osKernelGetTickCount();
+	taskTickLastStart = osKernelGetTickCount();
 	for (int i = 0; i < NUM_OF_CONTACTORS; i++) {
 		contactor_command_start_tick[i] = osKernelGetTickCount() + 15;
 	}
@@ -266,7 +266,7 @@ void MBMSStatus_init() {
 void perms_init() {
 	perms.common = 0;
 	perms.motor = 0;
-	perms.array = 0;
+//	perms.array = 0;
 //	perms.lv = 0;
 	perms.charge = 0;
 }
@@ -576,9 +576,6 @@ void SystemStateMachine() {
 				case MOTOR:
 					HAL_GPIO_WritePin(G2_GPIO_Port, G2_Pin, CONTACTOR_LED_ACTIVE);
 					break;
-				case ARRAY:
-					HAL_GPIO_WritePin(G3_GPIO_Port, G3_Pin, CONTACTOR_LED_ACTIVE);
-					break;
 				case CHARGE:
 					HAL_GPIO_WritePin(G5_GPIO_Port, G5_Pin, CONTACTOR_LED_ACTIVE);
 					break;
@@ -592,9 +589,6 @@ void SystemStateMachine() {
 					break;
 				case MOTOR:
 					HAL_GPIO_WritePin(G2_GPIO_Port, G2_Pin, !CONTACTOR_LED_ACTIVE);
-					break;
-				case ARRAY:
-					HAL_GPIO_WritePin(G3_GPIO_Port, G3_Pin, !CONTACTOR_LED_ACTIVE);
 					break;
 				case CHARGE:
 					HAL_GPIO_WritePin(G5_GPIO_Port, G5_Pin, !CONTACTOR_LED_ACTIVE);
@@ -693,7 +687,8 @@ void SystemStateMachine() {
 				//enter_CHARGING(); //DEBUG!
 			}
 
-			if (plugged && (contactorInfo[CHARGE].contactorClosed == CLOSE_CONTACTOR) && (contactorInfo[ARRAY].contactorClosed == CLOSE_CONTACTOR)) {
+//			if (plugged && (contactorInfo[CHARGE].contactorClosed == CLOSE_CONTACTOR) && (contactorInfo[ARRAY].contactorClosed == CLOSE_CONTACTOR)) {
+			if (plugged && (contactorInfo[CHARGE].contactorClosed == CLOSE_CONTACTOR)) {
 				enter_CHARGING(); //DEBUG!
 			}
 
@@ -756,7 +751,7 @@ void SystemStateMachine() {
 
 			if (softBatteryTrip.cell_OV == 1){
 				perms.charge = 0;
-				perms.array = 0;
+//				perms.array = 0;
 
 			}
 			if(softBatteryTrip.cell_UV == 1) {
@@ -815,12 +810,12 @@ void UpdateContactors() {
             contactor_command_start_tick[MOTOR] = osKernelGetTickCount();
 
         }
-        else if ((perms.array) && (contactorInfo[ARRAY].contactorClosed != CLOSE_CONTACTOR)
-        		&& (mbmsStatus.chargeEnable == CHARGE_ENABLE_ACTIVE) && (contactorCommand.array != CLOSE_CONTACTOR)) {
-        	contactorCommand.array = CLOSE_CONTACTOR;
-            contactor_command_start_tick[ARRAY] = osKernelGetTickCount();
-
-        }
+//        else if ((perms.array) && (contactorInfo[ARRAY].contactorClosed != CLOSE_CONTACTOR)
+//        		&& (mbmsStatus.chargeEnable == CHARGE_ENABLE_ACTIVE) && (contactorCommand.array != CLOSE_CONTACTOR)) {
+//        	contactorCommand.array = CLOSE_CONTACTOR;
+//            contactor_command_start_tick[ARRAY] = osKernelGetTickCount();
+//
+//        }
         else if ((perms.charge) && (contactorInfo[CHARGE].contactorClosed != CLOSE_CONTACTOR)
         		&& (mbmsStatus.chargeEnable == CHARGE_ENABLE_ACTIVE) && (contactorCommand.charge != CLOSE_CONTACTOR)) {
             contactorCommand.charge = CLOSE_CONTACTOR;
@@ -839,12 +834,12 @@ void UpdateContactors() {
         contactor_command_start_tick[MOTOR] = osKernelGetTickCount();
     }
 
-    if ((!perms.array) && (contactorCommand.array != OPEN_CONTACTOR)) {
-        contactorCommand.array = OPEN_CONTACTOR;
-
-        contactor_command_start_tick[ARRAY] = osKernelGetTickCount();
-
-    }
+//    if ((!perms.array) && (contactorCommand.array != OPEN_CONTACTOR)) {
+//        contactorCommand.array = OPEN_CONTACTOR;
+//
+//        contactor_command_start_tick[ARRAY] = osKernelGetTickCount();
+//
+//    }
 
 //    if ((!perms.lv) && (contactorCommand.LV != OPEN_CONTACTOR)) {
 //        contactorCommand.motor = OPEN_CONTACTOR;
@@ -886,7 +881,10 @@ void startupCheck(){
 
 	}
 	if (heartbeatDead == 1){
-#if 1
+
+
+		// KHADEEJA: CHANGE if 0 to 1
+#if 0
 		enter_BPS_FAULT();
 #endif
 	}
@@ -923,9 +921,6 @@ uint8_t waitForFirstHeartbeats() {
 						break;
 					case MOTOR:
 						mbmsTrip.motorHeartbeatDeadTrip = 1;
-						break;
-					case ARRAY:
-						mbmsTrip.arrayHeartbeatDeadTrip = 1;
 						break;
 					case CHARGE:
 						mbmsTrip.chargeHeartbeatDeadTrip = 1;
@@ -986,9 +981,7 @@ uint8_t checkContactorsOpen() {
 					case MOTOR:
 						mbmsTrip.motorHeartbeatDeadTrip = 1;
 						break;
-					case ARRAY:
-						mbmsTrip.arrayHeartbeatDeadTrip = 1;
-						break;
+
 					case CHARGE:
 						mbmsTrip.chargeHeartbeatDeadTrip = 1;
 						break;
@@ -1126,9 +1119,7 @@ void CheckContactorHeartbeats() {
 						case MOTOR:
 							mbmsTrip.motorHeartbeatDeadTrip = 1;
 							break;
-						case ARRAY:
-							mbmsTrip.arrayHeartbeatDeadTrip = 1;
-							break;
+//
 						case CHARGE:
 							mbmsTrip.chargeHeartbeatDeadTrip = 1;
 							break;
@@ -1156,7 +1147,9 @@ void CheckContactorHeartbeats() {
 	}
 
 	if(BPSFault) {
-#if 1
+
+		// KHADEEJA: CHANGE IF 0 to 1
+#if 0
 		enter_BPS_FAULT();
 #endif
 	}
@@ -1212,9 +1205,9 @@ void CheckSoftBatteryLimit() {
 			if (contactorInfo[MOTOR].lineCurrent > SOFT_MAX_MOTORS_CONTACTOR_CURRENT){
 				mbmsSoftBatteryLimitWarning.motorHighCurrentWarning = 1;
 			}
-			if (contactorInfo[ARRAY].lineCurrent > SOFT_MAX_ARRAY_CONTACTOR_CURRENT){
-				mbmsSoftBatteryLimitWarning.arrayHighCurrentWarning = 1;
-			}
+//			if (contactorInfo[ARRAY].lineCurrent > SOFT_MAX_ARRAY_CONTACTOR_CURRENT){
+//				mbmsSoftBatteryLimitWarning.arrayHighCurrentWarning = 1;
+//			}
 //			if (contactorInfo[LOWV].lineCurrent > SOFT_MAX_LV_CONTACTOR_CURRENT){
 //				mbmsSoftBatteryLimitWarning.LVHighCurrentWarning = 1;
 //			}
@@ -1268,20 +1261,20 @@ void UpdateTripStatus() {
 				hard_high_current_count[MOTOR] = 0;
 			}
 
-			if (contactorInfo[ARRAY].lineCurrent > HARD_MAX_ARRAY_CONTACTOR_CURRENT){
-				hard_high_current_count[ARRAY]++;
-				if((hard_high_current_count[ARRAY] * 10) > HARD_CURRENT_TRIP_TIMEOUT) {
-					mbmsTrip.arrayHighCurrentTrip = 1;
-
-#if 1
-					BPS_Fault = 1;
-
-#endif
-				}
-			}
-			else {
-				hard_high_current_count[ARRAY] = 0;
-			}
+//			if (contactorInfo[ARRAY].lineCurrent > HARD_MAX_ARRAY_CONTACTOR_CURRENT){
+//				hard_high_current_count[ARRAY]++;
+//				if((hard_high_current_count[ARRAY] * 10) > HARD_CURRENT_TRIP_TIMEOUT) {
+//					mbmsTrip.arrayHighCurrentTrip = 1;
+//
+//#if 1
+//					BPS_Fault = 1;
+//
+//#endif
+//				}
+//			}
+//			else {
+//				hard_high_current_count[ARRAY] = 0;
+//			}
 
 //			if (contactorInfo[LOWV].lineCurrent > HARD_MAX_LV_CONTACTOR_CURRENT){
 //				hard_high_current_count[LOWV]++;
@@ -1382,8 +1375,6 @@ void UpdateTripStatus() {
 						 && ((osKernelGetTickCount() - contactor_command_start_tick[COMMON]) >= CLOSE_CONTACTOR_TIMEOUT))
 					|| ((contactorCommand.motor == CLOSE_CONTACTOR) && (contactorInfo[MOTOR].lineCurrent < NO_CURRENT_THRESHOLD)
 						 && ((osKernelGetTickCount() - contactor_command_start_tick[MOTOR]) >= CLOSE_CONTACTOR_TIMEOUT))
-					|| ((contactorCommand.array  == CLOSE_CONTACTOR) && (contactorInfo[ARRAY].lineCurrent  < NO_CURRENT_THRESHOLD)
-						 && ((osKernelGetTickCount() - contactor_command_start_tick[ARRAY]) >= CLOSE_CONTACTOR_TIMEOUT))
 					|| ((contactorCommand.charge == CLOSE_CONTACTOR) && (contactorInfo[CHARGE].lineCurrent < NO_CURRENT_THRESHOLD)
 						 && ((osKernelGetTickCount() - contactor_command_start_tick[CHARGE]) >= CLOSE_CONTACTOR_TIMEOUT))
 				)
@@ -1409,8 +1400,6 @@ void UpdateTripStatus() {
 						 && ((osKernelGetTickCount() - contactor_command_start_tick[COMMON]) >= OPEN_CONTACTOR_TIMEOUT))
 					|| ((contactorCommand.motor == OPEN_CONTACTOR) && (contactorInfo[MOTOR].lineCurrent >= NO_CURRENT_THRESHOLD)
 						 && ((osKernelGetTickCount() - contactor_command_start_tick[MOTOR]) >= OPEN_CONTACTOR_TIMEOUT))
-					|| ((contactorCommand.array  == OPEN_CONTACTOR) && (contactorInfo[ARRAY].lineCurrent  >= NO_CURRENT_THRESHOLD)
-						 && ((osKernelGetTickCount() - contactor_command_start_tick[ARRAY]) >= OPEN_CONTACTOR_TIMEOUT))
 					|| ((contactorCommand.charge == OPEN_CONTACTOR) && (contactorInfo[CHARGE].lineCurrent >= NO_CURRENT_THRESHOLD)
 						 && ((osKernelGetTickCount() - contactor_command_start_tick[CHARGE]) >= OPEN_CONTACTOR_TIMEOUT))
 				)
@@ -1424,7 +1413,7 @@ void UpdateTripStatus() {
 			}
 
 			/* Here, it is also a contactor connected unexpectedly trip if the contactor won't open when told to */
-			for (int i = 0; i < 5; i++) {
+			for (int i = 0; i < NUM_OF_CONTACTORS; i++) {
 				if(contactorInfo[i].contactorOpeningError == 1) {
 					mbmsTrip.contactorConnectedUnexpectedlyTrip = 1;
 					BPS_Fault = 1;

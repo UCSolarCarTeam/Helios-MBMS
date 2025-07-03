@@ -193,7 +193,6 @@ void sendContactorsCanMessage() {
 //								+ ((contactorCommand.charge & 0x01) << CHARGE);
 
 	contactorCommandMsg.data[0] = ((contactorCommand.common & 0x01) << COMMON) + ((contactorCommand.motor & 0x01) << MOTOR)
-									+ ((contactorCommand.array & 0x01) << ARRAY)
 									+ ((contactorCommand.charge & 0x01) << CHARGE);
 	osMessageQueuePut(TxCANMessageQueueHandle, &contactorCommandMsg, 0, osWaitForever);
 

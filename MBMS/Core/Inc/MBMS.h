@@ -52,7 +52,7 @@ typedef enum { false = 0, true = 1 } boolean;
 enum Contactor {
 	COMMON = 0,
 	MOTOR,
-	ARRAY,
+//	ARRAY,
 //	LOWV,
 	CHARGE
 };
@@ -92,7 +92,7 @@ typedef struct {
 typedef struct {
 	uint8_t common;
 	uint8_t motor;
-	uint8_t array;
+//	uint8_t array;
 //	uint8_t lv;
 	uint8_t charge;
 	uint8_t startupDone;
@@ -213,7 +213,7 @@ typedef struct {
 typedef struct{
 	uint8_t common;
 	uint8_t motor;
-	uint8_t array;
+//	uint8_t array;
 //	uint8_t LV;
 	uint8_t charge;
 } ContactorCommand;

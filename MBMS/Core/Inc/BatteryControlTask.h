@@ -104,7 +104,7 @@ void enter_BOOT();
 #define SOFT_MAX_CHARGE_CONTACTOR_CURRENT 43.2F
 
 // celsius i guess
-#define	HARD_MAX_TEMP 40
+#define	HARD_MAX_TEMP 44 // KHADEEJA: CONFIRM with dylan that it's 44! and not 49
 #define	SOFT_MAX_TEMP 35
 #define	HARD_MIN_TEMP 5
 #define	SOFT_MIN_TEMP 10
@@ -114,7 +114,7 @@ void enter_BOOT();
 #define OPEN_CONTACTOR_TIMEOUT 5000
 
 // contactors
-#define NUM_OF_CONTACTORS 4
+#define NUM_OF_CONTACTORS 3
 
 
 

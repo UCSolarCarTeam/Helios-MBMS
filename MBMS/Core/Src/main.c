@@ -481,8 +481,6 @@ static void MX_CAN1_Init(void)
   packInfoFilter.FilterMaskIdLow = filter_mask & 0xffff;
 
 
-
-
   packInfoFilter.FilterIdHigh = ((pack_filter_id >> 16) & 0xffff); //
   packInfoFilter.FilterIdLow = pack_filter_id & 0xffff;  // shift left 3 bits because last 13 bits of EXID in low reg, and zero out last 3 bits of low reg (RTR, IDE, 0)
 

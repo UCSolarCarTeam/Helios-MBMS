@@ -13,7 +13,7 @@
 #include "MBMS.h"
 
 //extern ContactorState contactorState;
-extern ContactorInfo contactorInfo[6];
+extern ContactorInfo contactorInfo[NUM_OF_CONTACTORS];
 extern MBMSStatus mbmsStatus;
 extern uint32_t BCT_Counter;
 extern uint32_t startup_Check_Counter;
@@ -32,6 +32,8 @@ extern MBMSTrip mbmsTrip;
 extern ContactorCommand contactorCommand;
 extern Permissions perms;
 extern uint8_t carState;
+
+uint32_t precharge_start_tick = 0;
 
 void StartupTask(void* arg)
 {
@@ -106,11 +108,14 @@ void Startup()
 	// dont worry, discharge and charge enable are checked for their respective contactors in BCT
 	perms.common = 1;
 	// commented out for testing only
-#if 1
+
+	// KHADEEJA: CHANGE THIS BACK TO 1
+#if 0
 	while ((contactorInfo[COMMON].contactorClosed != CLOSE_CONTACTOR)) {
 
 	}
 #endif
+
 	if (contactorInfo[COMMON].contactorError) {
 		// TO DO: handle error
 		//Error_Handler();
@@ -138,12 +143,31 @@ void Startup()
 
 	mbmsStatus.startupState = EN1_ON;
 
+	// KHADEEJA: DONT CHANGE BELOW TO 1 CUZ ITS a broken on the MBMS
+#if 0
 	//precharge 12V CAN
 	HAL_GPIO_WritePin(_12V_PCHG_En_GPIO_Port, _12V_PCHG_En_Pin, _12V_PCHG_EN_ACTIVE);
 	//wait to finish precharging!
+
+
 	while(read_Critical_OV_UV() != CRITICAL_OV_UV_ACTIVE) { // 0 is good to go
 
 	}
+#endif
+
+	//KHADEEJA: 'S VERSION OF THE ABOVE CODE to circumvent that brokenness
+#if 1
+	precharge_start_tick = osKernelGetTickCount();
+
+	//precharge 12V CAN
+	HAL_GPIO_WritePin(_12V_PCHG_En_GPIO_Port, _12V_PCHG_En_Pin, _12V_PCHG_EN_ACTIVE);
+
+	// wait for it to precharge
+	precharge_start_tick += 1000;
+	osDelayUntil(precharge_start_tick);
+
+#endif
+
 	//Enable 12V CAN
 	HAL_GPIO_WritePin(_12V_CAN_En_GPIO_Port, _12V_CAN_En_Pin, _12V_CAN_EN_ACTIVE);
 	HAL_GPIO_WritePin(_12V_PCHG_En_GPIO_Port, _12V_PCHG_En_Pin, !(_12V_PCHG_EN_ACTIVE));
@@ -159,7 +183,7 @@ void Startup()
 	// wait until array contactor done (same as above, make sure everything okay still, doesnt NEED it to bed closed...)
 
 /* Khadeeja: COMMENTED THIS OUT because we gonna do this in the state machine now */
-	perms.array = 1;
+	//perms.array = 1;
 	perms.charge = 1; // NEW MILLAINE
 
 	mbmsStatus.startupState = ARRAY_PERMS;
