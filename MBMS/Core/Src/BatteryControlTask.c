@@ -44,6 +44,9 @@ ScreenDataDictionary screenData; // this is the root data structure for the scre
 
 uint8_t orionMessagesReceived = 0x0;
 
+uint8_t tim_started = 0;
+uint32_t start_12v_pchg = 0;
+
 uint32_t heartbeat_check_count = 0;
 extern uint32_t heartbeat_update_count;
 
@@ -724,10 +727,16 @@ void SystemStateMachine() {
 //				perms.motor = 1;
 //			}
 			if((contactorInfo[MOTOR].contactorClosed == CLOSE_CONTACTOR)) {
+				if (!(tim_started)) {
+					start_12v_pchg = osKernelGetTickCount();
+					tim_started = 1;
+				}
 				HAL_GPIO_WritePin(_12V_PCHG_En_GPIO_Port, _12V_PCHG_En_Pin, _12V_PCHG_EN_ACTIVE); // turn on precharge
-				if(read_Critical_OV_UV() == CRITICAL_OV_UV_ACTIVE) { // if equals 0 good to go
+//				if(read_Critical_OV_UV() == CRITICAL_OV_UV_ACTIVE) { // if equals 0 good to go
+				if ((osKernelGetTickCount() - start_12v_pchg) > 1000) {
 					HAL_GPIO_WritePin(_12V_CAN_En_GPIO_Port, _12V_CAN_En_Pin, _12V_CAN_EN_ACTIVE); // anable 12V CAN
 					HAL_GPIO_WritePin(_12V_PCHG_En_GPIO_Port, _12V_PCHG_En_Pin, !(_12V_PCHG_EN_ACTIVE));
+					tim_started = 0;
 					enter_FULLY_OPERATIONAL();
 				}
 			}
