@@ -128,14 +128,14 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan){
 			motor_heartbeat_count++;
 			break;
 		case 0x202:
-			array_heartbeat_count++;
+			charge_heartbeat_count++;
 			break;
 //		case 0x203:
 //			lv_heartbeat_count++;
 //			break;
-		case 0x203:
-			charge_heartbeat_count++;
-			break;
+//		case 0x203:
+//			charge_heartbeat_count++;
+//			break;
 
 		case 0x210:
 			common_msg_count++;
@@ -144,14 +144,14 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan){
 			motor_msg_count++;
 			break;
 		case 0x212:
-			array_msg_count++;
+			charge_msg_count++;
 			break;
 //		case 0x213:
 //			lv_msg_count++;
 //			break;
-		case 0x213:
-			charge_msg_count++;
-			break;
+//		case 0x213:
+//			charge_msg_count++;
+//			break;
 
 		case 0x302:
 			pack_msg_count++;
